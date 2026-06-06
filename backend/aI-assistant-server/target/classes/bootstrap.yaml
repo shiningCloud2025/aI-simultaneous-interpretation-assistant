@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: AiAssistantServer
+
+  profiles:
+    active: dev
+
+  config:
+    import:
+      - optional:nacos:${NACOS_DATA_ID_BASE}.yaml?group=${NACOS_GROUP}&namespace=${NACOS_NAMESPACE}
+      - optional:nacos:${NACOS_DATA_ID_BASE}-${SPRING_PROFILES_ACTIVE}.yaml?group=${NACOS_GROUP}&namespace=${NACOS_NAMESPACE}
+
+  cloud:
+    nacos:
+      server-addr: ${NACOS_SERVER_ADDR}
+      username: ${NACOS_USERNAME}
+      password: ${NACOS_PASSWORD}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR}
+        namespace: ${NACOS_NAMESPACE}
+        group: ${NACOS_GROUP}
+        service: ${NACOS_SERVICE_NAME:${spring.application.name}}
+        register-enabled: ${NACOS_REGISTER_ENABLED:true}
+        enabled: ${NACOS_DISCOVERY_ENABLED:true}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR}
+        namespace: ${NACOS_NAMESPACE}
+        group: ${NACOS_GROUP}
+        file-extension: ${NACOS_FILE_EXTENSION}
+        extension-configs:
+          - data-id: ${NACOS_DATA_ID_BASE}.yaml
+            group: ${NACOS_GROUP}
+            refresh: true
+          - data-id: ${NACOS_DATA_ID_BASE}-${SPRING_PROFILES_ACTIVE}.yaml
+            group: ${NACOS_GROUP}
+            refresh: true
