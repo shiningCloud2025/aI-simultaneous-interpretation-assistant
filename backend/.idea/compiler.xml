@@ -2,10 +2,12 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="aI-assistant-server (1)" />
       </profile>
       <profile name="Annotation profile for aI-simultaneous-interpretation-assistant" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -15,12 +17,15 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
         </processorPath>
         <module name="aI-assistant-server" />
+        <module name="ai-assistant-server" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="aI-assistant-server" options="-parameters" />
+      <module name="aI-assistant-server (1)" options="-parameters" />
+      <module name="ai-assistant-server" options="-parameters" />
     </option>
   </component>
 </project>

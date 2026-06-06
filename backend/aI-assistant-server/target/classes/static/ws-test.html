@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h3>WebSocket 测试</h3>
+<button onclick="connect()">连接</button>
+<pre id="log"></pre>
+
+<script>
+    function log(msg) { document.getElementById('log').textContent += msg + '\n' }
+
+    function connect() {
+      const ws = new WebSocket('ws://localhost:8080/api/asia/audio')
+      ws.onopen = () => {
+        log('✅已连接')
+        ws.send(new Uint8Array([1,2,3,4]).buffer)
+        log('➤已发送测试数据')
+      }
+      ws.onclose = () => log('🔌已断开')
+      ws.onerror = () => log('❌连接失败')
+      window.ws = ws
+    }
+</script>
+</body>
+</html>
