@@ -1,5 +1,6 @@
 package com.lucky.server.handler;
 
+import com.lucky.server.util.AudioUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -12,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import java.nio.ByteBuffer;
 
+/**
+ * @author shiningCloud2025
+ */
 @Slf4j
 @Component
 public class AudioWebSocketHandler extends BinaryWebSocketHandler {
@@ -53,7 +57,12 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
     private void flushBuffer(String sessionId, ByteArrayOutputStream buffer) {
         byte[] pcm = buffer.toByteArray();
         buffer.reset();
-        log.info("切出语音片段: {} 字节, session={}", pcm.length, sessionId);
+
+        // PCM → WAV
+        byte[] wav = AudioUtil.pcmToWav(pcm, SAMPLE_RATE, BITS_PER_SAMPLE, CHANNELS);
+        log.info("切出语音片段: {} 字节 (PCM) → {} 字节 (WAV), session={}",
+                pcm.length, wav.length, sessionId);
+
         // TODO: 加WAV头 → 调语音大模型
     }
 

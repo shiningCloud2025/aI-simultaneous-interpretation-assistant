@@ -1,49 +1,30 @@
-2026-06-06 11:18:06.748 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP] success
-2026-06-06 11:18:06.749 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP] success
-2026-06-06 11:18:07.246 [main] INFO  c.l.s.AiAssistantServerApplication - The following 1 profile is active: "dev"
-2026-06-06 11:18:07.276 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP] success
-2026-06-06 11:18:07.276 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP] success
-2026-06-06 11:18:08.264 [main] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[com.lucky.server]' package. Please check your configuration.
-2026-06-06 11:18:08.364 [main] INFO  o.s.cloud.context.scope.GenericScope - BeanFactory id=4765c622-6d99-3286-9cc9-3b9445a671b7
-2026-06-06 11:18:08.839 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
-2026-06-06 11:18:08.855 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
-2026-06-06 11:18:08.860 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
-2026-06-06 11:18:08.860 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.33]
-2026-06-06 11:18:08.945 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
-2026-06-06 11:18:08.945 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1668 ms
-2026-06-06 11:18:10.338 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
-2026-06-06 11:18:10.366 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/api'
-2026-06-06 11:18:10.406 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
-2026-06-06 11:18:10.407 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
-2026-06-06 11:18:11.050 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP AiAssistantServer 172.29.126.54:8080 register finished
-2026-06-06 11:18:11.071 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-06-06 11:18:11.072 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
-2026-06-06 11:18:11.075 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 3 ms
-2026-06-06 11:18:11.076 [main] INFO  c.l.s.AiAssistantServerApplication - Started AiAssistantServerApplication in 7.509 seconds (process running for 8.392)
-2026-06-06 11:18:11.102 [main] INFO  c.a.c.n.r.NacosContextRefresher - [Nacos Config] Listening config: dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP
-2026-06-06 11:18:11.105 [main] INFO  c.a.c.n.r.NacosContextRefresher - [Nacos Config] Listening config: dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP
-2026-06-06 11:18:11.170 [http-nio-8080-exec-1] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: 04a5eb72-7dd1-8256-e6cf-180ed01c8b86
-2026-06-06 11:18:12.229 [http-nio-8080-exec-2] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: 04a5eb72-7dd1-8256-e6cf-180ed01c8b86, 状态: CloseStatus[code=1001, reason=null]
-2026-06-06 11:18:13.765 [http-nio-8080-exec-3] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: 270f9d67-357f-a545-4278-b50a51cb4f75
-2026-06-06 11:18:13.951 [http-nio-8080-exec-4] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: bfe36650-7e53-3487-fc1e-37a52c4fe87e
-2026-06-06 11:18:14.265 [http-nio-8080-exec-5] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: e7320074-954a-7576-3ed5-27eda9fbf088
-2026-06-06 11:18:14.469 [http-nio-8080-exec-6] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: 0d2975ef-5dd5-5032-7bb4-cd27c07a8eb2
-2026-06-06 11:19:24.782 [http-nio-8080-exec-9] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: e7320074-954a-7576-3ed5-27eda9fbf088, 状态: CloseStatus[code=1001, reason=null]
-2026-06-06 11:19:24.782 [http-nio-8080-exec-8] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: bfe36650-7e53-3487-fc1e-37a52c4fe87e, 状态: CloseStatus[code=1001, reason=null]
-2026-06-06 11:19:24.782 [http-nio-8080-exec-7] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: 270f9d67-357f-a545-4278-b50a51cb4f75, 状态: CloseStatus[code=1001, reason=null]
-2026-06-06 11:19:24.783 [http-nio-8080-exec-10] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: 0d2975ef-5dd5-5032-7bb4-cd27c07a8eb2, 状态: CloseStatus[code=1001, reason=null]
-2026-06-06 11:19:42.503 [http-nio-8080-exec-1] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: 2d35bcde-83d5-1535-c491-552cdb9f2919
-2026-06-06 11:19:42.507 [http-nio-8080-exec-2] INFO  c.l.s.handler.AudioWebSocketHandler - 收到音频块: 4 字节, session=2d35bcde-83d5-1535-c491-552cdb9f2919
-2026-06-06 11:19:43.124 [http-nio-8080-exec-3] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接建立: 42deba24-e2b7-3e35-5a12-a539df22cff1
-2026-06-06 11:19:43.126 [http-nio-8080-exec-4] INFO  c.l.s.handler.AudioWebSocketHandler - 收到音频块: 4 字节, session=42deba24-e2b7-3e35-5a12-a539df22cff1
-2026-06-06 11:20:24.598 [Thread-9] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
-2026-06-06 11:20:24.598 [Thread-7] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
-2026-06-06 11:20:24.598 [Thread-1] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Start destroying ThreadPool
-2026-06-06 11:20:24.598 [Thread-9] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
-2026-06-06 11:20:24.599 [Thread-7] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
-2026-06-06 11:20:24.599 [Thread-1] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Destruction of the end
-2026-06-06 11:20:24.600 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registering from Nacos Server now...
-2026-06-06 11:20:24.738 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registration finished.
-2026-06-06 11:20:34.754 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosGracefulShutdownDelegate - Nacos client graceful shutdown has been executed successfully. Graceful shutdown wait time is 10000
-2026-06-06 11:20:34.770 [SpringApplicationShutdownHook] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: 42deba24-e2b7-3e35-5a12-a539df22cff1, 状态: CloseStatus[code=1001, reason=The web application is stopping]
-2026-06-06 11:20:34.771 [SpringApplicationShutdownHook] INFO  c.l.s.handler.AudioWebSocketHandler - WebSocket连接断开: 2d35bcde-83d5-1535-c491-552cdb9f2919, 状态: CloseStatus[code=1001, reason=The web application is stopping]
+2026-06-08 22:43:00.767 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP] success
+2026-06-08 22:43:00.780 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP] success
+2026-06-08 22:43:01.422 [main] INFO  c.l.s.AiAssistantServerApplication - The following 1 profile is active: "dev"
+2026-06-08 22:43:01.456 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP] success
+2026-06-08 22:43:01.458 [main] INFO  c.a.c.n.c.NacosConfigDataLoader - [Nacos Config] Load config[dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP] success
+2026-06-08 22:43:02.688 [main] WARN  o.m.s.mapper.ClassPathMapperScanner - No MyBatis mapper was found in '[com.lucky.server]' package. Please check your configuration.
+2026-06-08 22:43:02.852 [main] INFO  o.s.cloud.context.scope.GenericScope - BeanFactory id=4765c622-6d99-3286-9cc9-3b9445a671b7
+2026-06-08 22:43:03.456 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-06-08 22:43:03.483 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-06-08 22:43:03.486 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-06-08 22:43:03.486 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.33]
+2026-06-08 22:43:03.671 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2026-06-08 22:43:03.671 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2212 ms
+2026-06-08 22:43:05.276 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-06-08 22:43:05.303 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/api'
+2026-06-08 22:43:05.338 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2026-06-08 22:43:05.340 [main] INFO  c.a.n.p.a.s.c.ClientAuthPluginManager - [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2026-06-08 22:43:05.788 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP AiAssistantServer 172.41.80.19:8080 register finished
+2026-06-08 22:43:05.807 [main] INFO  c.l.s.AiAssistantServerApplication - Started AiAssistantServerApplication in 8.426 seconds (process running for 9.722)
+2026-06-08 22:43:05.825 [main] INFO  c.a.c.n.r.NacosContextRefresher - [Nacos Config] Listening config: dataId=AiAssistantServer-dev.yaml, group=DEFAULT_GROUP
+2026-06-08 22:43:05.827 [main] INFO  c.a.c.n.r.NacosContextRefresher - [Nacos Config] Listening config: dataId=AiAssistantServer.yaml, group=DEFAULT_GROUP
+2026-06-08 22:43:28.995 [Thread-9] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
+2026-06-08 22:43:28.995 [Thread-1] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Start destroying ThreadPool
+2026-06-08 22:43:28.995 [Thread-7] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
+2026-06-08 22:43:28.995 [Thread-9] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
+2026-06-08 22:43:28.996 [Thread-7] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
+2026-06-08 22:43:28.996 [Thread-1] WARN  c.a.n.c.executor.ThreadPoolManager - [ThreadPoolManager] Destruction of the end
+2026-06-08 22:43:28.998 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registering from Nacos Server now...
+2026-06-08 22:43:29.083 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registration finished.
+2026-06-08 22:43:39.110 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosGracefulShutdownDelegate - Nacos client graceful shutdown has been executed successfully. Graceful shutdown wait time is 10000
