@@ -1,4 +1,4 @@
-package com.lucky.server.asr;
+package com.lucky.server.asr.stream;
 /**
  * ASR服务接口
  * @author shiningCloud2025

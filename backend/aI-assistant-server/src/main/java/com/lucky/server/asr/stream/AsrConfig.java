@@ -1,4 +1,4 @@
-package com.lucky.server.asr;
+package com.lucky.server.asr.stream;
 
 import lombok.Builder;
 import lombok.Data;

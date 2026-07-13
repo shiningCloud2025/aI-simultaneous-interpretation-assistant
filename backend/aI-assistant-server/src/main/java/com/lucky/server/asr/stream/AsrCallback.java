@@ -1,4 +1,4 @@
-package com.lucky.server.asr;
+package com.lucky.server.asr.stream;
 /**
  * ASR 识别结果回调
  * @author shiningCloud2025
