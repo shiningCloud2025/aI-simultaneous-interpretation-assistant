@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实时转译 - TransFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f3f0; color: #333;
+      display: flex; height: 100vh; overflow: hidden;
+    }
+
+    /* ========== 侧边栏 ========== */
+    .sidebar {
+      width: 200px; background: #fff;
+      border-right: 1px solid #e8e6e1;
+      display: flex; flex-direction: column;
+      padding: 20px 0;
+    }
+    .sidebar-brand {
+      padding: 0 20px 20px; border-bottom: 1px solid #f0efec;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-icon {
+      width: 30px; height: 30px; background: #2c2c2c;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #fff;
+    }
+    .brand-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+
+    .nav-section { padding: 12px 12px 0; }
+    .nav-section-title {
+      font-size: 10px; color: #bbb; padding: 0 8px; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; cursor: pointer; color: #888;
+      margin-bottom: 1px; transition: all 0.1s;
+    }
+    .nav-item:hover { background: #f5f3f0; color: #333; }
+    .nav-item.active { background: #f0efec; color: #1a1a1a; font-weight: 500; }
+    .nav-item .badge {
+      margin-left: auto; background: #e55c5c; color: #fff;
+      font-size: 10px; padding: 1px 6px; border-radius: 8px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 12px;
+      border-top: 1px solid #f0efec;
+    }
+    .user-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px; border-radius: 8px; cursor: pointer;
+    }
+    .user-row:hover { background: #f5f3f0; }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #2c2c2c; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #fff; font-weight: 600;
+    }
+    .user-name { font-size: 12px; color: #333; }
+    .user-plan { font-size: 10px; color: #bbb; }
+
+    /* ========== 主内容 ========== */
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .top-bar {
+      height: 50px; border-bottom: 1px solid #e8e6e1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; background: #fff;
+    }
+    .page-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+
+    .lang-switcher {
+      display: flex; gap: 6px; align-items: center; font-size: 12px;
+    }
+    .lang-btn {
+      padding: 5px 12px; border: 1px solid #e8e6e1; border-radius: 6px;
+      background: #fff; color: #666; cursor: pointer; font-size: 12px;
+      transition: all 0.1s;
+    }
+    .lang-btn:hover { border-color: #ccc; }
+    .lang-swap { color: #bbb; font-size: 14px; cursor: pointer; }
+
+    .content-area {
+      flex: 1; padding: 20px 24px; display: flex; flex-direction: column;
+      gap: 16px; overflow-y: auto;
+    }
+
+    /* 翻译面板 */
+    .translation-panels {
+      flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .panel {
+      background: #fff; border-radius: 14px;
+      border: 1px solid #f0efec; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 18px; border-bottom: 1px solid #f0efec;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-label {
+      font-size: 12px; color: #999; display: flex; align-items: center; gap: 6px;
+    }
+    .panel-label .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .dot-source { background: #999; }
+    .dot-target { background: #4caf50; }
+    .panel-actions { display: flex; gap: 6px; }
+    .panel-btn {
+      padding: 4px 10px; font-size: 11px; border-radius: 6px;
+      background: #f5f3f0; border: none; color: #888; cursor: pointer;
+      transition: all 0.1s;
+    }
+    .panel-btn:hover { background: #e8e6e1; color: #333; }
+
+    .transcript {
+      flex: 1; padding: 16px 18px; overflow-y: auto;
+      font-size: 13px; line-height: 1.8;
+    }
+    .segment {
+      padding: 8px 0; border-bottom: 1px solid #fafaf9;
+    }
+    .segment .time {
+      font-size: 10px; color: #ccc; margin-bottom: 3px;
+    }
+    .segment .text { color: #555; }
+    .segment .corrected {
+      font-size: 11px; color: #b8860b; margin-top: 2px;
+    }
+
+    /* 控制栏 */
+    .control-bar {
+      background: #fff; border: 1px solid #f0efec;
+      border-radius: 14px; padding: 14px 24px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .btn-audio {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: #f5f3f0; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; transition: all 0.1s;
+    }
+    .btn-audio:hover { background: #e8e6e1; }
+
+    .btn-record {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: #e55c5c; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff; transition: all 0.15s;
+    }
+    .btn-record:hover { background: #d44; transform: scale(1.04); }
+    .btn-record.recording {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(229,92,92,0.3); }
+      50% { box-shadow: 0 0 0 10px rgba(229,92,92,0); }
+    }
+
+    .info-group {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .info-label { font-size: 10px; color: #bbb; }
+    .info-value { font-size: 12px; color: #555; font-weight: 500; }
+    .info-value.active { color: #e55c5c; }
+
+    .divider-v {
+      width: 1px; height: 28px; background: #f0efec;
+    }
+
+    .btn-model {
+      padding: 6px 12px; border-radius: 20px;
+      background: #f5f3f0; border: none; cursor: pointer;
+      font-size: 11px; color: #888; transition: all 0.1s;
+    }
+    .btn-model:hover { background: #e8e6e1; color: #333; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      padding: 10px 24px; background: #2c2c2c; color: #fff;
+      border-radius: 10px; font-size: 13px; z-index: 999;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">T</div>
+      <span class="brand-name">TransFlow</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">功能</div>
+      <div class="nav-item" onclick="navigate(this)">🏠 首页</div>
+      <div class="nav-item active" onclick="navigate(this)">🔄 实时转译</div>
+      <div class="nav-item" onclick="navigate(this)">📋 翻译记录 <span class="badge">3</span></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">设置</div>
+      <div class="nav-item" onclick="navigate(this)">🎧 音频</div>
+      <div class="nav-item" onclick="navigate(this)">⌨️ 快捷键</div>
+      <div class="nav-item" onclick="navigate(this)">⚙️ 偏好</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="avatar">S</div>
+        <div>
+          <div class="user-name">shiningCloud</div>
+          <div class="user-plan">免费版</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <div class="page-title">实时转译</div>
+      <div class="lang-switcher">
+        <button class="lang-btn" onclick="switchPageLang('zh', this)">中文</button>
+        <span class="lang-swap" onclick="swapPageLang()">⇄</span>
+        <button class="lang-btn" onclick="switchPageLang('en', this)">English</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="translation-panels">
+        <!-- 源语言 -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-label">
+              <span class="dot dot-source"></span> 源语言 · 中文
+            </div>
+            <div class="panel-actions">
+              <button class="panel-btn" onclick="showToast3('已复制')">复制</button>
+              <button class="panel-btn" onclick="showToast3('已清空')">清空</button>
+            </div>
+          </div>
+          <div class="transcript">
+            <div class="segment">
+              <div class="time">00:02</div>
+              <div class="text">大家好，欢迎参加今天的项目进度会议。</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:08</div>
+              <div class="text">首先我们来回顾一下上周的工作进展。</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:15</div>
+              <div class="text">市场部完成了竞品分析报告，研发部已经完成了第一阶段的开发工作。</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:25</div>
+              <div class="text">接下来我们需要讨论一下下个季度的产品路线图...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 目标语言 -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-label">
+              <span class="dot dot-target"></span> 译文 · English
+            </div>
+            <div class="panel-actions">
+              <button class="panel-btn" onclick="showToast3('已复制')">复制</button>
+              <button class="panel-btn" onclick="showToast3('已清空')">清空</button>
+            </div>
+          </div>
+          <div class="transcript">
+            <div class="segment">
+              <div class="time">00:02</div>
+              <div class="text">Hello everyone, welcome to today's project progress meeting.</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:08</div>
+              <div class="text">First, let's review the work progress from last week.</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:15</div>
+              <div class="text">The marketing department has completed the competitive analysis report, and the R&D department has finished the first phase of development.</div>
+            </div>
+            <div class="segment">
+              <div class="time">00:25</div>
+              <div class="text">Next, we need to discuss the product roadmap for the next quarter...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 控制栏 -->
+      <div class="control-bar">
+        <button class="btn-audio" onclick="showToast3('音频设备设置')">🎧</button>
+
+        <div class="info-group">
+          <span class="info-label">ASR</span>
+          <span class="info-value">Whisper Large v3</span>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <button class="btn-record recording" id="pageRecordBtn" onclick="togglePageRecord()">⏹</button>
+
+        <div class="divider-v"></div>
+
+        <div class="info-group">
+          <span class="info-label">翻译</span>
+          <span class="info-value">GPT-4o</span>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <div class="info-group">
+          <span class="info-label">状态</span>
+          <span class="info-value active" id="pageStatus">● 翻译中</span>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <div class="info-group">
+          <span class="info-label">延迟</span>
+          <span class="info-value">~320ms</span>
+        </div>
+
+        <button class="btn-model" onclick="showToast3('模型选择面板')">切换模型</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast3"></div>
+
+  <script>
+    let isRecording = true;
+
+    function navigate(el) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      showToast3('切换到: ' + el.textContent.trim().replace(/\d+$/, ''));
+    }
+
+    function togglePageRecord() {
+      const btn = document.getElementById('pageRecordBtn');
+      const status = document.getElementById('pageStatus');
+      isRecording = !isRecording;
+      if (isRecording) {
+        btn.classList.add('recording');
+        btn.textContent = '⏹';
+        status.textContent = '● 翻译中';
+        status.classList.add('active');
+        showToast3('开始录音翻译');
+      } else {
+        btn.classList.remove('recording');
+        btn.textContent = '▶';
+        status.textContent = '○ 已暂停';
+        status.classList.remove('active');
+        showToast3('已暂停翻译');
+      }
+    }
+
+    function switchPageLang(lang, el) {
+      const btns = document.querySelectorAll('.lang-btn');
+      btns.forEach(b => b.style.background = '#fff');
+      el.style.background = '#f0efec';
+      showToast3('切换语言: ' + lang);
+    }
+
+    function swapPageLang() {
+      showToast3('已交换语言方向');
+    }
+
+    function showToast3(msg) {
+      const t = document.getElementById('toast3');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => t.classList.remove('show'), 1500);
+    }
+  </script>
+</body>
+</html>

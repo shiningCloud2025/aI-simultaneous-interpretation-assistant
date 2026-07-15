@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主面板 - AI同声转译助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #1a1a2e; color: #e0e0e0;
+      display: flex; height: 100vh; overflow: hidden;
+    }
+
+    /* ========== 侧边栏 ========== */
+    .sidebar {
+      width: 220px; background: rgba(255,255,255,0.03);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column;
+      padding: 20px 0;
+    }
+    .sidebar-header {
+      padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-header .app-icon {
+      width: 32px; height: 32px; background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .sidebar-header span { font-size: 14px; font-weight: 600; }
+
+    .nav-section { padding: 16px 12px; }
+    .nav-section-title {
+      font-size: 11px; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); padding: 0 8px; margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      font-size: 14px; cursor: pointer; transition: all 0.15s;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .nav-item.active { background: rgba(102,126,234,0.15); color: #667eea; font-weight: 500; }
+    .nav-item .badge {
+      margin-left: auto; background: #ff4d4f; color: #fff;
+      font-size: 11px; padding: 2px 7px; border-radius: 10px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .user-info {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px; border-radius: 8px; cursor: pointer;
+    }
+    .user-info:hover { background: rgba(255,255,255,0.05); }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+    }
+    .user-name { font-size: 13px; }
+    .user-role { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+    /* ========== 主内容区 ========== */
+    .main-content {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .top-bar {
+      height: 52px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; background: rgba(255,255,255,0.02);
+    }
+    .page-title { font-size: 15px; font-weight: 500; }
+
+    .model-bar {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .model-select {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; font-size: 12px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .model-select:hover { background: rgba(255,255,255,0.08); }
+    .model-label { color: rgba(255,255,255,0.35); font-size: 11px; }
+    .model-value { color: #667eea; font-weight: 500; }
+    .model-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #52c41a;
+    }
+
+    .content-area {
+      flex: 1; padding: 24px; overflow-y: auto;
+    }
+
+    /* ========== 仪表盘内容 ========== */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 20px;
+    }
+    .stat-card .label { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #fff; }
+    .stat-card .unit { font-size: 13px; color: rgba(255,255,255,0.4); margin-left: 4px; }
+    .stat-card .trend { font-size: 12px; margin-top: 6px; color: #52c41a; }
+
+    .panel {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
+    }
+    .panel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .panel-title { font-size: 14px; font-weight: 600; }
+
+    .quick-actions {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    }
+    .action-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 16px; text-align: center; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .action-card:hover { background: rgba(102,126,234,0.1); border-color: rgba(102,126,234,0.3); }
+    .action-icon { font-size: 24px; margin-bottom: 8px; }
+    .action-label { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+    .translation-list .item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .item-lang { font-size: 12px; color: rgba(255,255,255,0.3); width: 50px; }
+    .item-text { flex: 1; font-size: 13px; padding: 0 12px; }
+    .item-time { font-size: 12px; color: rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="app-icon">🎙️</div>
+      <span>AI 同声转译</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">主菜单</div>
+      <div class="nav-item active">🏠 仪表盘</div>
+      <div class="nav-item">🔄 实时转译</div>
+      <div class="nav-item">📋 翻译记录 <span class="badge">3</span></div>
+      <div class="nav-item">📊 使用统计</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">工具</div>
+      <div class="nav-item">🎧 音频设备</div>
+      <div class="nav-item">⌨️ 快捷键</div>
+      <div class="nav-item">📝 术语库</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">设置</div>
+      <div class="nav-item">⚙️ 通用设置</div>
+      <div class="nav-item">🔑 账户管理</div>
+      <div class="nav-item">❓ 帮助反馈</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">S</div>
+        <div>
+          <div class="user-name">shiningCloud</div>
+          <div class="user-role">免费版</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main-content">
+    <div class="top-bar">
+      <div class="page-title">仪表盘</div>
+      <div class="model-bar">
+        <div class="model-select">
+          <span class="model-label">ASR</span>
+          <span class="model-value">Whisper Large v3</span>
+          <span class="model-dot"></span>
+        </div>
+        <div class="model-select">
+          <span class="model-label">翻译</span>
+          <span class="model-value">GPT-4o</span>
+          <span class="model-dot"></span>
+        </div>
+        <div class="model-select">
+          <span class="model-label">纠错</span>
+          <span class="model-value">Claude 3.5</span>
+          <span class="model-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- 统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">今日翻译时长</div>
+          <div class="value">2.5<span class="unit">小时</span></div>
+          <div class="trend">↑ 12% 较昨日</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">今日翻译次数</div>
+          <div class="value">128<span class="unit">次</span></div>
+          <div class="trend">↑ 8% 较昨日</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">准确率</div>
+          <div class="value">96.8<span class="unit">%</span></div>
+          <div class="trend">↑ 0.3% 较昨日</div>
+        </div>
+      </div>
+
+      <!-- 快捷操作 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">快捷操作</div>
+        </div>
+        <div class="quick-actions">
+          <div class="action-card">
+            <div class="action-icon">🎤</div>
+            <div class="action-label">开始收音</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">🌐</div>
+            <div class="action-label">实时翻译</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">📄</div>
+            <div class="action-label">导出记录</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">⚡</div>
+            <div class="action-label">快速纠错</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近翻译 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">最近翻译</div>
+          <a href="#" style="font-size:12px; color:#667eea; text-decoration:none;">查看全部 →</a>
+        </div>
+        <div class="translation-list">
+          <div class="item">
+            <span class="item-lang">EN → ZH</span>
+            <span class="item-text">Let's discuss the quarterly revenue forecast...</span>
+            <span class="item-time">2分钟前</span>
+          </div>
+          <div class="item">
+            <span class="item-lang">ZH → EN</span>
+            <span class="item-text">我们需要在下周一之前完成这份报告</span>
+            <span class="item-time">15分钟前</span>
+          </div>
+          <div class="item">
+            <span class="item-lang">JA → ZH</span>
+            <span class="item-text">本日の会議の議題についてご説明します</span>
+            <span class="item-time">1小时前</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
