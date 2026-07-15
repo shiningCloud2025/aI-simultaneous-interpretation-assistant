@@ -93,16 +93,21 @@ body {
 .tb-btn .tooltip {
   display: none;
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background: #2c2c2c;
   color: #fff;
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 6px;
   white-space: nowrap;
   pointer-events: none;
+  z-index: 200;
+  max-width: 280px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
 }
 .tb-btn:hover .tooltip { display: block; }
 
@@ -204,8 +209,8 @@ body {
   border-radius: 12px;
   padding: 12px 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  min-width: 400px;
-  max-width: 600px;
+  width: 100%;
+  max-width: 100%;
   -webkit-app-region: drag;
 }
 

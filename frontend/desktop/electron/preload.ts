@@ -9,18 +9,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   hideToolbar: () => ipcRenderer.send('hide-toolbar'),
   showToolbar: () => ipcRenderer.send('show-toolbar'),
+  toggleFullscreen: () => ipcRenderer.send('toggle-fullscreen'),
   startResize: (edge: string) => {
     ipcRenderer.send('start-resize', edge);
-    // 监听鼠标移动直到松开
-    const onMouseMove = (e: MouseEvent) => {
-      ipcRenderer.send('resize-move', { x: e.screenX, y: e.screenY });
-    };
-    const onMouseUp = () => {
+    const onUp = () => {
       ipcRenderer.send('resize-end');
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mouseup', onUp);
     };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', onUp);
   },
 });

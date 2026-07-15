@@ -77,7 +77,7 @@ for (let i = 0; i < 256; i++) {
 // ========== 工具栏窗口 ==========
 function createToolbarWindow() {
   const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-  const winWidth = 700;
+  const winWidth = 900;
 
   mainWindow = new BrowserWindow({
     width: winWidth,
@@ -88,12 +88,12 @@ function createToolbarWindow() {
     transparent: true,
     alwaysOnTop: true,
     resizable: true,
+    thickFrame: false,
     minWidth: 400,
     minHeight: 54,
-    maxWidth: 800,
-    maxHeight: 400,
     skipTaskbar: false,
     hasShadow: true,
+    vibrancy: 'under-window',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -180,26 +180,43 @@ ipcMain.handle('set-model', (_e, { type, model }: { type: string; model: string 
 });
 ipcMain.on('hide-toolbar', () => mainWindow?.hide());
 ipcMain.on('show-toolbar', () => { mainWindow?.show(); mainWindow?.focus(); });
+ipcMain.on('toggle-fullscreen', () => {
+  if (!mainWindow) return;
+  const isFullScreen = mainWindow.isFullScreen();
+  mainWindow.setFullScreen(!isFullScreen);
+});
 ipcMain.on('start-resize', (_e, edge: string) => {
   const win = BrowserWindow.fromWebContents(_e.sender);
   if (!win) return;
   const bounds = win.getBounds();
-  const p = screen.getCursorScreenPoint();
-  const minW = 400, minH = 54, maxW = 800, maxH = 400;
+  const startPoint = screen.getCursorScreenPoint();
+  // 用固定的最大值（4K）作为上限，不依赖 workAreaSize 防止循环
+  const MAX_W = 4000;
+  const MAX_H = 4000;
+  const MIN_W = 400;
+  const MIN_H = 54;
 
-  const onMove = (e2: Electron.IpcMainEvent, pos: { x: number; y: number }) => {
-    const dx = pos.x - p.x;
-    const dy = pos.y - p.y;
-    let { x, y, width, height } = bounds;
-    if (edge.includes('right')) width = Math.min(maxW, Math.max(minW, bounds.width + dx));
-    if (edge.includes('bottom')) height = Math.min(maxH, Math.max(minH, bounds.height + dy));
-    win.setBounds({ x, y, width, height });
-  };
+  const interval = setInterval(() => {
+    const now = screen.getCursorScreenPoint();
+    const dx = now.x - startPoint.x;
+    const dy = now.y - startPoint.y;
+    let x = bounds.x, y = bounds.y, w = bounds.width, h = bounds.height;
 
-  ipcMain.on('resize-move', onMove);
-  ipcMain.once('resize-end', () => {
-    ipcMain.removeListener('resize-move', onMove);
-  });
+    if (edge.includes('right')) w = Math.max(MIN_W, Math.min(MAX_W, bounds.width + dx));
+    if (edge.includes('left')) { w = Math.max(MIN_W, Math.min(MAX_W, bounds.width - dx)); x = bounds.x + dx; }
+    if (edge.includes('bottom')) h = Math.max(MIN_H, Math.min(MAX_H, bounds.height + dy));
+    if (edge.includes('top')) { h = Math.max(MIN_H, Math.min(MAX_H, bounds.height - dy)); y = bounds.y + dy; }
+
+    // x/y 不能小于 0
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    // 如果 x/y 被调整导致 w/h 越界，再修正
+    if (edge.includes('left') && (bounds.x + bounds.width) !== (x + w)) w = Math.max(MIN_W, bounds.x + bounds.width - x);
+
+    win.setBounds({ x, y, width: w, height: h });
+  }, 16);
+
+  ipcMain.once('resize-end', () => clearInterval(interval));
 });
 
 // ========== 生命周期 ==========

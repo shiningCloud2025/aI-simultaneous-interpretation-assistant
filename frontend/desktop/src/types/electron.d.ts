@@ -10,6 +10,7 @@ interface ElectronAPI {
   }) => void) => void;
   hideToolbar: () => void;
   showToolbar: () => void;
+  toggleFullscreen?: () => void;
   startResize?: (edge: string) => void;
 }
 

@@ -10,7 +10,16 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
 		electron.ipcRenderer.on("model-changed", (_event, data) => callback(data));
 	},
 	hideToolbar: () => electron.ipcRenderer.send("hide-toolbar"),
-	showToolbar: () => electron.ipcRenderer.send("show-toolbar")
+	showToolbar: () => electron.ipcRenderer.send("show-toolbar"),
+	toggleFullscreen: () => electron.ipcRenderer.send("toggle-fullscreen"),
+	startResize: (edge) => {
+		electron.ipcRenderer.send("start-resize", edge);
+		const onUp = () => {
+			electron.ipcRenderer.send("resize-end");
+			document.removeEventListener("mouseup", onUp);
+		};
+		document.addEventListener("mouseup", onUp);
+	}
 });
 //#endregion
 

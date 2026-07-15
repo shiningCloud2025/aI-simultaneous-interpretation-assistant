@@ -82,29 +82,30 @@ export function Toolbar() {
         <button
           className={`tb-btn ${micRecording ? 'mic-active' : micOn ? 'toggle-on' : ''}`}
           onClick={toggleMic}
-          title="麦克风"
+          title="点击切换麦克风收音状态"
         >
           🎤
-          <span className="tooltip">{micRecording ? '录音中' : micOn ? '麦克风' : '已关闭'}</span>
+          <span className="tooltip">{micRecording ? '录音中 · 点击停止' : micOn ? '麦克风已开启 · 点击开始录音' : '麦克风已关闭 · 点击开启'}</span>
         </button>
 
         {/* 扬声器 */}
         <button
           className={`tb-btn ${!speakerOn ? 'speaker-muted' : 'toggle-on'}`}
           onClick={toggleSpeaker}
-          title="扬声器"
+          title="点击切换扬声器静音状态"
         >
           {speakerOn ? '🔊' : '🔇'}
-          <span className="tooltip">{speakerOn ? '扬声器' : '已静音'}</span>
+          <span className="tooltip">{speakerOn ? '扬声器已开启 · 点击静音' : '扬声器已静音 · 点击开启'}</span>
         </button>
 
         <div className="tb-divider" />
 
-        {/* ASR 模型下拉 — 默认「ASR」，选完后显示模型名 */}
+        {/* ASR 模型下拉 — 语音识别模型 */}
         <div className="model-wrapper">
           <button
             className={`tb-select ${openDropdown === 'asr' ? 'active' : ''}`}
             onClick={() => setOpenDropdown(openDropdown === 'asr' ? null : 'asr')}
+            title="语音识别(ASR)模型：将音频转为文字"
           >
             <span className="select-value">{asrModel}</span>
             <span className="select-arrow">▾</span>
@@ -124,11 +125,12 @@ export function Toolbar() {
           )}
         </div>
 
-        {/* 翻译模型下拉 — 默认「翻译」，选完后显示模型名 */}
+        {/* 翻译模型下拉 */}
         <div className="model-wrapper">
           <button
             className={`tb-select ${openDropdown === 'translation' ? 'active' : ''}`}
             onClick={() => setOpenDropdown(openDropdown === 'translation' ? null : 'translation')}
+            title="翻译模型：将识别文字翻译为目标语言"
           >
             <span className="select-value">{translationModel}</span>
             <span className="select-arrow">▾</span>
@@ -148,11 +150,12 @@ export function Toolbar() {
           )}
         </div>
 
-        {/* 纠错模型下拉 — 默认「纠错」，选完后显示模型名 */}
+        {/* 纠错模型下拉 */}
         <div className="model-wrapper">
           <button
             className={`tb-select ${openDropdown === 'correction' ? 'active' : ''}`}
             onClick={() => setOpenDropdown(openDropdown === 'correction' ? null : 'correction')}
+            title="纠错模型：对翻译结果进行语法和语义修正"
           >
             <span className="select-value">{correctionModel}</span>
             <span className="select-arrow">▾</span>
@@ -179,6 +182,7 @@ export function Toolbar() {
           <button
             className={`tb-select lang-select ${openDropdown === 'sourceLang' ? 'active' : ''}`}
             onClick={() => setOpenDropdown(openDropdown === 'sourceLang' ? null : 'sourceLang')}
+            title="识别语言：麦克风收听到的语种"
           >
             <span className="select-label dim">识别:</span>
             <span className="select-value">{sourceLang}</span>
@@ -204,6 +208,7 @@ export function Toolbar() {
           <button
             className={`tb-select lang-select ${openDropdown === 'targetLang' ? 'active' : ''}`}
             onClick={() => setOpenDropdown(openDropdown === 'targetLang' ? null : 'targetLang')}
+            title="翻译结果语言：要翻译成的目标语种"
           >
             <span className="select-label dim">译文:</span>
             <span className="select-value">{targetLang}</span>
@@ -236,24 +241,34 @@ export function Toolbar() {
 
         <div className="tb-divider" />
 
-        {/* 完整页面按钮 */}
+        {/* 完整页面 */}
         <button
           className="tb-btn"
           onClick={() => window.electronAPI?.showToolbar()}
-          title="完整页面"
+          title="打开完整翻译页面"
         >
           🖥
-          <span className="tooltip">完整页面</span>
+          <span className="tooltip">打开完整页面</span>
         </button>
 
-        {/* 隐藏按钮 */}
+        {/* 全屏 */}
+        <button
+          className="tb-btn"
+          onClick={() => window.electronAPI?.toggleFullscreen()}
+          title="切换全屏模式"
+        >
+          ⛶
+          <span className="tooltip">切换全屏</span>
+        </button>
+
+        {/* 隐藏 */}
         <button
           className="tb-btn"
           onClick={() => window.electronAPI?.hideToolbar()}
-          title="隐藏"
+          title="隐藏工具栏到系统托盘（Cmd+Shift+T 恢复）"
         >
           −
-          <span className="tooltip">隐藏</span>
+          <span className="tooltip">隐藏到托盘</span>
         </button>
       </div>
 

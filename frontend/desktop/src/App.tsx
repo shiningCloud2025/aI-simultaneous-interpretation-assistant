@@ -1,39 +1,26 @@
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { Toolbar } from './components/Toolbar';
 import './App.css';
 
 function App() {
-  // 处理 resize 拖拽 —— 通过 IPC 告诉主进程调整窗口大小
-  useEffect(() => {
-    const handleResizeStart = (edge: string) => (e: MouseEvent) => {
-      e.preventDefault();
-      if (!window.electronAPI) return;
-      // 通知主进程开始 resize
-      window.electronAPI.startResize?.(edge);
-    };
-
-    const bottom = document.querySelector('.resize-handle-bottom');
-    const right = document.querySelector('.resize-handle-right');
-    const corner = document.querySelector('.resize-handle-corner');
-
-    bottom?.addEventListener('mousedown', handleResizeStart('bottom'));
-    right?.addEventListener('mousedown', handleResizeStart('right'));
-    corner?.addEventListener('mousedown', handleResizeStart('bottom-right'));
-
-    return () => {
-      bottom?.removeEventListener('mousedown', handleResizeStart('bottom'));
-      right?.removeEventListener('mousedown', handleResizeStart('right'));
-      corner?.removeEventListener('mousedown', handleResizeStart('bottom-right'));
-    };
+  const handleResize = useCallback((edge: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.electronAPI?.startResize?.(edge);
   }, []);
 
   return (
     <div className="app-container">
       <Toolbar />
-      {/* Resize 手柄 */}
-      <div className="resize-handle-bottom" />
-      <div className="resize-handle-right" />
-      <div className="resize-handle-corner" />
+      {/* 四周 resize 手柄 */}
+      <div className="resize-edge top" onMouseDown={handleResize('top')} />
+      <div className="resize-edge bottom" onMouseDown={handleResize('bottom')} />
+      <div className="resize-edge left" onMouseDown={handleResize('left')} />
+      <div className="resize-edge right" onMouseDown={handleResize('right')} />
+      <div className="resize-edge top-left" onMouseDown={handleResize('top-left')} />
+      <div className="resize-edge top-right" onMouseDown={handleResize('top-right')} />
+      <div className="resize-edge bottom-left" onMouseDown={handleResize('bottom-left')} />
+      <div className="resize-edge bottom-right" onMouseDown={handleResize('bottom-right')} />
     </div>
   );
 }

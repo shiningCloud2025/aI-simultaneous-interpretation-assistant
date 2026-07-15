@@ -85,7 +85,7 @@ for (let i = 0; i < 256; i++) {
 }
 function createToolbarWindow() {
 	const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-	const winWidth = 700;
+	const winWidth = 900;
 	mainWindow = new BrowserWindow({
 		width: winWidth,
 		height: 160,
@@ -95,12 +95,12 @@ function createToolbarWindow() {
 		transparent: true,
 		alwaysOnTop: true,
 		resizable: true,
+		thickFrame: false,
 		minWidth: 400,
 		minHeight: 54,
-		maxWidth: 800,
-		maxHeight: 400,
 		skipTaskbar: false,
 		hasShadow: true,
+		vibrancy: "under-window",
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
 			contextIsolation: true,
@@ -250,6 +250,47 @@ ipcMain.on("hide-toolbar", () => mainWindow?.hide());
 ipcMain.on("show-toolbar", () => {
 	mainWindow?.show();
 	mainWindow?.focus();
+});
+ipcMain.on("toggle-fullscreen", () => {
+	if (!mainWindow) return;
+	const isFullScreen = mainWindow.isFullScreen();
+	mainWindow.setFullScreen(!isFullScreen);
+});
+ipcMain.on("start-resize", (_e, edge) => {
+	const win = BrowserWindow.fromWebContents(_e.sender);
+	if (!win) return;
+	const bounds = win.getBounds();
+	const startPoint = screen.getCursorScreenPoint();
+	const MAX_W = 4e3;
+	const MAX_H = 4e3;
+	const MIN_W = 400;
+	const MIN_H = 54;
+	const interval = setInterval(() => {
+		const now = screen.getCursorScreenPoint();
+		const dx = now.x - startPoint.x;
+		const dy = now.y - startPoint.y;
+		let x = bounds.x, y = bounds.y, w = bounds.width, h = bounds.height;
+		if (edge.includes("right")) w = Math.max(MIN_W, Math.min(MAX_W, bounds.width + dx));
+		if (edge.includes("left")) {
+			w = Math.max(MIN_W, Math.min(MAX_W, bounds.width - dx));
+			x = bounds.x + dx;
+		}
+		if (edge.includes("bottom")) h = Math.max(MIN_H, Math.min(MAX_H, bounds.height + dy));
+		if (edge.includes("top")) {
+			h = Math.max(MIN_H, Math.min(MAX_H, bounds.height - dy));
+			y = bounds.y + dy;
+		}
+		if (x < 0) x = 0;
+		if (y < 0) y = 0;
+		if (edge.includes("left") && bounds.x + bounds.width !== x + w) w = Math.max(MIN_W, bounds.x + bounds.width - x);
+		win.setBounds({
+			x,
+			y,
+			width: w,
+			height: h
+		});
+	}, 16);
+	ipcMain.once("resize-end", () => clearInterval(interval));
 });
 app.whenReady().then(() => {
 	createToolbarWindow();
