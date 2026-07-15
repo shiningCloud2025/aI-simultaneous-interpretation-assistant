@@ -1,0 +1,243 @@
+/* ========================================
+   悬浮工具栏 + 翻译内容框
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.toolbar-wrapper {
+  width: fit-content;
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ============ 工具栏本体 ============ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.1);
+  user-select: none;
+  -webkit-app-region: no-drag;
+  height: 100%;
+  width: fit-content;
+  min-width: 100%;
+}
+
+/* 整个工具栏都可以拖动（除按钮和下拉） */
+.toolbar { -webkit-app-region: drag; }
+.tb-btn, .tb-select, .dropdown-item { -webkit-app-region: no-drag; }
+
+.drag-handle {
+  width: 18px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #ccc;
+  font-size: 14px;
+}
+.drag-handle:active { cursor: grabbing; }
+
+.tb-divider {
+  width: 1px;
+  height: 20px;
+  background: #e8e6e1;
+  margin: 0 6px;
+}
+
+/* ============ 按钮 ============ */
+.tb-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #666;
+  transition: all 0.12s;
+  position: relative;
+}
+.tb-btn:hover { background: #f5f3f0; color: #333; }
+.tb-btn:active { background: #e8e6e1; }
+.tb-btn.toggle-on { background: #f0efec; color: #1a1a1a; }
+.tb-btn.toggle-on:hover { background: #e8e6e1; }
+.tb-btn.mic-active { background: #fff0f0; color: #e55c5c; }
+.tb-btn.mic-active:hover { background: #ffe8e8; }
+.tb-btn.speaker-muted { background: #fff0f0; color: #e55c5c; }
+.tb-btn.speaker-muted:hover { background: #ffe8e8; }
+
+.tb-btn .tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c2c2c;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tb-btn:hover .tooltip { display: block; }
+
+/* ============ 下拉选择器（统一用于模型/语言） ============ */
+.model-wrapper {
+  position: relative;
+}
+
+.tb-select {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #f5f3f0;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+.tb-select:hover { background: #e8e6e1; }
+.tb-select.active { background: #2c2c2c; color: #fff; }
+.tb-select.active .select-arrow { color: rgba(255,255,255,0.6); }
+.tb-select.active .select-label.dim { color: rgba(255,255,255,0.5); }
+.tb-select.active .select-value { color: #fff; }
+.select-arrow { font-size: 9px; color: #aaa; }
+.select-label { color: #666; font-weight: 600; font-size: 11px; }
+.select-label.dim { color: #bbb; font-weight: 400; }
+.select-value { color: #333; }
+.tb-select:hover .select-value { color: #1a1a1a; }
+
+/* ============ 下拉菜单 ============ */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  min-width: 180px;
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #555;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.dropdown-item:hover { background: #f5f3f0; color: #1a1a1a; }
+.dropdown-item.selected {
+  color: #1a1a1a;
+  font-weight: 500;
+  background: #f5f3f0;
+}
+.dropdown-item.selected::after {
+  content: '✓';
+  font-size: 10px;
+  color: #4caf50;
+  margin-left: auto;
+}
+
+/* ============ 状态指示 ============ */
+.tb-status {
+  font-size: 10px;
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+}
+
+/* ============ 翻译内容框（demo） ============ */
+.transcript-box {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  min-width: 400px;
+  max-width: 600px;
+  -webkit-app-region: drag;
+}
+
+.transcript-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+}
+.transcript-row + .transcript-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0efec;
+}
+
+.lang-tag {
+  font-size: 10px;
+  color: #999;
+  background: #f5f3f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.lang-tag.target {
+  color: #4caf50;
+  background: #f0faf0;
+}
+
+.transcript-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+}

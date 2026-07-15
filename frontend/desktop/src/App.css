@@ -1,0 +1,60 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: transparent;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.app-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: transparent;
+  position: relative;
+  padding: 0 0 8px 0;
+}
+
+/* resize 手柄 - 底部 */
+.resize-handle-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: s-resize;
+  -webkit-app-region: no-drag;
+  z-index: 10;
+}
+
+/* resize 手柄 - 右边 */
+.resize-handle-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: e-resize;
+  -webkit-app-region: no-drag;
+  z-index: 10;
+}
+
+/* resize 手柄 - 右下角 */
+.resize-handle-corner {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+  -webkit-app-region: no-drag;
+  z-index: 11;
+}

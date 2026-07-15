@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - TransFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f3f0; display: flex; justify-content: center; align-items: center;
+      height: 100vh;
+    }
+    .window {
+      width: 400px; background: #fff;
+      border-radius: 20px; padding: 48px 40px 40px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
+    }
+
+    .logo {
+      text-align: center; margin-bottom: 36px;
+    }
+    .logo .mark {
+      width: 48px; height: 48px; margin: 0 auto 16px;
+      background: #2c2c2c; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: #fff;
+    }
+    .logo h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .logo p { font-size: 13px; color: #999; }
+
+    /* Tab 切换 */
+    .tab-switch {
+      display: flex; margin-bottom: 28px;
+      background: #f5f3f0; border-radius: 10px; padding: 4px;
+    }
+    .tab-switch button {
+      flex: 1; padding: 10px; border: none; background: transparent;
+      color: #999; font-size: 13px; border-radius: 8px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab-switch button.active {
+      background: #fff; color: #1a1a1a; font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* 表单 */
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 13px; color: #666;
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .form-group input {
+      width: 100%; padding: 11px 14px;
+      background: #f7f6f4; border: 1px solid transparent;
+      border-radius: 10px; color: #1a1a1a; font-size: 14px;
+      outline: none; transition: all 0.2s;
+    }
+    .form-group input:focus {
+      background: #fff; border-color: #2c2c2c;
+    }
+    .form-group input::placeholder { color: #bbb; }
+
+    .sms-row {
+      display: flex; gap: 10px;
+    }
+    .sms-row input { flex: 1; }
+    .btn-sms {
+      padding: 11px 16px; background: #f5f3f0; border: none;
+      border-radius: 10px; font-size: 13px; color: #666;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+      font-weight: 500;
+    }
+    .btn-sms:hover { background: #e8e6e1; color: #333; }
+    .btn-sms.counting { color: #bbb; cursor: not-allowed; }
+
+    .extra {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px; font-size: 13px;
+    }
+    .extra a { color: #666; text-decoration: none; cursor: pointer; }
+    .extra a:hover { color: #1a1a1a; }
+    .checkbox {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      color: #888;
+    }
+    .checkbox input[type="checkbox"] { accent-color: #2c2c2c; }
+
+    .btn-primary {
+      width: 100%; padding: 12px; border: none;
+      background: #2c2c2c; color: #fff; font-size: 14px; font-weight: 600;
+      border-radius: 10px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary:hover { background: #1a1a1a; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-primary:disabled {
+      background: #ccc; cursor: not-allowed; transform: none;
+    }
+
+    .switch-hint {
+      text-align: center; margin-top: 24px; font-size: 13px; color: #999;
+    }
+    .switch-hint a { color: #2c2c2c; font-weight: 500; text-decoration: none; cursor: pointer; }
+
+    .status {
+      text-align: center; margin-top: 28px;
+      font-size: 11px; color: #bbb;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      padding: 10px 24px; background: #2c2c2c; color: #fff;
+      border-radius: 10px; font-size: 13px; z-index: 999;
+      opacity: 0; transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* 登录成功弹窗 */
+    .success-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.3); justify-content: center; align-items: center;
+      z-index: 100;
+    }
+    .success-overlay.show { display: flex; }
+    .success-box {
+      background: #fff; border-radius: 16px; padding: 36px 40px;
+      text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+    .success-box .check {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #4caf50; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; font-size: 24px; color: #fff;
+    }
+    .success-box h3 { font-size: 16px; margin-bottom: 6px; color: #1a1a1a; }
+    .success-box p { font-size: 13px; color: #999; margin-bottom: 20px; }
+    .success-box button {
+      padding: 10px 32px; background: #2c2c2c; color: #fff;
+      border: none; border-radius: 10px; font-size: 13px; cursor: pointer;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="logo">
+      <div class="mark">T</div>
+      <h1>TransFlow</h1>
+      <p>同声转译，随时随地</p>
+    </div>
+
+    <div class="tab-switch">
+      <button class="active" onclick="switchTab('password')">密码登录</button>
+      <button onclick="switchTab('sms')">短信登录</button>
+    </div>
+
+    <!-- ========== 密码登录 ========== -->
+    <div id="panel-password" class="form-panel active">
+      <div class="form-group">
+        <label>账号 / 手机号</label>
+        <input type="text" id="account" placeholder="请输入账号或手机号">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="password" placeholder="请输入密码">
+      </div>
+      <div class="extra">
+        <label class="checkbox">
+          <input type="checkbox" id="rememberPwd" checked>
+          <span>记住登录</span>
+        </label>
+        <a href="#">忘记密码？</a>
+      </div>
+      <button class="btn-primary" onclick="handlePasswordLogin()">登 录</button>
+    </div>
+
+    <!-- ========== 短信登录 ========== -->
+    <div id="panel-sms" class="form-panel">
+      <div class="form-group">
+        <label>手机号</label>
+        <input type="text" id="phone" placeholder="请输入手机号">
+      </div>
+      <div class="form-group">
+        <label>验证码</label>
+        <div class="sms-row">
+          <input type="text" id="smsCode" placeholder="请输入验证码">
+          <button class="btn-sms" id="btnSms" onclick="sendSms()">获取验证码</button>
+        </div>
+      </div>
+      <div class="extra">
+        <label class="checkbox">
+          <input type="checkbox" id="rememberSms" checked>
+          <span>记住登录</span>
+        </label>
+        <a href="#">收不到验证码？</a>
+      </div>
+      <button class="btn-primary" onclick="handleSmsLogin()">登 录</button>
+    </div>
+
+    <div class="switch-hint">
+      还没有账号？<a href="#">立即注册</a>
+    </div>
+
+    <div class="status">启动时自动连接后端服务</div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 登录成功弹窗 -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="check">✓</div>
+      <h3>登录成功</h3>
+      <p id="successMsg">欢迎回来，shiningCloud</p>
+      <button onclick="closeSuccess()">进入 TransFlow</button>
+    </div>
+  </div>
+
+  <script>
+    let smsTimer = null;
+    let smsCountdown = 0;
+
+    function switchTab(type) {
+      document.querySelectorAll('.tab-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+
+      if (type === 'password') {
+        document.querySelector('.tab-switch button:first-child').classList.add('active');
+        document.getElementById('panel-password').classList.add('active');
+      } else {
+        document.querySelector('.tab-switch button:last-child').classList.add('active');
+        document.getElementById('panel-sms').classList.add('active');
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function handlePasswordLogin() {
+      const account = document.getElementById('account').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!account) { showToast('请输入账号或手机号'); return; }
+      if (!password) { showToast('请输入密码'); return; }
+
+      // 模拟登录
+      const btn = document.querySelector('#panel-password .btn-primary');
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '登 录';
+        showSuccess(account.includes('@') ? account : '用户 ' + account);
+      }, 1200);
+    }
+
+    function sendSms() {
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone) { showToast('请先输入手机号'); return; }
+      if (!/^1\d{10}$/.test(phone)) { showToast('请输入正确的手机号'); return; }
+      if (smsCountdown > 0) return;
+
+      showToast('验证码已发送');
+      smsCountdown = 60;
+      const btn = document.getElementById('btnSms');
+      btn.classList.add('counting');
+
+      smsTimer = setInterval(() => {
+        smsCountdown--;
+        btn.textContent = smsCountdown + 's';
+        if (smsCountdown <= 0) {
+          clearInterval(smsTimer);
+          btn.textContent = '获取验证码';
+          btn.classList.remove('counting');
+        }
+      }, 1000);
+    }
+
+    function handleSmsLogin() {
+      const phone = document.getElementById('phone').value.trim();
+      const code = document.getElementById('smsCode').value.trim();
+
+      if (!phone) { showToast('请输入手机号'); return; }
+      if (!code) { showToast('请输入验证码'); return; }
+      if (code !== '123456') { showToast('验证码错误，试试 123456'); return; }
+
+      const btn = document.querySelector('#panel-sms .btn-primary');
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '登 录';
+        showSuccess(phone);
+      }, 1000);
+    }
+
+    function showSuccess(identifier) {
+      document.getElementById('successMsg').textContent = '欢迎回来，' + identifier;
+      document.getElementById('successOverlay').classList.add('show');
+    }
+
+    function closeSuccess() {
+      document.getElementById('successOverlay').classList.remove('show');
+      showToast('已进入 TransFlow，托盘已启动');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统托盘 - TransFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #e8e6e1; display: flex; justify-content: center; align-items: center;
+      height: 100vh; gap: 80px;
+    }
+    .platform { text-align: center; }
+    .platform h2 {
+      font-size: 11px; color: #aaa; font-weight: 500;
+      margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;
+    }
+
+    /* ========== 菜单通用 ========== */
+    .context-menu {
+      width: 250px; background: #fff;
+      border-radius: 12px; padding: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1);
+    }
+    .menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px; font-size: 13px;
+      color: #555; cursor: pointer; transition: all 0.1s;
+    }
+    .menu-item:hover { background: #f5f3f0; color: #1a1a1a; }
+    .menu-separator {
+      height: 1px; background: #f0efec; margin: 6px 8px;
+    }
+    .menu-header {
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      color: #1a1a1a; display: flex; align-items: center; gap: 8px;
+    }
+    .menu-header .status-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #4caf50;
+    }
+    .menu-item .shortcut { margin-left: auto; font-size: 11px; color: #bbb; }
+    .menu-item .sub-arrow { margin-left: auto; font-size: 10px; color: #bbb; }
+
+    .submenu {
+      padding: 0 0 0 16px; margin: 2px 0;
+    }
+    .submenu-item {
+      padding: 7px 12px; font-size: 12px; color: #888; border-radius: 6px; cursor: pointer;
+    }
+    .submenu-item:hover { background: #f5f3f0; color: #1a1a1a; }
+    .submenu-item.active { color: #1a1a1a; font-weight: 500; }
+
+    .section-label {
+      font-size: 10px; color: #bbb; text-transform: uppercase;
+      letter-spacing: 1px; padding: 10px 12px 4px;
+    }
+
+    /* ========== Windows 托盘示意 ========== */
+    .taskbar {
+      width: 280px; height: 44px; background: #fff;
+      border: 1px solid #e8e6e1; border-radius: 8px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 12px; gap: 8px; margin-bottom: 8px;
+    }
+    .taskbar-icon {
+      width: 18px; height: 18px; border-radius: 4px;
+      background: #2c2c2c; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #fff;
+    }
+    .taskbar-hint {
+      font-size: 10px; color: #bbb; margin-bottom: 16px;
+    }
+
+    /* ========== macOS 菜单栏示意 ========== */
+    .menubar {
+      width: 280px; height: 28px; background: #fff;
+      border: 1px solid #e8e6e1; border-radius: 6px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 10px; gap: 14px; margin-bottom: 8px;
+    }
+    .menubar-text { font-size: 10px; color: #bbb; }
+    .menubar-app {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; color: #333;
+    }
+    .menubar-app .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .menubar-app .dot.green { background: #4caf50; }
+    .menubar-app .dot.gray { background: #bbb; }
+  </style>
+</head>
+<body>
+  <!-- Windows -->
+  <div class="platform">
+    <h2>Windows 系统托盘</h2>
+    <div class="taskbar">
+      <span style="font-size:10px;color:#ccc;">🔊 🌐</span>
+      <div class="taskbar-icon">T</div>
+      <span style="font-size:10px;color:#ccc;">14:30</span>
+    </div>
+    <div class="taskbar-hint">右下角托盘区</div>
+
+    <div class="context-menu">
+      <div class="menu-header">
+        <span class="status-dot"></span> TransFlow
+      </div>
+      <div class="menu-separator"></div>
+
+      <div class="section-label">浮窗</div>
+      <div class="menu-item">显示浮窗 <span class="shortcut">Ctrl+Shift+F</span></div>
+      <div class="menu-item">隐藏浮窗</div>
+      <div class="menu-separator"></div>
+
+      <div class="section-label">模型</div>
+      <div class="menu-item">
+        ASR 模型
+        <span class="sub-arrow">Whisper Large v3 ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">Whisper Large v3</div>
+        <div class="submenu-item">Whisper Medium</div>
+        <div class="submenu-item">FunASR Paraformer</div>
+      </div>
+
+      <div class="menu-item">
+        翻译模型
+        <span class="sub-arrow">GPT-4o ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">GPT-4o</div>
+        <div class="submenu-item">GPT-4o-mini</div>
+        <div class="submenu-item">Claude 3.5 Sonnet</div>
+      </div>
+
+      <div class="menu-item">
+        纠错模型
+        <span class="sub-arrow">Claude 3.5 ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">Claude 3.5 Sonnet</div>
+        <div class="submenu-item">GPT-4o</div>
+        <div class="submenu-item">关闭</div>
+      </div>
+
+      <div class="menu-separator"></div>
+      <div class="menu-item">打开完整页面</div>
+      <div class="menu-item">退出登录</div>
+      <div class="menu-separator"></div>
+      <div class="menu-item" style="color:#ccc;">退出 TransFlow</div>
+    </div>
+  </div>
+
+  <!-- macOS -->
+  <div class="platform">
+    <h2>macOS 菜单栏</h2>
+    <div class="menubar">
+      <span class="menubar-text">File Edit View</span>
+      <span style="flex:1;"></span>
+      <span class="menubar-text">🔋 📶</span>
+      <span class="menubar-app">
+        <span class="dot green"></span>
+        <span class="dot gray"></span>
+        T
+      </span>
+      <span class="menubar-text">14:30</span>
+    </div>
+    <div class="taskbar-hint">顶部菜单栏</div>
+
+    <div class="context-menu">
+      <div class="menu-header">
+        <span class="status-dot"></span> TransFlow
+      </div>
+      <div class="menu-separator"></div>
+
+      <div class="section-label">浮窗</div>
+      <div class="menu-item">显示浮窗 <span class="shortcut">⌘⇧F</span></div>
+      <div class="menu-item">隐藏浮窗</div>
+      <div class="menu-separator"></div>
+
+      <div class="section-label">模型</div>
+      <div class="menu-item">
+        ASR 模型
+        <span class="sub-arrow">Whisper Large v3 ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">Whisper Large v3</div>
+        <div class="submenu-item">Whisper Medium</div>
+        <div class="submenu-item">FunASR Paraformer</div>
+      </div>
+
+      <div class="menu-item">
+        翻译模型
+        <span class="sub-arrow">GPT-4o ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">GPT-4o</div>
+        <div class="submenu-item">GPT-4o-mini</div>
+        <div class="submenu-item">Claude 3.5 Sonnet</div>
+      </div>
+
+      <div class="menu-item">
+        纠错模型
+        <span class="sub-arrow">Claude 3.5 ▾</span>
+      </div>
+      <div class="submenu">
+        <div class="submenu-item active">Claude 3.5 Sonnet</div>
+        <div class="submenu-item">GPT-4o</div>
+        <div class="submenu-item">关闭</div>
+      </div>
+
+      <div class="menu-separator"></div>
+      <div class="menu-item">打开完整页面</div>
+      <div class="menu-item">退出登录</div>
+      <div class="menu-separator"></div>
+      <div class="menu-item" style="color:#ccc;">退出 TransFlow</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>悬浮工具栏 - TransFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #e8e6e1; display: flex; justify-content: center; align-items: center;
+      height: 100vh; flex-direction: column; gap: 40px;
+    }
+    .scene-label {
+      font-size: 11px; color: #aaa; text-transform: uppercase;
+      letter-spacing: 2px; margin-bottom: 8px;
+    }
+
+    /* ========================================
+       主工具栏 —— 腾讯会议那种悬浮条
+       ======================================== */
+    .toolbar {
+      display: flex; align-items: center; gap: 2px;
+      background: #fff; border-radius: 12px;
+      padding: 8px 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+    .toolbar .drag-handle {
+      width: 18px; height: 32px; display: flex; align-items: center;
+      justify-content: center; cursor: grab; color: #ccc; font-size: 14px;
+    }
+    .toolbar .drag-handle:active { cursor: grabbing; }
+
+    .tb-divider {
+      width: 1px; height: 20px; background: #e8e6e1;
+      margin: 0 6px;
+    }
+
+    .tb-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: none; background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #666; transition: all 0.12s;
+      position: relative;
+    }
+    .tb-btn:hover { background: #f5f3f0; color: #333; }
+    .tb-btn:active { background: #e8e6e1; }
+
+    /* 麦克风/扬声器 开启态 */
+    .tb-btn.toggle-on {
+      background: #f0efec; color: #1a1a1a;
+    }
+    .tb-btn.toggle-on:hover { background: #e8e6e1; }
+    /* 麦克风 录音态 */
+    .tb-btn.mic-active {
+      background: #fff0f0; color: #e55c5c;
+    }
+    .tb-btn.mic-active:hover { background: #ffe8e8; }
+    /* 扬声器 静音态 */
+    .tb-btn.speaker-muted {
+      background: #fff0f0; color: #e55c5c;
+    }
+    .tb-btn.speaker-muted:hover { background: #ffe8e8; }
+
+    /* Tooltip */
+    .tb-btn .tooltip {
+      display: none; position: absolute; bottom: calc(100% + 8px);
+      left: 50%; transform: translateX(-50%);
+      background: #2c2c2c; color: #fff; font-size: 11px;
+      padding: 4px 10px; border-radius: 6px;
+      white-space: nowrap; pointer-events: none;
+    }
+    .tb-btn:hover .tooltip { display: block; }
+
+    /* ========================================
+       模型标签按钮（紧凑模式下显示当前选中）
+       ======================================== */
+    .tb-model-tag {
+      padding: 6px 10px; border-radius: 6px;
+      border: none; background: transparent; cursor: pointer;
+      font-size: 11px; color: #888; transition: all 0.12s;
+      white-space: nowrap; position: relative;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .tb-model-tag:hover { background: #f5f3f0; color: #333; }
+    .tb-model-tag .tag-arrow { font-size: 8px; color: #bbb; }
+
+    /* ========================================
+       模型下拉面板（每个按钮独立弹出）
+       ======================================== */
+    .model-dropdown {
+      display: none; position: absolute; bottom: calc(100% + 12px);
+      left: 50%; transform: translateX(-50%);
+      background: #fff; border-radius: 12px; padding: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.12);
+      min-width: 170px; z-index: 10;
+    }
+    .model-dropdown.show { display: block; }
+
+    .model-option {
+      padding: 8px 12px; font-size: 12px; color: #888;
+      border-radius: 6px; cursor: pointer; display: flex; align-items: center;
+      gap: 6px; transition: all 0.1s; white-space: nowrap;
+    }
+    .model-option:hover { background: #f5f3f0; color: #333; }
+    .model-option.selected { color: #1a1a1a; font-weight: 500; }
+    .model-option.selected::after { content: '✓'; margin-left: auto; font-size: 10px; color: #4caf50; }
+
+    /* ========================================
+       展开后的完整工具栏
+       ======================================== */
+    .toolbar-expanded {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border-radius: 14px;
+      padding: 10px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.1);
+    }
+    .tb-model-select {
+      padding: 6px 12px; background: #f5f3f0; border: none;
+      border-radius: 8px; font-size: 11px; color: #666;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.1s; position: relative;
+    }
+    .tb-model-select:hover { background: #e8e6e1; }
+    .tb-model-select .arrow { font-size: 8px; color: #bbb; }
+
+    .tb-lang-switch {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: #666;
+    }
+    .tb-lang-switch span {
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      transition: all 0.1s;
+    }
+    .tb-lang-switch span:hover { background: #f5f3f0; }
+    .tb-lang-switch span.active { background: #f0efec; font-weight: 500; color: #1a1a1a; }
+    .tb-lang-switch .swap { color: #bbb; cursor: pointer; font-size: 13px; }
+
+    .tb-status {
+      font-size: 10px; color: #4caf50; display: flex; align-items: center; gap: 4px;
+    }
+    .tb-status .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #4caf50;
+    }
+
+    /* ========================================
+       看视频场景
+       ======================================== */
+    .video-scene {
+      position: relative; width: 560px; height: 320px;
+      background: #1a1a1a; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .video-bg {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #1e2a3a, #162030);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.15); font-size: 40px;
+    }
+    .floating-toolbar {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+      border-radius: 12px; padding: 8px 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+    .floating-toolbar .tb-btn {
+      width: 30px; height: 30px; font-size: 13px;
+    }
+    .floating-toolbar .tb-divider {
+      margin: 0 4px; height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <!-- =============================================
+       场景1: 紧凑工具栏 —— 三个模型独立入口
+       ============================================= -->
+  <div style="text-align:center;">
+    <div class="scene-label">紧凑工具栏 · 三个模型独立切换</div>
+    <div style="position:relative;display:inline-block;" id="compactWrapper">
+      <div class="toolbar" id="compactToolbar">
+        <!-- 拖拽把手 -->
+        <span class="drag-handle">⋮⋮</span>
+
+        <!-- 麦克风 -->
+        <button class="tb-btn toggle-on" id="btnMic" onclick="toggleMic()">
+          🎤
+          <span class="tooltip">麦克风</span>
+        </button>
+        <!-- 扬声器 -->
+        <button class="tb-btn toggle-on" id="btnSpeaker" onclick="toggleSpeaker()">
+          🔊
+          <span class="tooltip">扬声器</span>
+        </button>
+
+        <div class="tb-divider"></div>
+
+        <!-- ASR 模型 -->
+        <div style="position:relative;">
+          <button class="tb-model-tag" id="btnAsrCompact" onclick="toggleDropdown('dropdownAsr', event)">
+            ASR <span class="tag-arrow">▾</span>
+          </button>
+          <div class="model-dropdown" id="dropdownAsr">
+            <div class="model-option selected" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">Whisper Large v3</div>
+            <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">Whisper Medium</div>
+            <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">FunASR Paraformer</div>
+            <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">SenseVoice</div>
+          </div>
+        </div>
+
+        <!-- 翻译模型 -->
+        <div style="position:relative;">
+          <button class="tb-model-tag" id="btnTransCompact" onclick="toggleDropdown('dropdownTrans', event)">
+            翻译 <span class="tag-arrow">▾</span>
+          </button>
+          <div class="model-dropdown" id="dropdownTrans">
+            <div class="model-option selected" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">GPT-4o</div>
+            <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">GPT-4o-mini</div>
+            <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">Claude 3.5 Sonnet</div>
+            <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">DeepSeek V3</div>
+          </div>
+        </div>
+
+        <!-- 纠错模型 -->
+        <div style="position:relative;">
+          <button class="tb-model-tag" id="btnCorrectCompact" onclick="toggleDropdown('dropdownCorrect', event)">
+            纠错 <span class="tag-arrow">▾</span>
+          </button>
+          <div class="model-dropdown" id="dropdownCorrect">
+            <div class="model-option selected" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">Claude 3.5 Sonnet</div>
+            <div class="model-option" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">GPT-4o</div>
+            <div class="model-option" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">关闭纠错</div>
+          </div>
+        </div>
+
+        <div class="tb-divider"></div>
+
+        <!-- 展开按钮 -->
+        <button class="tb-btn" onclick="toggleExpandedToolbar()" title="展开">
+          ⤡
+          <span class="tooltip">展开更多</span>
+        </button>
+        <!-- 打开页面 -->
+        <button class="tb-btn" onclick="showToast2('已打开完整页面')" title="打开页面">
+          🖥
+          <span class="tooltip">完整页面</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       场景2: 展开工具栏 —— 更多控制
+       ============================================= -->
+  <div style="text-align:center;" id="expandedWrapper" >
+    <div class="scene-label">展开工具栏 · 语言切换 + 模型选择</div>
+    <div class="toolbar-expanded" id="expandedToolbar" style="display:none;">
+      <span class="drag-handle">⋮⋮</span>
+
+      <button class="tb-btn toggle-on" id="btnMicExpanded" onclick="toggleMicExpanded()">🎤</button>
+      <button class="tb-btn toggle-on" id="btnSpeakerExpanded" onclick="toggleSpeakerExpanded()">🔊</button>
+
+      <div class="tb-divider"></div>
+
+      <!-- 语言切换 -->
+      <div class="tb-lang-switch">
+        <span class="active" onclick="switchLang(this)">中文</span>
+        <span class="swap" onclick="swapLang()">⇄</span>
+        <span onclick="switchLang(this)">English</span>
+      </div>
+
+      <div class="tb-divider"></div>
+
+      <!-- ASR 模型 -->
+      <div style="position:relative;">
+        <button class="tb-model-select" id="btnAsrExpanded" onclick="toggleDropdown('dropdownAsrExpanded', event)">
+          ASR: Whisper Large v3 <span class="arrow">▾</span>
+        </button>
+        <div class="model-dropdown" id="dropdownAsrExpanded">
+          <div class="model-option selected" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">Whisper Large v3</div>
+          <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">Whisper Medium</div>
+          <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">FunASR Paraformer</div>
+          <div class="model-option" onclick="selectModel(this, 'asr', 'btnAsrCompact', 'btnAsrExpanded')">SenseVoice</div>
+        </div>
+      </div>
+
+      <!-- 翻译模型 -->
+      <div style="position:relative;">
+        <button class="tb-model-select" id="btnTransExpanded" onclick="toggleDropdown('dropdownTransExpanded', event)">
+          翻译: GPT-4o <span class="arrow">▾</span>
+        </button>
+        <div class="model-dropdown" id="dropdownTransExpanded">
+          <div class="model-option selected" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">GPT-4o</div>
+          <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">GPT-4o-mini</div>
+          <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">Claude 3.5 Sonnet</div>
+          <div class="model-option" onclick="selectModel(this, 'trans', 'btnTransCompact', 'btnTransExpanded')">DeepSeek V3</div>
+        </div>
+      </div>
+
+      <!-- 纠错模型 -->
+      <div style="position:relative;">
+        <button class="tb-model-select" id="btnCorrectExpanded" onclick="toggleDropdown('dropdownCorrectExpanded', event)">
+          纠错: Claude 3.5 <span class="arrow">▾</span>
+        </button>
+        <div class="model-dropdown" id="dropdownCorrectExpanded">
+          <div class="model-option selected" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">Claude 3.5 Sonnet</div>
+          <div class="model-option" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">GPT-4o</div>
+          <div class="model-option" onclick="selectModel(this, 'correct', 'btnCorrectCompact', 'btnCorrectExpanded')">关闭纠错</div>
+        </div>
+      </div>
+
+      <div class="tb-divider"></div>
+      <span class="tb-status"><span class="dot"></span>翻译中</span>
+
+      <div class="tb-divider"></div>
+      <button class="tb-btn" onclick="showToast2('已打开完整页面')" title="页面">🖥</button>
+      <button class="tb-btn" onclick="toggleExpandedToolbar()" title="收起">⤢</button>
+    </div>
+  </div>
+
+  <!-- =============================================
+       场景3: 看视频时的浮窗工具栏
+       ============================================= -->
+  <div style="text-align:center;">
+    <div class="scene-label">看视频 · 浮窗悬浮</div>
+    <div class="video-scene">
+      <div class="video-bg">🎬 视频内容</div>
+      <div class="floating-toolbar">
+        <span class="drag-handle" style="cursor:grab;color:#ccc;font-size:12px;">⋮⋮</span>
+        <button class="tb-btn toggle-on" style="width:28px;height:28px;font-size:12px;" onclick="this.classList.toggle('mic-active');this.classList.toggle('toggle-on');">🎤</button>
+        <button class="tb-btn toggle-on" style="width:28px;height:28px;font-size:12px;" onclick="this.classList.toggle('speaker-muted');this.classList.toggle('toggle-on');">🔊</button>
+        <div class="tb-divider"></div>
+        <span style="font-size:9px;color:#999;padding:0 4px;">ASR: Whisper</span>
+        <span style="font-size:9px;color:#999;padding:0 4px;">翻译: GPT-4o</span>
+        <div class="tb-divider"></div>
+        <span style="font-size:9px;color:#4caf50;display:flex;align-items:center;gap:3px;">
+          <span style="width:5px;height:5px;border-radius:50%;background:#4caf50;"></span> 翻译中
+        </span>
+        <div class="tb-divider"></div>
+        <button class="tb-btn" style="width:28px;height:28px;font-size:12px;">⤡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div style="position:fixed;top:24px;left:50%;transform:translateX(-50%);padding:10px 24px;background:#2c2c2c;color:#fff;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;" id="toast2"></div>
+
+  <script>
+    // ========== 麦克风 ==========
+    function toggleMic() {
+      const btn = document.getElementById('btnMic');
+      if (btn.classList.contains('mic-active')) {
+        // 当前在录音 → 关闭
+        btn.classList.remove('mic-active');
+        btn.classList.add('toggle-on');
+        btn.innerHTML = '🎤<span class="tooltip">麦克风</span>';
+        showToast2('麦克风已关闭');
+      } else if (btn.classList.contains('toggle-on')) {
+        // 当前开启但未录音 → 开始录音
+        btn.classList.remove('toggle-on');
+        btn.classList.add('mic-active');
+        btn.innerHTML = '🎤<span class="tooltip">麦克风 · 录音中</span>';
+        showToast2('麦克风已开启，正在录音');
+      } else {
+        // 关闭态 → 开启
+        btn.classList.add('toggle-on');
+        btn.innerHTML = '🎤<span class="tooltip">麦克风</span>';
+        showToast2('麦克风已开启');
+      }
+    }
+
+    // ========== 扬声器 ==========
+    function toggleSpeaker() {
+      const btn = document.getElementById('btnSpeaker');
+      if (btn.classList.contains('speaker-muted')) {
+        btn.classList.remove('speaker-muted');
+        btn.classList.add('toggle-on');
+        btn.innerHTML = '🔊<span class="tooltip">扬声器</span>';
+        showToast2('扬声器已开启');
+      } else {
+        btn.classList.remove('toggle-on');
+        btn.classList.add('speaker-muted');
+        btn.innerHTML = '🔇<span class="tooltip">扬声器 · 已静音</span>';
+        showToast2('扬声器已静音');
+      }
+    }
+
+    // ========== 展开工具栏 麦克风/扬声器 ==========
+    function toggleMicExpanded() {
+      const btn = document.getElementById('btnMicExpanded');
+      if (btn.classList.contains('mic-active')) {
+        btn.classList.remove('mic-active'); btn.classList.add('toggle-on');
+        showToast2('麦克风已关闭');
+      } else if (btn.classList.contains('toggle-on')) {
+        btn.classList.remove('toggle-on'); btn.classList.add('mic-active');
+        showToast2('麦克风已开启，正在录音');
+      } else {
+        btn.classList.add('toggle-on');
+        showToast2('麦克风已开启');
+      }
+    }
+
+    function toggleSpeakerExpanded() {
+      const btn = document.getElementById('btnSpeakerExpanded');
+      if (btn.classList.contains('speaker-muted')) {
+        btn.classList.remove('speaker-muted'); btn.classList.add('toggle-on');
+        showToast2('扬声器已开启');
+      } else {
+        btn.classList.remove('toggle-on'); btn.classList.add('speaker-muted');
+        showToast2('扬声器已静音');
+      }
+    }
+
+    // ========== 模型下拉 ==========
+    function toggleDropdown(dropdownId, e) {
+      e.stopPropagation();
+      // 关闭其他所有下拉
+      document.querySelectorAll('.model-dropdown.show').forEach(d => {
+        if (d.id !== dropdownId) d.classList.remove('show');
+      });
+      document.getElementById(dropdownId).classList.toggle('show');
+    }
+
+    // 点击其他地方关闭下拉
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.model-dropdown.show').forEach(d => d.classList.remove('show'));
+    });
+
+    function selectModel(el, type, compactBtnId, expandedBtnId) {
+      // 关闭同一下拉中的选中态
+      const dropdown = el.parentElement;
+      dropdown.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const modelName = el.textContent;
+
+      // 更新紧凑工具栏标签
+      const compactBtn = document.getElementById(compactBtnId);
+      if (compactBtn) {
+        if (type === 'asr') compactBtn.innerHTML = 'ASR <span class="tag-arrow">▾</span>';
+        else if (type === 'trans') compactBtn.innerHTML = '翻译 <span class="tag-arrow">▾</span>';
+        else compactBtn.innerHTML = '纠错 <span class="tag-arrow">▾</span>';
+      }
+
+      // 更新展开工具栏按钮文字
+      const expandedBtn = document.getElementById(expandedBtnId);
+      if (expandedBtn) {
+        const labelMap = { asr: 'ASR: ', trans: '翻译: ', correct: '纠错: ' };
+        expandedBtn.innerHTML = labelMap[type] + modelName + ' <span class="arrow">▾</span>';
+      }
+
+      // 关闭下拉
+      dropdown.classList.remove('show');
+
+      const typeMap = { asr: 'ASR模型', trans: '翻译模型', correct: '纠错模型' };
+      showToast2('已切换' + typeMap[type] + ': ' + modelName);
+    }
+
+    // ========== 展开/收起 ==========
+    function toggleExpandedToolbar() {
+      const compact = document.getElementById('compactWrapper');
+      const expanded = document.getElementById('expandedToolbar');
+      const expandedWrapper = document.getElementById('expandedWrapper');
+      if (expanded.style.display === 'none' || !expanded.style.display) {
+        compact.style.display = 'none';
+        expanded.style.display = 'flex';
+        expandedWrapper.querySelector('.scene-label').style.display = 'block';
+      } else {
+        compact.style.display = 'block';
+        expanded.style.display = 'none';
+      }
+    }
+
+    // ========== 语言切换 ==========
+    function switchLang(el) {
+      el.parentElement.querySelectorAll('span').forEach(s => {
+        if (!s.classList.contains('swap')) s.classList.remove('active');
+      });
+      el.classList.add('active');
+      showToast2('已切换语言');
+    }
+
+    function swapLang() {
+      const spans = document.querySelectorAll('#expandedToolbar .tb-lang-switch span:not(.swap)');
+      const t0 = spans[0].textContent;
+      spans[0].textContent = spans[1].textContent;
+      spans[1].textContent = t0;
+      showToast2('已交换语言方向');
+    }
+
+    // ========== Toast ==========
+    function showToast2(msg) {
+      const t = document.getElementById('toast2');
+      t.textContent = msg;
+      t.style.opacity = '1';
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => { t.style.opacity = '0'; }, 1500);
+    }
+  </script>
+</body>
+</html>

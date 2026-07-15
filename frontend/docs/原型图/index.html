@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>原型图 - TransFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f3f0; color: #333;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh;
+    }
+    .container { max-width: 640px; width: 100%; padding: 48px 24px; }
+
+    .header { text-align: center; margin-bottom: 48px; }
+    .header .logo {
+      width: 52px; height: 52px; margin: 0 auto 16px;
+      background: #2c2c2c; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; color: #fff;
+    }
+    .header h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .header .sub { font-size: 13px; color: #999; }
+
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 22px; border-radius: 14px;
+      background: #fff; border: 1px solid #f0efec;
+      text-decoration: none; color: #333;
+      transition: all 0.15s;
+    }
+    .card:hover {
+      border-color: #ddd; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .card-num {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #f5f3f0; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 14px; color: #888; flex-shrink: 0;
+    }
+    .card-info { flex: 1; }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; color: #1a1a1a; }
+    .card-desc { font-size: 12px; color: #999; }
+    .card-arrow { font-size: 16px; color: #ccc; }
+
+    .flow-section {
+      margin-top: 44px; padding-top: 28px;
+      border-top: 1px solid #e8e6e1;
+    }
+    .flow-section h2 {
+      font-size: 13px; font-weight: 600; color: #999; margin-bottom: 18px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; flex-wrap: wrap; font-size: 12px;
+    }
+    .flow-node {
+      padding: 8px 16px; border-radius: 8px;
+      background: #fff; border: 1px solid #e8e6e1; color: #666;
+    }
+    .flow-node.highlight { background: #2c2c2c; color: #fff; border-color: #2c2c2c; }
+    .flow-arrow { color: #ccc; font-size: 14px; }
+
+    .note {
+      margin-top: 36px; padding: 18px 22px;
+      background: #fff; border: 1px solid #f0efec;
+      border-radius: 14px; font-size: 12px; line-height: 1.8; color: #888;
+    }
+    .note strong { color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">T</div>
+      <h1>TransFlow</h1>
+      <p class="sub">同声转译助手 · 桌面端原型图</p>
+    </div>
+
+    <div class="list">
+      <a href="01-登录页.html" class="card">
+        <div class="card-num">01</div>
+        <div class="card-info">
+          <div class="card-title">登录页</div>
+          <div class="card-desc">账号密码登录 + 手机号短信登录，可交互</div>
+        </div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a href="02-悬浮工具栏.html" class="card">
+        <div class="card-num">02</div>
+        <div class="card-info">
+          <div class="card-title">悬浮工具栏</div>
+          <div class="card-desc">腾讯会议风格 · 紧凑/展开/看视频 三种场景，可交互</div>
+        </div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a href="03-系统托盘菜单.html" class="card">
+        <div class="card-num">03</div>
+        <div class="card-info">
+          <div class="card-title">系统托盘菜单</div>
+          <div class="card-desc">Windows 右下角 / macOS 菜单栏，模型切换</div>
+        </div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a href="05-实时转译页.html" class="card">
+        <div class="card-num">04</div>
+        <div class="card-info">
+          <div class="card-title">实时转译页</div>
+          <div class="card-desc">页面端核心功能，左右分栏，可交互</div>
+        </div>
+        <span class="card-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="flow-section">
+      <h2>产品架构</h2>
+      <div class="flow">
+        <div class="flow-node">🚀 启动</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">🔑 登录</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node highlight">📌 系统托盘</div>
+        <span class="flow-arrow">⇄</span>
+        <div class="flow-node highlight">🪟 悬浮工具栏</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">🖥 完整页面</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>设计思路：</strong><br>
+      产品 = 页面端 + 桌面端增强。<br>
+      桌面端核心是<b>悬浮工具栏</b>（腾讯会议那种）—— 看美剧、开会等场景下，<br>
+      以小工具栏悬浮在内容之上，随时录音翻译，不遮挡视线。<br><br>
+      <strong>交互提示：</strong>每个原型图都可以点击操作，试试按钮、Tab 切换等。
+    </div>
+  </div>
+</body>
+</html>
