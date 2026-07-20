@@ -23,6 +23,7 @@
         <lombok.version>1.18.36</lombok.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.3.4</spring-cloud-alibaba.version>
+        <jjwt.version>0.12.6</jjwt.version>
     </properties>
 
     <!-- 阿里云镜像仓库 -->
@@ -150,6 +151,34 @@
             <artifactId>dashscope-sdk-java</artifactId>
             <version>2.17.0</version>
         </dependency>
+
+
+        <!-- Spring Security :继承了 spring-boot-starter-parent:3.3.6，所有 spring-boot-starter-* 的版本都由父 POM 统一管理 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JWT -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+
 
 
 

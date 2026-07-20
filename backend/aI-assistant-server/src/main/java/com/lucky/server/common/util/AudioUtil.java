@@ -1,4 +1,4 @@
-package com.lucky.server.util;
+package com.lucky.server.common.util;
 /**
  * @author shiningCloud2025
  */
