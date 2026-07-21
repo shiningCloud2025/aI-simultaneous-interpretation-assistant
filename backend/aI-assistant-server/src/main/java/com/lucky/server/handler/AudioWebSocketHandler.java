@@ -1,6 +1,6 @@
 package com.lucky.server.handler;
 
-import com.lucky.server.util.AudioUtil;
+import com.lucky.server.common.util.AudioUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
