@@ -3,6 +3,7 @@ package com.lucky.server.common.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.lucky.server.common.basic.BusinessException;
 import lombok.Getter;
 
 /**
@@ -36,6 +37,6 @@ public enum UserStatusEnum {
                 return e;
             }
         }
-        throw new IllegalArgumentException("不支持的用户状态: " + code);
+        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "不支持的用户状态: " + code);
     }
 }

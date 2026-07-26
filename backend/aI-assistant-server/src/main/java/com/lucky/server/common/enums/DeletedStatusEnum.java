@@ -3,6 +3,7 @@ package com.lucky.server.common.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.lucky.server.common.basic.BusinessException;
 
 /**
  * 删除状态枚举
@@ -35,6 +36,6 @@ public enum DeletedStatusEnum {
                 return e;
             }
         }
-        throw new IllegalArgumentException("不支持的删除状态: " + code);
+        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "不支持的删除状态: " + code);
     }
 }
