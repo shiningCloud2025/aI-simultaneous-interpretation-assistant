@@ -22,12 +22,12 @@ public class SysUser implements Serializable {
     @Serial
     private final static long serialVersionUID = 1L;
 
-    @TableId(value = "ID",type= IdType.AUTO)
+    @TableId(value = "id",type= IdType.AUTO)
     @Schema(description = "主键ID")
     private Long id;
 
     @TableField("account")
-    @Schema(description = "用户账号“QQ号5-12位")
+    @Schema(description = "用户账号QQ号5-12位")
     private String account;
 
     @TableField("username")
@@ -38,11 +38,19 @@ public class SysUser implements Serializable {
     @Schema(description = "密码")
     private String password;
 
+    @TableField("email")
+    @Schema(description = "邮箱")
+    private String email;
+
     @TableField("phone")
     @Schema(description = "手机号：兼容中美双区")
     private String phone;
 
     @TableField("avatar")
+    @Schema(description = "OSS头像URL")
+    private String avatar;
+
+    @TableField("status")
     @Schema(description = "状态：0禁用，1启用")
     private UserStatusEnum status;
 
