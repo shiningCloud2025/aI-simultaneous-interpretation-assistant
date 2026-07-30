@@ -3,6 +3,7 @@ package com.lucky.server.common.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.lucky.server.common.basic.BusinessException;
 import lombok.Getter;
 
 /**
@@ -36,6 +37,6 @@ public enum AsrModelProviderEnum {
                 return p;
             }
         }
-        throw new IllegalArgumentException("不支持的ASR厂商: " + code);
+        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "不支持的ASR厂商: " + code);
     }
 }
