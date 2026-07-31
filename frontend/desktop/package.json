@@ -2,16 +2,56 @@
   "name": "transflow-desktop",
   "private": true,
   "version": "1.0.0",
-  "description": "TransFlow 同声转译助手桌面端",
+  "description": "TransFlow AI同声转译助手桌面端",
   "main": "dist-electron/main.js",
   "type": "module",
+  "author": "shiningCloud2025",
   "scripts": {
     "dev": "vite",
     "build:electron": "node scripts/build-electron.mjs",
     "dev:electron": "npm run build:electron && concurrently \"cross-env BROWSER=none vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "npm run build:electron && vite build",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
     "lint": "oxlint",
     "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.transflow.desktop",
+    "productName": "TransFlow",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "icon": "public/icon.png"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/icon.png"
+    }
   },
   "dependencies": {
     "react": "^19.2.7",
