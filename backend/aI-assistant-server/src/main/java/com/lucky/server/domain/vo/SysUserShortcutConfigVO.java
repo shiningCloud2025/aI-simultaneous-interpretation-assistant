@@ -8,6 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 public record SysUserShortcutConfigVO(
         @Schema(description = "主键ID") Long id,
-        @Schema(description = "功能动作名") String action,
-        @Schema(description = "快捷键键位组合") String keyCombination
+        @Schema(description = "功能动作名", maxLength = 64) String action,
+        @Schema(description = "快捷键键位组合", maxLength = 256) String keyCombination
 ) {}
