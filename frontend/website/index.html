@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransFlow - AI同声转译助手</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3f0;color:#333;overflow-x:hidden}
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 40px;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700}
+.nav-logo .icon{width:34px;height:34px;background:#2c2c2c;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.nav-links{display:flex;gap:32px;font-size:14px;color:#666}
+.nav-links a{color:#666;text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:#1a1a1a}
+
+.hero{padding:100px 40px 80px;text-align:center;max-width:800px;margin:0 auto}
+.hero h1{font-size:48px;font-weight:800;color:#1a1a1a;line-height:1.2;margin-bottom:20px}
+.hero h1 span{background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:#888;line-height:1.8;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-dl{padding:14px 36px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-dl.primary{background:#2c2c2c;color:#fff}
+.btn-dl.primary:hover{background:#1a1a1a;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.btn-dl.secondary{background:#fff;color:#2c2c2c;border:1px solid #e8e6e1}
+.btn-dl.secondary:hover{background:#f5f3f0}
+
+.features{padding:80px 40px;max-width:1000px;margin:0 auto}
+.features h2{text-align:center;font-size:32px;font-weight:700;margin-bottom:12px}
+.features .sub{text-align:center;font-size:15px;color:#999;margin-bottom:60px}
+.f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.f-card{background:#fff;border:1px solid #f0efec;border-radius:16px;padding:32px;transition:all .2s}
+.f-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px)}
+.f-icon{font-size:32px;margin-bottom:16px}
+.f-card h3{font-size:16px;margin-bottom:8px;color:#1a1a1a}
+.f-card p{font-size:13px;color:#999;line-height:1.7}
+
+.scenes{padding:80px 40px;background:#fff;border-top:1px solid #e8e6e1}
+.scenes h2{text-align:center;font-size:32px;font-weight:700;margin-bottom:60px}
+.s-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto}
+.s-card{text-align:center;padding:32px 24px;background:#fafaf9;border-radius:16px;transition:all .2s}
+.s-card:hover{background:#f5f3f0}
+.s-icon{font-size:40px;margin-bottom:16px}
+.s-card h3{font-size:15px;margin-bottom:8px;color:#1a1a1a}
+.s-card p{font-size:13px;color:#999;line-height:1.7}
+
+.cta{padding:100px 40px;text-align:center;background:linear-gradient(135deg,#2c2c2c,#1a1a2e);color:#fff}
+.cta h2{font-size:36px;font-weight:700;margin-bottom:16px}
+.cta p{font-size:16px;color:rgba(255,255,255,.6);margin-bottom:36px}
+.cta .btn-dl.primary{background:#fff;color:#2c2c2c}
+.cta .btn-dl.primary:hover{background:#f0efec}
+
+footer{padding:32px 40px;text-align:center;font-size:13px;color:#bbb;border-top:1px solid #f0efec;background:#fff}
+footer a{color:#999;text-decoration:none}
+
+@media(max-width:768px){
+.f-grid,.s-grid{grid-template-columns:1fr}
+.hero h1{font-size:32px}
+nav{padding:14px 20px}
+.nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+<div class="nav-logo"><div class="icon">T</div>TransFlow</div>
+<div class="nav-links">
+<a href="#features">功能</a>
+<a href="#scenes">场景</a>
+<a href="#download">下载</a>
+</div>
+</nav>
+
+<section class="hero">
+<h1>打破语言壁垒<br>让每堂课都 <span>听得懂</span></h1>
+<p>老师讲英文，学生看中文。实时语音识别 + AI翻译，教室大屏 / 学生手机同步显示译文。K12课堂、大学教育、方言转普通话，一个工具全搞定。</p>
+<div class="hero-btns">
+<a href="#download" class="btn-dl primary">⬇ 免费下载 macOS 版</a>
+<a href="#features" class="btn-dl secondary">了解更多 →</a>
+</div>
+</section>
+
+<section class="features" id="features">
+<h2>核心功能</h2>
+<p class="sub">简单、高效、专注教育场景</p>
+<div class="f-grid">
+<div class="f-card">
+<div class="f-icon">🎤</div>
+<h3>实时语音识别</h3>
+<p>支持 Whisper / FunASR 等多种 ASR 模型，精准识别中英文及多语种语音</p>
+</div>
+<div class="f-card">
+<div class="f-icon">🌐</div>
+<h3>AI 智能翻译</h3>
+<p>接入 GPT-4o / Claude 等大模型，翻译自然流畅，贴近真实语境</p>
+</div>
+<div class="f-card">
+<div class="f-icon">✨</div>
+<h3>语法智能纠错</h3>
+<p>翻译后自动进行语法和语义修正，确保译文准确可读</p>
+</div>
+<div class="f-card">
+<div class="f-icon">🖥</div>
+<h3>教室大屏模式</h3>
+<p>一键全屏大字显示，后排学生也能清晰看到译文内容</p>
+</div>
+<div class="f-card">
+<div class="f-icon">📱</div>
+<h3>学生端同步观看</h3>
+<p>扫码或链接进入，学生在手机上实时查看翻译字幕</p>
+</div>
+<div class="f-card">
+<div class="f-icon">📄</div>
+<h3>字幕文件导出</h3>
+<p>支持导出 SRT 字幕文件，配合录屏视频实现课后回放</p>
+</div>
+</div>
+</section>
+
+<section class="scenes" id="scenes">
+<h2>适用场景</h2>
+<div class="s-grid">
+<div class="s-card">
+<div class="s-icon">🏫</div>
+<h3>K12 英语课堂</h3>
+<p>老师讲英文投屏到大屏，全班学生实时看到中文翻译，零门槛参与互动</p>
+</div>
+<div class="s-card">
+<div class="s-icon">🎓</div>
+<h3>大学教育</h3>
+<p>外教全英文授课，学生通过手机/电脑同步观看中文译文</p>
+</div>
+<div class="s-card">
+<div class="s-icon">🗣</div>
+<h3>方言转普通话</h3>
+<p>老师有口音或讲方言？自动转成标准普通话字幕，沟通无障碍</p>
+</div>
+</div>
+</section>
+
+<section class="cta" id="download">
+<h2>免费下载，即刻体验</h2>
+<p>支持 macOS · Windows 即将推出</p>
+<div class="hero-btns">
+<a href="./release/TransFlow-1.0.0.dmg" class="btn-dl primary" onclick="handleDownload(event, 'mac')">⬇ 下载 macOS 版 (Apple Silicon)</a>
+<a href="#" class="btn-dl secondary" onclick="handleDownload(event, 'win')" style="opacity:0.5;cursor:not-allowed">Windows 版开发中</a>
+</div>
+<div style="margin-top:24px;font-size:13px;color:rgba(255,255,255,.4)">
+版本 1.0.0 · 完全免费 · 无需注册
+</div>
+</section>
+
+<footer>
+<p>© 2026 TransFlow · AI同声转译助手 · <a href="https://github.com/shiningCloud2025/aI-simultaneous-interpretation-assistant" target="_blank">GitHub</a></p>
+</footer>
+
+<script>
+function handleDownload(e, platform) {
+  if (platform === 'win') {
+    e.preventDefault();
+    alert('Windows 版本开发中，敬请期待！');
+    return;
+  }
+  // macOS: 尝试下载，如果文件不存在给出提示
+  const link = e.target.closest('a');
+  fetch(link.href, { method: 'HEAD' }).then(r => {
+    if (!r.ok) {
+      e.preventDefault();
+      alert('安装包正在构建中，请稍后重试。\n\n或前往 GitHub Releases 页面下载。');
+    }
+  }).catch(() => {
+    // 本地开发时文件可能不存在，忽略错误让浏览器尝试下载
+  });
+}
+</script>
+</body>
+</html>
