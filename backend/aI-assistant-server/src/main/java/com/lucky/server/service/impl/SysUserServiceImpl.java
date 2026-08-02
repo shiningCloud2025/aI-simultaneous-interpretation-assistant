@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.enums.UserStatusEnum;
+import com.lucky.server.common.jwt.JwtUserInfo;
 import com.lucky.server.common.jwt.JwtUtil;
 import com.lucky.server.common.util.WebUtil;
 import com.lucky.server.domain.dto.SysUserLoginDTO;
@@ -15,6 +16,8 @@ import com.lucky.server.service.SysUserService;
 import com.lucky.server.service.SysUserSmsService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -113,6 +116,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         return new SysUserLoginTokenVO(token);
+    }
+
+    @Override
+    public SysUser getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        JwtUserInfo userInfo = (JwtUserInfo) auth.getDetails();
+        SysUser user = lambdaQuery().eq(SysUser::getId, userInfo.getUserId()).one();
+        if (user == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "用户不存在");
+        }
+        return user;
     }
 
 

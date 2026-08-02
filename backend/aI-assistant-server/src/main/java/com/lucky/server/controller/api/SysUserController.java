@@ -2,6 +2,9 @@ package com.lucky.server.controller.api;
 
 import com.lucky.server.common.basic.BaseResult;
 import com.lucky.server.domain.dto.SysUserLoginDTO;
+import com.lucky.server.domain.dto.SysUserRegisterDTO;
+import com.lucky.server.domain.entity.SysUser;
+import com.lucky.server.domain.vo.SysUserInfoVO;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import com.lucky.server.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 系统用户控制器
@@ -30,4 +30,19 @@ public class SysUserController {
     public BaseResult<SysUserLoginTokenVO> login(@Valid @RequestBody SysUserLoginDTO dto,HttpServletRequest request){
         return BaseResult.ok(sysUserService.login(dto, request));
     }
+
+    @PostMapping("/register")
+    @Operation(summary = "系统用户注册")
+    public BaseResult<SysUserLoginTokenVO> register(@Valid @RequestBody SysUserRegisterDTO dto, HttpServletRequest request) {
+        return BaseResult.ok(sysUserService.register(dto, request));
+    }
+
+
+
+    @GetMapping("/info")
+    @Operation(summary = "获取当前登录用户信息")
+    public BaseResult<SysUserInfoVO> info() {
+        return BaseResult.ok(SysUserInfoVO.from(sysUserService.getCurrentUser()));
+    }
+
 }

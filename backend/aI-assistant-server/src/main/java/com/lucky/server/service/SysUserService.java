@@ -31,6 +31,13 @@ public interface SysUserService  extends IService<SysUser> {
     SysUserLoginTokenVO register(SysUserRegisterDTO dto, HttpServletRequest request);
 
 
+    /**
+     * 获取当前登录用户信息
+     *
+     * @return 用户实体
+     */
+    SysUser getCurrentUser();
+
 
     /**
      * 生成不重复的随机账号（5-12位数字）
