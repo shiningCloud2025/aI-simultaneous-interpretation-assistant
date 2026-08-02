@@ -96,7 +96,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPassword(passwordEncoder.encode(dto.password()));
         user.setPhone(dto.phone());
         user.setEmail(dto.email());
-        user.setAvatar("https://gd-hbimg.huaban.com/248453c441723291d2fe2cd622181fcd3de7a56817ba-G1KfqQ_fw658");
+        // 头像：前端传了用前端，没传用默认
+        if (dto.avatar() != null && !dto.avatar().isBlank()) {
+            user.setAvatar(dto.avatar());
+        } else {
+            user.setAvatar("https://gd-hbimg.huaban.com/248453c441723291d2fe2cd622181fcd3de7a56817ba-G1KfqQ_fw658");
+        }
         user.setStatus(UserStatusEnum.ENABLED);
         user.setLastLoginTime(LocalDateTime.now());
         user.setLastLoginIp(WebUtil.getClientIp(request));

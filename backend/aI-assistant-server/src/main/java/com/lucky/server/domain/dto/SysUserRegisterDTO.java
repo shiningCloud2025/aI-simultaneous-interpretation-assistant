@@ -17,5 +17,6 @@ public record SysUserRegisterDTO(
         @Size(max = 20, message = "手机号长度不能超过20位") @Schema(description = "手机号，选填") String phone,
         @Email(message = "邮箱格式不正确") @Size(max = 128, message = "邮箱长度不能超过128位") @Schema(description = "邮箱，选填") String email,
         @Size(min = 6, max = 6, message = "短信验证码必须为6位") @Schema(description = "短信验证码，填手机时必填") String smsCaptcha,
-        @Size(min = 6, max = 6, message = "邮箱验证码必须为6位") @Schema(description = "邮箱验证码，填邮箱时必填") String emailCaptcha
+        @Size(min = 6, max = 6, message = "邮箱验证码必须为6位") @Schema(description = "邮箱验证码，填邮箱时必填") String emailCaptcha,
+        @Size(max = 2056, message = "头像URL长度不能超过2056位") @Schema(description = "头像URL，选填") String avatar
 ) {}
