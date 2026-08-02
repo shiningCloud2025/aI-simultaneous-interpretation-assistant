@@ -9,6 +9,8 @@ import com.lucky.server.common.jwt.JwtUtil;
 import com.lucky.server.common.util.WebUtil;
 import com.lucky.server.domain.dto.SysUserLoginDTO;
 import com.lucky.server.domain.dto.SysUserRegisterDTO;
+import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
+import com.lucky.server.domain.dto.SysUserUpdateDTO;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import com.lucky.server.mapper.SysUserMapper;
@@ -116,6 +118,108 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         return new SysUserLoginTokenVO(token);
+    }
+
+    @Override
+    public void updateProfile(SysUserUpdateDTO dto) {
+        SysUser currentUser = getCurrentUser();
+
+        // 改手机号
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            if (dto.phone().equals(currentUser.getPhone())) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "新手机号不能与原手机号相同");
+            }
+            if (dto.smsCaptcha() == null || dto.smsCaptcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写短信验证码");
+            }
+            sysUserSmsService.checkCode(dto.phone(), dto.smsCaptcha());
+            if (lambdaQuery().eq(SysUser::getPhone, dto.phone()).ne(SysUser::getId, currentUser.getId()).one() != null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号已被使用");
+            }
+        }
+
+        // 改邮箱
+        if (dto.email() != null && !dto.email().isBlank()) {
+            if (dto.email().equals(currentUser.getEmail())) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "新邮箱不能与原邮箱相同");
+            }
+            if (dto.emailCaptcha() == null || dto.emailCaptcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写邮箱验证码");
+            }
+            sysUserEmailService.checkCode(dto.email(), dto.emailCaptcha());
+            if (lambdaQuery().eq(SysUser::getEmail, dto.email()).ne(SysUser::getId, currentUser.getId()).one() != null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "邮箱已被使用");
+            }
+        }
+
+        // 构建更新
+        var update = lambdaUpdate().eq(SysUser::getId, currentUser.getId());
+        if (dto.username() != null && !dto.username().isBlank()) {
+            update.set(SysUser::getUsername, dto.username());
+        }
+        if (dto.password() != null && !dto.password().isBlank()) {
+            update.set(SysUser::getPassword, passwordEncoder.encode(dto.password()));
+        }
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            update.set(SysUser::getPhone, dto.phone());
+        }
+        if (dto.email() != null && !dto.email().isBlank()) {
+            update.set(SysUser::getEmail, dto.email());
+        }
+        if (dto.avatar() != null && !dto.avatar().isBlank()) {
+            update.set(SysUser::getAvatar, dto.avatar());
+        }
+        update.set(SysUser::getUpdateTime, LocalDateTime.now());
+        update.update();
+
+        // 删除验证码
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            sysUserSmsService.deleteCode(dto.phone());
+        }
+        if (dto.email() != null && !dto.email().isBlank()) {
+            sysUserEmailService.deleteCode(dto.email());
+        }
+    }
+
+    @Override
+    public void resetPassword(SysUserResetPasswordDTO dto) {
+        SysUser user;
+
+        // 通过手机号找回
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            if (dto.captcha() == null || dto.captcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写验证码");
+            }
+            sysUserSmsService.verifyCode(dto.phone(), dto.captcha());
+            user = lambdaQuery().eq(SysUser::getPhone, dto.phone()).one();
+            if (user == null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号未注册");
+            }
+        }
+        // 通过邮箱找回
+        else if (dto.email() != null && !dto.email().isBlank()) {
+            if (dto.captcha() == null || dto.captcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写验证码");
+            }
+            sysUserEmailService.verifyCode(dto.email(), dto.captcha());
+            user = lambdaQuery().eq(SysUser::getEmail, dto.email()).one();
+            if (user == null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "邮箱未注册");
+            }
+        } else {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写邮箱");
+        }
+
+        // 检查状态
+        if (user.getStatus() == UserStatusEnum.DISABLED) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已被禁用，无法重置密码");
+        }
+
+        // 重置密码
+        lambdaUpdate().eq(SysUser::getId, user.getId())
+                .set(SysUser::getPassword, passwordEncoder.encode(dto.newPassword()))
+                .set(SysUser::getUpdateTime, LocalDateTime.now())
+                .update();
     }
 
     @Override

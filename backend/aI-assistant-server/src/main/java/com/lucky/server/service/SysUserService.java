@@ -3,6 +3,8 @@ package com.lucky.server.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lucky.server.domain.dto.SysUserLoginDTO;
 import com.lucky.server.domain.dto.SysUserRegisterDTO;
+import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
+import com.lucky.server.domain.dto.SysUserUpdateDTO;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +31,22 @@ public interface SysUserService  extends IService<SysUser> {
      * @return Token
      */
     SysUserLoginTokenVO register(SysUserRegisterDTO dto, HttpServletRequest request);
+
+
+    /**
+     * 修改个人资料
+     *
+     * @param dto 修改信息
+     */
+    void updateProfile(SysUserUpdateDTO dto);
+
+    /**
+     * 忘记密码（通过手机/邮箱验证码重置）
+     *
+     * @param dto 重置信息
+     */
+    void resetPassword(SysUserResetPasswordDTO dto);
+
 
 
     /**

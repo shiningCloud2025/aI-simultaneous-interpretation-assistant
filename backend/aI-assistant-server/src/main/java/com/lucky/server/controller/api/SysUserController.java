@@ -3,6 +3,8 @@ package com.lucky.server.controller.api;
 import com.lucky.server.common.basic.BaseResult;
 import com.lucky.server.domain.dto.SysUserLoginDTO;
 import com.lucky.server.domain.dto.SysUserRegisterDTO;
+import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
+import com.lucky.server.domain.dto.SysUserUpdateDTO;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserInfoVO;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
@@ -37,6 +39,20 @@ public class SysUserController {
         return BaseResult.ok(sysUserService.register(dto, request));
     }
 
+    @PutMapping("/profile")
+    @Operation(summary = "修改个人资料")
+    public BaseResult<Void> updateProfile(@Valid @RequestBody SysUserUpdateDTO dto) {
+        sysUserService.updateProfile(dto);
+        return BaseResult.ok();
+    }
+
+
+    @PutMapping("/reset-password")
+    @Operation(summary = "忘记密码")
+    public BaseResult<Void> resetPassword(@Valid @RequestBody SysUserResetPasswordDTO dto) {
+        sysUserService.resetPassword(dto);
+        return BaseResult.ok();
+    }
 
 
     @GetMapping("/info")
