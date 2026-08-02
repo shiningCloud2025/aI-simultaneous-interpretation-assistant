@@ -87,4 +87,9 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         fileStorageService.delete(sysFile.getUrl());
         removeById(fileId);
     }
+
+    @Override
+    public List<SysFile> listByIds(List<Long> ids) {
+        return super.listByIds(ids);
+    }
 }

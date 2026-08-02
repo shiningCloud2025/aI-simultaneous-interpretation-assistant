@@ -1,7 +1,10 @@
 package com.lucky.server.service;
 
+import com.lucky.server.domain.entity.SysFile;
 import com.lucky.server.domain.vo.SysFileVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 文件 Service 接口
@@ -21,4 +24,11 @@ public interface SysFileService {
      * @param fileId 文件ID
      */
     void delete(Long fileId);
+
+    /**
+     * 根据ID列表查询文件
+     * @param ids 文件ID列表
+     * @return 文件列表
+     */
+    List<SysFile> listByIds(List<Long> ids);
 }
