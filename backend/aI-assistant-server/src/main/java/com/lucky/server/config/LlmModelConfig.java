@@ -22,6 +22,8 @@ public class LlmModelConfig {
     @Data
     public static class ProviderInfo {
         private String name;
+        private String endpoint;
+        private String testModel;
         private List<ModelInfo> models;
     }
 
