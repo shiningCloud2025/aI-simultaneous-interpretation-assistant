@@ -2,6 +2,7 @@ package com.lucky.server.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
+import com.lucky.server.common.enums.DeletedStatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -51,5 +52,5 @@ public class SysUserModelPreference implements Serializable {
 
     @TableField("deleted")
     @Schema(description = "逻辑删除：0=正常 1=删除")
-    private Integer deleted;
+    private DeletedStatusEnum deleted;
 }
