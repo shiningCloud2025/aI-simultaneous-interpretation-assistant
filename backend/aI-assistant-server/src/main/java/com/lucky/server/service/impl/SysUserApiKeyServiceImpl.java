@@ -9,6 +9,7 @@ import com.lucky.server.common.tester.LlmApiKeyTester;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.dto.SysUserApiKeyDTO;
 import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.domain.vo.SysUserApiKeyVO;
 import com.lucky.server.mapper.SysUserApiKeyMapper;
 import com.lucky.server.service.SysUserApiKeyService;
 import com.lucky.server.service.SysUserService;
@@ -64,12 +65,15 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
     }
 
     @Override
-    public List<SysUserApiKey> listApiKeys() {
+    public List<SysUserApiKeyVO> listApiKeys() {
         Long userId = sysUserService.getCurrentUser().getId();
         return lambdaQuery()
                 .eq(SysUserApiKey::getUserId, userId)
                 .eq(SysUserApiKey::getDeleted, DeletedStatusEnum.NORMAL)
-                .list();
+                .list()
+                .stream()
+                .map(SysUserApiKeyVO::from)
+                .toList();
     }
 
     @Override

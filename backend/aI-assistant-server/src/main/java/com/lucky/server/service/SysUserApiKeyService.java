@@ -1,7 +1,7 @@
 package com.lucky.server.service;
 
 import com.lucky.server.domain.dto.SysUserApiKeyDTO;
-import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.domain.vo.SysUserApiKeyVO;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public interface SysUserApiKeyService {
     void saveApiKey(SysUserApiKeyDTO dto);
 
     /** 查看当前用户所有 API Key */
-    List<SysUserApiKey> listApiKeys();
+    List<SysUserApiKeyVO> listApiKeys();
 
     /** 删除 API Key */
     void deleteApiKey(Long id);
