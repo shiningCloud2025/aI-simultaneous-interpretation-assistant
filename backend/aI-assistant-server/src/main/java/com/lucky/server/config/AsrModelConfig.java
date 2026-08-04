@@ -29,6 +29,7 @@ public class AsrModelConfig {
     public static class ModelInfo {
         private String name;
         private String display;
+        private String wsUrl;
         private List<String> languages;
     }
 }

@@ -13,9 +13,8 @@ public class AsrConfig {
 
     /** API Key */
     private String apiKey;
-    /** 模型名，默认 fun-asr-realtime */
-    @Builder.Default
-    private String model = "fun-asr-realtime";
+    /** 模型名 */
+    private String model ;
     /** 语言：ko/ja/en/zh，null=自动 */
     private String language;
     /** 音频格式，默认 pcm */
@@ -25,6 +24,5 @@ public class AsrConfig {
     @Builder.Default
     private int sampleRate = 16000;
     /** WebSocket 地址，不同地域不同 */
-    @Builder.Default
-    private String wsUrl = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
+    private String wsUrl;
 }
