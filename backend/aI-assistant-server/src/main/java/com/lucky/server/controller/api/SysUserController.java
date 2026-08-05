@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/sys/user")
+@RequestMapping("sys/user")
 @RequiredArgsConstructor
 @Tag(name="SysUserController",description = "系统用户控制器")
 public class SysUserController {

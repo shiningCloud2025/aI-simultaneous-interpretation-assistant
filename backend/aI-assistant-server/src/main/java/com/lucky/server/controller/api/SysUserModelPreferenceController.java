@@ -17,7 +17,7 @@ import java.util.List;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/user/model-preference")
+@RequestMapping("sys/user/model-preference")
 @RequiredArgsConstructor
 @Tag(name = "SysUserModelPreferenceController", description = "系统用户模型偏好控制器")
 public class SysUserModelPreferenceController {

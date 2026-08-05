@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/sys/user/sms")
+@RequestMapping("/sys/user/sms")
 @RequiredArgsConstructor
 @Tag(name = "SysUserSmsController", description = "系统用户短信控制器")
 public class SysUserSmsController {

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/sys/user/email")
+@RequestMapping("sys/user/email")
 @RequiredArgsConstructor
 @Tag(name = "SysUserEmailController", description = "系统用户邮箱控制器")
 public class SysUserEmailController {
