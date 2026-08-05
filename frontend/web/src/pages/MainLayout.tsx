@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../stores/appStore';
+import { useAppStore, api } from '../stores/appStore';
 import { Dashboard } from '../components/Dashboard';
 import { StaticTrans } from '../components/StaticTrans';
 import { RealTimeTrans } from '../components/RealTimeTrans';
@@ -10,29 +10,27 @@ import { GeneralSettings } from '../components/GeneralSettings';
 import { EduPPT } from '../components/EduPPT';
 import { EduWord } from '../components/EduWord';
 import { EduExcel } from '../components/EduExcel';
-import { EduCorrect } from '../components/EduCorrect';
 import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const navItems = [
   { group: '通用', items: [
     { id: 'dashboard', icon: '🏠', label: '仪表盘' },
-    { id: 'static-trans', icon: '📁', label: '静态转译' },
-    { id: 'translate', icon: '🔄', label: '实时转译' },
     { id: 'edu-ppt', icon: '📊', label: 'PPT 集成' },
     { id: 'edu-word', icon: '📝', label: 'Word 集成' },
     { id: 'edu-excel', icon: '📈', label: 'Excel 集成' },
+  ]},
+  { group: '智慧英语课堂-听力', items: [
+    { id: 'translate', icon: '🎧', label: '实时转译' },
+    { id: 'static-trans', icon: '📁', label: '静态转译' },
   ]},
   { group: '设置', items: [
     { id: 'audio', icon: '🎧', label: '音频设备' },
     { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
     { id: 'model-config', icon: '🧠', label: '模型配置' },
     { id: 'settings', icon: '⚙️', label: '通用设置' },
-  ]},
-  { group: 'TransFlow+ 教育解决方案', items: [
-    { id: 'edu-correct', icon: '✏️', label: '课堂纠错' },
   ]},
   { group: '其他', items: [
     { id: 'account', icon: '👤', label: '个人中心' },
@@ -44,22 +42,28 @@ const navItems = [
 const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'static-trans': StaticTrans, 'translate': RealTimeTrans,
   'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'model-config': ModelConfig, 'settings': GeneralSettings,
-  'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel, 'edu-correct': EduCorrect,
+  'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage,
 };
 
 const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'static-trans': '静态转译', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'model-config': '模型配置', 'settings': '通用设置',
-  'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成', 'edu-correct': '课堂纠错',
+  'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于',
 };
 
 export function MainLayout() {
-  const { user, activePanel, setActivePanel, logout } = useAppStore();
+  const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
   const nav = useNavigate();
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
+
+  useEffect(() => {
+    if (token && !user) {
+      api.getUserInfo().then(setUser).catch(() => { logout(); nav('/login'); });
+    }
+  }, []);
 
   const handleLogout = () => { logout(); nav('/login'); };
 
@@ -89,8 +93,8 @@ export function MainLayout() {
         </div>
         <div style={{ padding: '16px 12px', borderTop: '1px solid #f0efec' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>{user?.avatar || 'U'}</div>
-            <div style={{ fontSize: 12, color: '#333' }}>{user?.name || '未登录'}</div>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>{user?.username?.[0]?.toUpperCase() || 'U'}</div>
+            <div style={{ fontSize: 12, color: '#333' }}>{user?.username || '未登录'}</div>
           </div>
         </div>
       </div>

@@ -15,3 +15,7 @@ Thumbs.db
 
 # Env
 *.env
+
+# AI 本地记忆（不提交）
+.codebuddy/
+.agentscope/

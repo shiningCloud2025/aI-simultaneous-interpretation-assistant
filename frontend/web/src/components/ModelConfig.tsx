@@ -1,24 +1,114 @@
-import { useState } from 'react';
-import { Card, SettingRow, Select, Toggle } from './ui';
+import { useState, useEffect } from 'react';
+import { api } from '../stores/appStore';
+import { Card, SettingRow, Select } from './ui';
+
+interface ModelInfo {
+  name: string;
+  display: string;
+  languages?: string[];
+  inputs?: string[];
+}
+
+interface Provider {
+  key: string;
+  name: string;
+}
 
 export function ModelConfig() {
-  const [vad, setVad] = useState(true);
-  const [autoCorrect, setAutoCorrect] = useState(true);
+  const [asrProviders, setAsrProviders] = useState<Provider[]>([]);
+  const [llmProviders, setLlmProviders] = useState<Provider[]>([]);
+  const [asrModels, setAsrModels] = useState<ModelInfo[]>([]);
+  const [llmModels, setLlmModels] = useState<ModelInfo[]>([]);
+  const [asrProvider, setAsrProvider] = useState('');
+  const [llmProvider, setLlmProvider] = useState('');
+  const [asrModel, setAsrModel] = useState('');
+  const [llmModel, setLlmModel] = useState('');
+  const [toast, setToast] = useState('');
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
+
+  useEffect(() => {
+    // 加载厂商列表
+    fetch('/api/ai/asr/providers').then(r => r.json()).then(d => {
+      if (d.code === 200) setAsrProviders(d.data);
+    }).catch(() => {});
+    fetch('/api/ai/llm/providers').then(r => r.json()).then(d => {
+      if (d.code === 200) setLlmProviders(d.data);
+    }).catch(() => {});
+    // 加载推荐模型
+    fetch('/api/ai/asr/models').then(r => r.json()).then(d => {
+      if (d.code === 200) setAsrModels(d.data);
+    }).catch(() => {});
+    fetch('/api/ai/llm/models').then(r => r.json()).then(d => {
+      if (d.code === 200) setLlmModels(d.data);
+    }).catch(() => {});
+  }, []);
+
+  const loadAsrModels = async (provider: string) => {
+    setAsrProvider(provider);
+    try {
+      const res = await fetch(`/api/ai/asr/models?provider=${provider}`);
+      const d = await res.json();
+      if (d.code === 200) setAsrModels(d.data);
+    } catch (e) { showToast('加载失败'); }
+  };
+
+  const loadLlmModels = async (provider: string) => {
+    setLlmProvider(provider);
+    try {
+      const res = await fetch(`/api/ai/llm/models?provider=${provider}`);
+      const d = await res.json();
+      if (d.code === 200) setLlmModels(d.data);
+    } catch (e) { showToast('加载失败'); }
+  };
+
+  const savePreference = async (modelType: string, provider: string, modelName: string) => {
+    try {
+      await api.saveModelPreference({ modelType, provider, modelName });
+      showToast('已设为默认模型');
+    } catch (e: any) { showToast(e.message || '保存失败'); }
+  };
+
   return (
     <Card title="">
-      <div style={{ marginBottom: 24 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>语音识别 (ASR)</div>
-        <SettingRow label="ASR 模型" desc="将音频转为文字"><Select options={['Whisper Large v3', 'Whisper Medium', 'FunASR Paraformer', 'SenseVoice']} /></SettingRow>
-        <SettingRow label="识别语言" desc="默认识别的语种"><Select options={['中文', 'English', '日本語', '自动检测']} /></SettingRow>
-        <SettingRow label="VAD 静音检测" desc="自动切分语音段落"><Toggle on={vad} onClick={() => setVad(!vad)} /></SettingRow>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>语音识别 (ASR)</div>
+        <SettingRow label="厂商" desc="选择AI服务商">
+          <Select
+            value={asrProvider}
+            options={asrProviders.map(p => p.key)}
+            labels={Object.fromEntries(asrProviders.map(p => [p.key, p.name]))}
+            onChange={(v: string) => loadAsrModels(v)}
+          />
+        </SettingRow>
+        <SettingRow label="ASR 模型" desc="选择语音识别模型">
+          <Select
+            value={asrModel}
+            options={asrModels.map(m => m.name)}
+            labels={Object.fromEntries(asrModels.map(m => [m.name, m.display]))}
+            onChange={(v: string) => { setAsrModel(v); savePreference('ASR', asrProvider, v); }}
+          />
+        </SettingRow>
       </div>
-      <div style={{ marginBottom: 24 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>翻译</div>
-        <SettingRow label="翻译模型" desc="将识别文字翻译为目标语言"><Select options={['GPT-4o', 'GPT-4o-mini', 'Claude 3.5 Sonnet', 'DeepSeek V3']} /></SettingRow>
-        <SettingRow label="目标语言" desc="翻译结果语言"><Select options={['English', '中文', '日本語', '한국어']} /></SettingRow>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>大语言模型 (LLM)</div>
+        <SettingRow label="厂商" desc="选择AI服务商">
+          <Select
+            value={llmProvider}
+            options={llmProviders.map(p => p.key)}
+            labels={Object.fromEntries(llmProviders.map(p => [p.key, p.name]))}
+            onChange={(v: string) => loadLlmModels(v)}
+          />
+        </SettingRow>
+        <SettingRow label="LLM 模型" desc="选择翻译/纠错模型">
+          <Select
+            value={llmModel}
+            options={llmModels.map(m => m.name)}
+            labels={Object.fromEntries(llmModels.map(m => [m.name, m.display]))}
+            onChange={(v: string) => { setLlmModel(v); savePreference('LLM', llmProvider, v); }}
+          />
+        </SettingRow>
       </div>
-      <div><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>纠错</div>
-        <SettingRow label="纠错模型" desc="对翻译结果进行语法和语义修正"><Select options={['Claude 3.5 Sonnet', 'GPT-4o', '关闭纠错']} /></SettingRow>
-        <SettingRow label="自动纠错" desc="翻译完成后自动进行纠错"><Toggle on={autoCorrect} onClick={() => setAutoCorrect(!autoCorrect)} /></SettingRow>
-      </div>
+      {toast && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{toast}</div>}
     </Card>
   );
 }

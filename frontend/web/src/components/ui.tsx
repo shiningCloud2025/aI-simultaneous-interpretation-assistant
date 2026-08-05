@@ -37,10 +37,11 @@ export function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   );
 }
 
-export function Select({ options, value, onChange }: { options: string[]; value?: string; onChange?: (v: string) => void }) {
+export function Select({ options, value, onChange, labels }: { options: string[]; value?: string; onChange?: (v: string) => void; labels?: Record<string, string> }) {
   return (
     <select value={value} onChange={e => onChange?.(e.target.value)} style={{ padding: '6px 12px', border: '1px solid #e8e6e1', borderRadius: 8, fontSize: 12, color: '#555', background: '#fff', outline: 'none' }}>
-      {options.map(o => <option key={o}>{o}</option>)}
+      <option value="">请选择</option>
+      {options.map(o => <option key={o} value={o}>{labels?.[o] || o}</option>)}
     </select>
   );
 }
