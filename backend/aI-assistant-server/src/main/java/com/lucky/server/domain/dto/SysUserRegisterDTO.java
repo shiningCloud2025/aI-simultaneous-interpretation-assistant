@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
  */
 @Schema(description = "系统用户注册")
 public record SysUserRegisterDTO(
-        @NotBlank(message = "账号不能为空") @Size(min = 5, max = 12, message = "账号长度为5-12位") @Schema(description = "账号") String account,
+        @NotBlank(message = "账号不能为空") @Size(min = 5, max = 12, message = "账号长度为5-12位数字") @Pattern(regexp = "^[0-9]+$", message = "账号必须为纯数字") @Schema(description = "账号") String account,
         @NotBlank(message = "用户名不能为空") @Size(min = 1, max = 32, message = "用户名长度不能超过32位") @Schema(description = "用户名/昵称") String username,
         @NotBlank(message = "密码不能为空") @Size(min = 6, max = 26, message = "密码长度为6-26位") @Schema(description = "密码") String password,
         @Size(max = 20, message = "手机号长度不能超过20位") @Schema(description = "手机号，选填") String phone,
