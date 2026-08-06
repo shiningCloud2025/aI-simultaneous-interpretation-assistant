@@ -28,17 +28,17 @@ export function ModelConfig() {
 
   useEffect(() => {
     // 加载厂商列表
-    fetch('/api/ai/asr/providers').then(r => r.json()).then(d => {
+    fetch('/api/sys/user/ai/asr/providers').then(r => r.json()).then(d => {
       if (d.code === 200) setAsrProviders(d.data);
     }).catch(() => {});
-    fetch('/api/ai/llm/providers').then(r => r.json()).then(d => {
+    fetch('/api/sys/user/ai/llm/providers').then(r => r.json()).then(d => {
       if (d.code === 200) setLlmProviders(d.data);
     }).catch(() => {});
     // 加载推荐模型
-    fetch('/api/ai/asr/models').then(r => r.json()).then(d => {
+    fetch('/api/sys/user/ai/asr/models').then(r => r.json()).then(d => {
       if (d.code === 200) setAsrModels(d.data);
     }).catch(() => {});
-    fetch('/api/ai/llm/models').then(r => r.json()).then(d => {
+    fetch('/api/sys/user/ai/llm/models').then(r => r.json()).then(d => {
       if (d.code === 200) setLlmModels(d.data);
     }).catch(() => {});
   }, []);
@@ -46,7 +46,7 @@ export function ModelConfig() {
   const loadAsrModels = async (provider: string) => {
     setAsrProvider(provider);
     try {
-      const res = await fetch(`/api/ai/asr/models?provider=${provider}`);
+      const res = await fetch(`/api/sys/user/ai/asr/models?provider=${provider}`);
       const d = await res.json();
       if (d.code === 200) setAsrModels(d.data);
     } catch (e) { showToast('加载失败'); }
@@ -55,7 +55,7 @@ export function ModelConfig() {
   const loadLlmModels = async (provider: string) => {
     setLlmProvider(provider);
     try {
-      const res = await fetch(`/api/ai/llm/models?provider=${provider}`);
+      const res = await fetch(`/api/sys/user/ai/llm/models?provider=${provider}`);
       const d = await res.json();
       if (d.code === 200) setLlmModels(d.data);
     } catch (e) { showToast('加载失败'); }

@@ -84,6 +84,10 @@ export const api = {
     request<any>('/sys/user/feedback/page', { method: 'POST', body: JSON.stringify(data) }),
   getFeedbackDetail: (id: number) =>
     request<any>(`/sys/user/feedback/${id}`),
+  // 快捷键
+  getShortcuts: () => request<any[]>('/sys/user/shortcut/config'),
+  saveShortcuts: (data: { shortcuts: any[] }) =>
+    request<void>('/sys/user/shortcut/config', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 export const useAppStore = create<AppState>((set) => ({

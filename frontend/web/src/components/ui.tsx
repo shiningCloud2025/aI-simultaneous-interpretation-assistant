@@ -1,7 +1,7 @@
 export function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #f0efec', borderRadius: 14, padding: 20, marginBottom: 16 }}>
-      {title && <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 16 }}>{title}</div>}
+    <div className="card">
+      {title && <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>{title}</div>}
       {children}
     </div>
   );

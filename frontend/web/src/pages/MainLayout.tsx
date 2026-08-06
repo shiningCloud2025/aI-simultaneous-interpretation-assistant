@@ -6,7 +6,6 @@ import { RealTimeTrans } from '../components/RealTimeTrans';
 import { AudioSettings } from '../components/AudioSettings';
 import { ShortcutSettings } from '../components/ShortcutSettings';
 import { ModelConfig } from '../components/ModelConfig';
-import { GeneralSettings } from '../components/GeneralSettings';
 import { EduPPT } from '../components/EduPPT';
 import { EduWord } from '../components/EduWord';
 import { EduExcel } from '../components/EduExcel';
@@ -30,7 +29,6 @@ const navItems = [
     { id: 'audio', icon: '🎧', label: '音频设备' },
     { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
     { id: 'model-config', icon: '🧠', label: '模型配置' },
-    { id: 'settings', icon: '⚙️', label: '通用设置' },
   ]},
   { group: '其他', items: [
     { id: 'account', icon: '👤', label: '个人中心' },
@@ -41,14 +39,14 @@ const navItems = [
 
 const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'static-trans': StaticTrans, 'translate': RealTimeTrans,
-  'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'model-config': ModelConfig, 'settings': GeneralSettings,
+  'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'model-config': ModelConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage,
 };
 
 const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'static-trans': '静态转译', 'translate': '实时转译',
-  'audio': '音频设备', 'shortcuts': '快捷键', 'model-config': '模型配置', 'settings': '通用设置',
+  'audio': '音频设备', 'shortcuts': '快捷键', 'model-config': '模型配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于',
 };
@@ -58,9 +56,11 @@ export function MainLayout() {
   const nav = useNavigate();
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(!user);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
     if (token && !user) {
       setLoading(true);
       api.getUserInfo().then(u => { setUser(u); setLoading(false); }).catch(() => { logout(); nav('/login'); });
@@ -76,43 +76,45 @@ export function MainLayout() {
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       {/* 侧边栏 */}
-      <div style={{ width: 210, background: '#fff', borderRight: '1px solid #e8e6e1', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid #f0efec', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="sidebar">
+        <div className="sidebar-header">
           <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700 }}>E</div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>智慧英语课堂</span>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>智慧英语课堂</span>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {navItems.map((group) => (
             <div key={group.group} style={{ padding: '12px 12px 0' }}>
-              <div style={{ fontSize: 10, color: '#bbb', padding: '0 8px', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>{group.group}</div>
+              <div className="sidebar-group-title">{group.group}</div>
               {group.items.map((item) => (
-                <div key={item.id} onClick={() => setActivePanel(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: activePanel === item.id ? '#1a1a1a' : '#888', background: activePanel === item.id ? '#f0efec' : 'transparent', fontWeight: activePanel === item.id ? 500 : 400, marginBottom: 1, transition: 'all .1s' }}
-                  onMouseEnter={e => { if (activePanel !== item.id) (e.target as HTMLElement).style.background = '#f5f3f0'; }}
-                  onMouseLeave={e => { if (activePanel !== item.id) (e.target as HTMLElement).style.background = 'transparent'; }}
-                >{item.icon} {item.label}</div>
+                <div key={item.id} onClick={() => setActivePanel(item.id)} className={`sidebar-item ${activePanel === item.id ? 'active' : ''}`}>
+                  {item.icon} {item.label}
+                </div>
               ))}
             </div>
           ))}
         </div>
-        <div style={{ padding: '16px 12px', borderTop: '1px solid #f0efec' }}>
+        <div className="sidebar-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6 }}>
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>{user?.username?.[0]?.toUpperCase() || 'U'}</div>
-            <div style={{ fontSize: 12, color: '#333' }}>{user?.username || '未登录'}</div>
+            <div style={{ fontSize: 12 }}>{user?.username || '未登录'}</div>
           </div>
         </div>
       </div>
 
       {/* 内容区 */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ height: 50, borderBottom: '1px solid #e8e6e1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', background: '#fff' }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>{panelTitles[activePanel] || '仪表盘'}</span>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => showToast('桌面工具栏已就绪')} style={btn}>🪟 工具栏</button>
-            <button onClick={handleLogout} style={btn}>退出</button>
+        <div className="topbar">
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
+              <option value="light">☀️ 浅色</option>
+              <option value="dark">🌙 深色</option>
+            </select>
+            <button onClick={() => showToast('桌面工具栏已就绪')} className="btn">🪟 工具栏</button>
+            <button onClick={handleLogout} className="btn">退出</button>
           </div>
         </div>
-        <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
+        <div className="content">
           <PanelComponent />
         </div>
       </div>
