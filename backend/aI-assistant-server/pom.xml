@@ -209,6 +209,13 @@
             <version>5.6.231</version>
         </dependency>
 
+        <!-- validation注解 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+
 
 
     </dependencies>
