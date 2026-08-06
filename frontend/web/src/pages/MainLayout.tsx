@@ -78,8 +78,8 @@ export function MainLayout() {
       {/* 侧边栏 */}
       <div style={{ width: 210, background: '#fff', borderRight: '1px solid #e8e6e1', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '18px 20px', borderBottom: '1px solid #f0efec', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, background: '#2c2c2c', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff' }}>T</div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>TransFlow</span>
+          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700 }}>E</div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>智慧英语课堂</span>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {navItems.map((group) => (

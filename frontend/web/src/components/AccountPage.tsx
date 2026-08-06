@@ -1,24 +1,69 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
+
+type ModalType = 'profile' | 'password' | 'phone' | 'email' | null;
 
 export function AccountPage() {
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
-  const nav = useNavigate();
-  const [editing, setEditing] = useState(false);
+  const [modal, setModal] = useState<ModalType>(null);
   const [username, setUsername] = useState(user?.username || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [smsCaptcha, setSmsCaptcha] = useState('');
+  const [emailCaptcha, setEmailCaptcha] = useState('');
+  const [smsCount, setSmsCount] = useState(0);
+  const [emailCount, setEmailCount] = useState(0);
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
+  const openModal = (type: ModalType) => {
+    setUsername(user?.username || '');
+    setAvatar(user?.avatar || '');
+    setPassword(''); setConfirmPassword(''); setPhone(''); setEmail('');
+    setSmsCaptcha(''); setEmailCaptcha('');
+    setModal(type);
+  };
+
   const saveProfile = async () => {
     try {
-      await api.updateProfile({ username: username || undefined, avatar: avatar || undefined });
-      if (user) setUser({ ...user, username, avatar });
-      setEditing(false);
+      const body: any = {};
+      if (modal === 'profile') {
+        if (username && username !== user?.username) body.username = username;
+        if (avatar && avatar !== user?.avatar) body.avatar = avatar;
+      } else if (modal === 'password') {
+        if (!password) return showToast('请输入新密码');
+        if (password !== confirmPassword) return showToast('两次密码不一致');
+        body.password = password;
+      } else if (modal === 'phone') {
+        if (!phone) return showToast('请输入新手机号');
+        if (!smsCaptcha) return showToast('请输入短信验证码');
+        body.phone = phone;
+        body.smsCaptcha = smsCaptcha;
+      } else if (modal === 'email') {
+        if (!email) return showToast('请输入新邮箱');
+        if (!emailCaptcha) return showToast('请输入邮箱验证码');
+        body.email = email;
+        body.emailCaptcha = emailCaptcha;
+      }
+      await api.updateProfile(body);
+      if (user) setUser({ ...user, ...body });
+      setModal(null);
       showToast('保存成功');
     } catch (e: any) { showToast(e.message || '保存失败'); }
+  };
+
+  const sendSms = async () => {
+    if (smsCount > 0 || !phone) return;
+    try { await api.sendSmsCode(phone); showToast('验证码已发送'); setSmsCount(60); const t = setInterval(() => setSmsCount(p => { if (p <= 1) { clearInterval(t); return 0; } return p - 1; }), 1000); } catch (e: any) { showToast(e.message || '发送失败'); }
+  };
+
+  const sendEmailCode = async () => {
+    if (emailCount > 0 || !email) return;
+    try { await api.sendEmailCode(email); showToast('验证码已发送'); setEmailCount(60); const t = setInterval(() => setEmailCount(p => { if (p <= 1) { clearInterval(t); return 0; } return p - 1; }), 1000); } catch (e: any) { showToast(e.message || '发送失败'); }
   };
 
   if (!user) return null;
@@ -27,8 +72,8 @@ export function AccountPage() {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* 头像区 */}
       <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 600, overflow: 'hidden', boxShadow: '0 4px 20px rgba(102,126,234,.25)' }}>
-          {user.avatar ? <img src={user.avatar} style={{ width: 80, height: 80, objectFit: 'cover' }} /> : user.username?.[0]?.toUpperCase()}
+        <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', fontWeight: 600, overflow: 'hidden', boxShadow: '0 4px 24px rgba(102,126,234,.3)' }}>
+          {user.avatar ? <img src={user.avatar} style={{ width: 100, height: 100, objectFit: 'cover' }} /> : user.username?.[0]?.toUpperCase()}
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginTop: 16 }}>{user.username}</div>
       </div>
@@ -42,27 +87,64 @@ export function AccountPage() {
         <Row label="注册时间" value={user.createTime ? fmt(user.createTime) : '-'} />
       </div>
 
-      {/* 操作 */}
+      {/* 操作按钮 */}
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button onClick={() => setEditing(!editing)} style={menuBtn}>✏️ 编辑资料</button>
-        <button onClick={() => nav('/change-pwd')} style={menuBtn}>🔒 修改密码</button>
+        <button onClick={() => openModal('profile')} style={menuBtn}>✏️ 编辑资料</button>
+        <button onClick={() => openModal('password')} style={menuBtn}>🔒 修改密码</button>
+        <button onClick={() => openModal('phone')} style={menuBtn}>📱 换绑手机</button>
+        <button onClick={() => openModal('email')} style={menuBtn}>📧 换绑邮箱</button>
       </div>
 
-      {/* 编辑弹窗 */}
-      {editing && (
-        <div style={{ marginTop: 16, background: '#fff', border: '1px solid #f0efec', borderRadius: 14, padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 16 }}>编辑资料</div>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>用户名</div>
-            <input value={username} onChange={e => setUsername(e.target.value)} style={inp} placeholder="用户名" />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>头像URL</div>
-            <input value={avatar} onChange={e => setAvatar(e.target.value)} style={inp} placeholder="https://..." />
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={saveProfile} style={{ ...menuBtn, background: '#2c2c2c', color: '#fff', flex: 1 }}>保存</button>
-            <button onClick={() => { setUsername(user.username); setAvatar(user.avatar); setEditing(false); }} style={{ ...menuBtn, flex: 1 }}>取消</button>
+      {/* 悬浮编辑框 */}
+      {modal && (
+        <div onClick={() => setModal(null)} style={overlay}>
+          <div onClick={e => e.stopPropagation()} style={modalBox}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a', marginBottom: 24 }}>
+              {modal === 'profile' ? '编辑资料' : modal === 'password' ? '修改密码' : modal === 'phone' ? '换绑手机' : '换绑邮箱'}
+            </div>
+
+            {modal === 'profile' && (
+              <>
+                <Field label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} style={inp} placeholder="用户名" /></Field>
+                <Field label="头像URL"><input value={avatar} onChange={e => setAvatar(e.target.value)} style={inp} placeholder="https://..." /></Field>
+              </>
+            )}
+
+            {modal === 'password' && (
+              <>
+                <Field label="新密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} style={inp} placeholder="至少6位密码" /></Field>
+                <Field label="确认新密码"><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={inp} placeholder="再次输入新密码" /></Field>
+              </>
+            )}
+
+            {modal === 'phone' && (
+              <>
+                <Field label="新手机号"><input value={phone} onChange={e => setPhone(e.target.value)} style={inp} placeholder="请输入新手机号" /></Field>
+                <Field label="短信验证码">
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={smsCaptcha} onChange={e => setSmsCaptcha(e.target.value)} style={{ ...inp, flex: 1 }} placeholder="请输入验证码" />
+                    <button onClick={sendSms} style={captchaBtn(smsCount > 0)}>{smsCount > 0 ? smsCount + 's' : '获取'}</button>
+                  </div>
+                </Field>
+              </>
+            )}
+
+            {modal === 'email' && (
+              <>
+                <Field label="新邮箱"><input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="请输入新邮箱" /></Field>
+                <Field label="邮箱验证码">
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={emailCaptcha} onChange={e => setEmailCaptcha(e.target.value)} style={{ ...inp, flex: 1 }} placeholder="请输入验证码" />
+                    <button onClick={sendEmailCode} style={captchaBtn(emailCount > 0)}>{emailCount > 0 ? emailCount + 's' : '获取'}</button>
+                  </div>
+                </Field>
+              </>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button onClick={saveProfile} style={btnPrimary}>保存</button>
+              <button onClick={() => setModal(null)} style={btnCancel}>取消</button>
+            </div>
           </div>
         </div>
       )}
@@ -81,9 +163,20 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}</div>{children}</div>;
+}
+
 function fmt(t: string) {
   return new Date(t).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const modalBox: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: 28, width: 400, boxShadow: '0 12px 40px rgba(0,0,0,.15)' };
 const menuBtn: React.CSSProperties = { width: '100%', padding: '16px 24px', background: '#fff', border: '1px solid #f0efec', borderRadius: 12, fontSize: 15, color: '#555', cursor: 'pointer', textAlign: 'left' as const };
 const inp: React.CSSProperties = { width: '100%', padding: '10px 12px', background: '#f7f6f4', border: '1px solid transparent', borderRadius: 10, color: '#333', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+const btnPrimary: React.CSSProperties = { flex: 1, padding: 12, border: 'none', borderRadius: 10, background: '#2c2c2c', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' };
+const btnCancel: React.CSSProperties = { flex: 1, padding: 12, border: '1px solid #e0ded8', borderRadius: 10, background: '#fff', color: '#666', fontSize: 14, cursor: 'pointer' };
+function captchaBtn(disabled: boolean): React.CSSProperties {
+  return { padding: '10px 14px', background: '#f5f3f0', border: 'none', borderRadius: 10, fontSize: 13, color: disabled ? '#bbb' : '#666', cursor: disabled ? 'default' : 'pointer', whiteSpace: 'nowrap', fontWeight: 500 };
+}

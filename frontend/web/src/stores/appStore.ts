@@ -77,6 +77,13 @@ export const api = {
   testApiKey: (id: number) => request<void>(`/user/api-key/${id}/test`, { method: 'POST' }),
   // 模型偏好
   listModelPreferences: () => request<any[]>('/user/model-preference'),
+  // 反馈
+  submitFeedback: (data: { type: string; title: string; content: string }) =>
+    request<void>('/sys/user/feedback/submit', { method: 'POST', body: JSON.stringify(data) }),
+  getFeedbacks: (data: { page: number; size: number }) =>
+    request<any>('/sys/user/feedback/page', { method: 'POST', body: JSON.stringify(data) }),
+  getFeedbackDetail: (id: number) =>
+    request<any>(`/sys/user/feedback/${id}`),
 };
 
 export const useAppStore = create<AppState>((set) => ({
