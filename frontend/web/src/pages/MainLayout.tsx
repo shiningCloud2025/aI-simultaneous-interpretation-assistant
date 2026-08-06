@@ -55,6 +55,7 @@ export function MainLayout() {
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(!user);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   useEffect(() => {
@@ -91,11 +92,35 @@ export function MainLayout() {
             </div>
           ))}
         </div>
-        <div className="sidebar-footer">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6 }}>
+        <div className="sidebar-footer" style={{ position: 'relative' }}>
+          <div onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6, cursor: 'pointer' }}>
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>{user?.username?.[0]?.toUpperCase() || 'U'}</div>
             <div style={{ fontSize: 12 }}>{user?.username || '未登录'}</div>
           </div>
+          {showUserMenu && (
+            <>
+              <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+              <div style={{ position: 'absolute', bottom: '100%', left: 8, right: 8, background: '#fff', border: '1px solid #f0efec', borderRadius: 12, padding: 6, zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,.1)', marginBottom: 8 }}>
+                {[
+                  { id: 'account', icon: '👤', label: '个人中心' },
+                  { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
+                  { id: 'model-config', icon: '🧠', label: '模型配置' },
+                  { id: 'audio', icon: '🎧', label: '音频设备' },
+                  { id: 'help', icon: '❓', label: '帮助反馈' },
+                ].map(item => (
+                  <div key={item.id} onClick={() => { setActivePanel(item.id); setShowUserMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#555' }}
+                    onMouseEnter={e => (e.target as HTMLElement).style.background = '#f5f3f0'}
+                    onMouseLeave={e => (e.target as HTMLElement).style.background = 'transparent'}
+                  >{item.icon} {item.label}</div>
+                ))}
+                <div style={{ height: 1, background: '#f0efec', margin: '4px 0' }} />
+                <div onClick={() => { handleLogout(); setShowUserMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#e55c5c' }}
+                  onMouseEnter={e => (e.target as HTMLElement).style.background = '#fdf2f2'}
+                  onMouseLeave={e => (e.target as HTMLElement).style.background = 'transparent'}
+                >🚪 退出登录</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
