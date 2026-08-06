@@ -8,8 +8,8 @@ import { ChangePwdPage } from './pages/ChangePwdPage';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const user = useAppStore((s) => s.user);
-  if (!user) return <Navigate to="/login" replace />;
+  const token = useAppStore((s) => s.token);
+  if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 

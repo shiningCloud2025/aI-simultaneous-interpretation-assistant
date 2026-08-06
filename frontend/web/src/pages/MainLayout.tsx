@@ -57,15 +57,19 @@ export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
   const nav = useNavigate();
   const [toast, setToast] = useState('');
+  const [loading, setLoading] = useState(!user);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   useEffect(() => {
     if (token && !user) {
-      api.getUserInfo().then(setUser).catch(() => { logout(); nav('/login'); });
+      setLoading(true);
+      api.getUserInfo().then(u => { setUser(u); setLoading(false); }).catch(() => { logout(); nav('/login'); });
     }
   }, []);
 
   const handleLogout = () => { logout(); nav('/login'); };
+
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#999' }}>加载中...</div>;
 
   const PanelComponent = panelComponents[activePanel] || Dashboard;
 
