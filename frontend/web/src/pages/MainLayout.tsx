@@ -25,13 +25,11 @@ const navItems = [
     { id: 'translate', icon: '🎧', label: '实时转译' },
     { id: 'static-trans', icon: '📁', label: '静态转译' },
   ]},
-  { group: '设置', items: [
+  { group: '设置与个人', items: [
+    { id: 'account', icon: '👤', label: '个人中心' },
     { id: 'audio', icon: '🎧', label: '音频设备' },
     { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
     { id: 'model-config', icon: '🧠', label: '模型配置' },
-  ]},
-  { group: '其他', items: [
-    { id: 'account', icon: '👤', label: '个人中心' },
     { id: 'help', icon: '❓', label: '帮助反馈' },
     { id: 'about', icon: 'ℹ️', label: '关于' },
   ]},
