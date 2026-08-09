@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/sys/user/ai")
+@RequestMapping("sys/user/ai")
 @RequiredArgsConstructor
 @Tag(name = "AiModelController", description = "AI模型控制器")
 public class SysUserAiModelController {

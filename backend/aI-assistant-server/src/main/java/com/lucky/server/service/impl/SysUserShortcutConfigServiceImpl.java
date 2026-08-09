@@ -7,7 +7,9 @@ import com.lucky.server.domain.dto.SysUserShortcutConfigSaveDTO.ShortcutItem;
 import com.lucky.server.domain.entity.SysUserShortcutConfig;
 import com.lucky.server.domain.vo.SysUserShortcutConfigVO;
 import com.lucky.server.mapper.SysUserShortcutConfigMapper;
+import com.lucky.server.service.SysUserService;
 import com.lucky.server.service.SysUserShortcutConfigService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +27,13 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@AllArgsConstructor
 public class SysUserShortcutConfigServiceImpl extends ServiceImpl<SysUserShortcutConfigMapper, SysUserShortcutConfig> implements SysUserShortcutConfigService {
 
+    private SysUserService sysUserService;
     @Override
     public List<SysUserShortcutConfigVO> listByUserId() {
-        // TODO: 后续从 SecurityContext 获取当前用户ID
-        Long userId = null;
+        Long userId = sysUserService.getCurrentUser().getId();
         return lambdaQuery().eq(SysUserShortcutConfig::getUserId, userId).list()
                 .stream()
                 .map(e -> new SysUserShortcutConfigVO(e.getId(), e.getAction(), e.getKeyCombination()))
@@ -40,8 +43,7 @@ public class SysUserShortcutConfigServiceImpl extends ServiceImpl<SysUserShortcu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchSaveOrUpdate(List<ShortcutItem> dtos) {
-        // TODO: 后续从 SecurityContext 获取当前用户ID
-        Long userId = null;
+        Long userId = sysUserService.getCurrentUser().getId();
 
         List<SysUserShortcutConfig> existingList = lambdaQuery()
                 .eq(SysUserShortcutConfig::getUserId, userId).list();

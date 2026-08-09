@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/sys/user/feedback")
+@RequestMapping("sys/user/feedback")
 @RequiredArgsConstructor
 @Tag(name = "SysUserFeedbackController", description = "用户反馈")
 public class SysUserFeedbackController {

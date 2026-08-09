@@ -17,7 +17,7 @@ import java.util.List;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/user/term/library")
+@RequestMapping("sys/user/term/library")
 @RequiredArgsConstructor
 @Tag(name = "SysUserTermLibraryController", description = "系统用户术语库控制器")
 public class SysUserTermLibraryController {

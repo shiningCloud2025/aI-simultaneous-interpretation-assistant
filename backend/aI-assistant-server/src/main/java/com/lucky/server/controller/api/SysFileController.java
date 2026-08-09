@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/file")
+@RequestMapping("common/file")
 @RequiredArgsConstructor
 @Tag(name = "SysFileController", description = "文件控制器")
 public class SysFileController {

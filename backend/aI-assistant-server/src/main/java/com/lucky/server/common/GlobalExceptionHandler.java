@@ -4,6 +4,7 @@ import com.lucky.server.common.basic.BaseResult;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,7 +28,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public BaseResult<Void> handleValidationException(MethodArgumentNotValidException e){
         String msg = e.getBindingResult().getFieldErrors().stream()
-                .map(err -> err.getField() + ":" + err.getDefaultMessage())
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         return new BaseResult<>(ResultCodeEnum.VALIDATION_ERROR.getCode()
                 ,ResultCodeEnum.VALIDATION_ERROR.getMessage(),msg,null);

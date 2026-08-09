@@ -18,7 +18,7 @@ import java.util.List;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/user/api-key")
+@RequestMapping("sys/user/api-key")
 @RequiredArgsConstructor
 @Tag(name = "SysUserApiKeyController", description = "系统用户API Key控制器")
 public class SysUserApiKeyController {

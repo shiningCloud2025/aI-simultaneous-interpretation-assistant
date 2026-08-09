@@ -251,9 +251,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         .or().eq(SysUser::getEmail, keyword))
                 .one();
 
-        if (user == null || !passwordEncoder.matches(dto.password(), user.getPassword())) {
+        if (user == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号未注册，请先注册");
+        }
+        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号或密码错误");
         }
+
 
         if (user.getStatus() == UserStatusEnum.DISABLED) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已被禁用");

@@ -3,4 +3,30 @@ html, body, #root { width: 100%; height: 100%; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   background: #f5f3f0; color: #333;
+  transition: background .3s, color .3s;
 }
+.card { background: #fff; border: 1px solid #f0efec; border-radius: 14px; padding: 20px; margin-bottom: 16px; transition: background .3s, border-color .3s; }
+.btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; background: #f5f3f0; border: none; color: #666; cursor: pointer; }
+.theme-select { padding: 6px 10px; border: 1px solid #e8e6e1; border-radius: 8px; font-size: 12px; color: #333; background: #fff; outline: none; cursor: pointer; }
+.sidebar { width: 210px; background: #fff; border-right: 1px solid #e8e6e1; display: flex; flex-direction: column; flex-shrink: 0; transition: background .3s, border-color .3s; }
+.sidebar-header { padding: 18px 20px; border-bottom: 1px solid #f0efec; display: flex; align-items: center; gap: 10px; }
+.sidebar-group-title { font-size: 10px; color: #bbb; padding: 0 8px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.sidebar-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; color: #888; margin-bottom: 1px; transition: all .1s; }
+.sidebar-item:hover { background: #f5f3f0; }
+.sidebar-item.active { background: #f0efec; color: #1a1a1a; font-weight: 500; }
+.sidebar-footer { padding: 16px 12px; border-top: 1px solid #f0efec; }
+.topbar { height: 50px; border-bottom: 1px solid #e8e6e1; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #fff; transition: background .3s, border-color .3s; }
+.content { flex: 1; padding: 24px; overflow-y: auto; }
+
+[data-theme="dark"] body { background: #1a1a2e; color: #e0e0e0; }
+[data-theme="dark"] .card { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }
+[data-theme="dark"] .btn { background: #3a3a4e !important; color: #ccc !important; }
+[data-theme="dark"] .theme-select { background: #2a2a3e !important; color: #e0e0e0 !important; border-color: #3a3a4e !important; }
+[data-theme="dark"] .sidebar { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }
+[data-theme="dark"] .sidebar-header { border-color: #3a3a4e !important; }
+[data-theme="dark"] .sidebar-group-title { color: #888; }
+[data-theme="dark"] .sidebar-item { color: #ccc; }
+[data-theme="dark"] .sidebar-item:hover { background: #3a3a4e !important; }
+[data-theme="dark"] .sidebar-item.active { background: #3a3a4e !important; color: #fff !important; }
+[data-theme="dark"] .sidebar-footer { border-color: #3a3a4e !important; }
+[data-theme="dark"] .topbar { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }

@@ -10,6 +10,7 @@ import com.lucky.server.domain.entity.SysUserTermLibrary;
 import com.lucky.server.domain.vo.SysUserTermLibraryVO;
 import com.lucky.server.mapper.SysUserTermEntryMapper;
 import com.lucky.server.mapper.SysUserTermLibraryMapper;
+import com.lucky.server.service.SysUserService;
 import com.lucky.server.service.SysUserTermLibraryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +32,11 @@ import java.util.stream.Collectors;
 public class SysUserTermLibraryServiceImpl extends ServiceImpl<SysUserTermLibraryMapper, SysUserTermLibrary> implements SysUserTermLibraryService {
 
     private final SysUserTermEntryMapper termEntryMapper;
+    private final SysUserService sysUserService;
 
     @Override
     public List<SysUserTermLibraryVO> listByUserId() {
-        // TODO: 后续从 SecurityContext 获取当前用户ID
-        Long userId = null;
+        Long userId = sysUserService.getCurrentUser().getId();
 
         List<SysUserTermLibrary> libraries = lambdaQuery()
                 .eq(SysUserTermLibrary::getUserId, userId).list();
@@ -57,8 +58,7 @@ public class SysUserTermLibraryServiceImpl extends ServiceImpl<SysUserTermLibrar
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SysUserTermLibraryVO create(SysUserTermLibrarySaveDTO dto) {
-        // TODO: 后续从 SecurityContext 获取当前用户ID
-        Long userId = null;
+        Long userId = sysUserService.getCurrentUser().getId();
         LocalDateTime now = LocalDateTime.now();
 
         // 如果设为默认，先清掉其他默认

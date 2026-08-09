@@ -17,7 +17,7 @@ import java.util.List;
  * @author shiningCloud2025
  */
 @RestController
-@RequestMapping("api/user/shortcut/config")
+@RequestMapping("sys/user/shortcut/config")
 @RequiredArgsConstructor
 @Tag(name = "SysUserShortcutConfigController", description = "系统用户快捷键配置控制器")
 public class SysUserShortcutConfigController {
