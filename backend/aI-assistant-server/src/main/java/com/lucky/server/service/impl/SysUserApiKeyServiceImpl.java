@@ -118,4 +118,14 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
                 .set(SysUserApiKey::getLastTestTime, LocalDateTime.now())
                 .update();
     }
+
+    @Override
+    public SysUserApiKey getAvailableLlmKey() {
+        Long userId = sysUserService.getCurrentUser().getId();
+        return lambdaQuery()
+                .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.LLM)
+                .eq(SysUserApiKey::getStatus, 1) // 状态可用
+                .one();
+    }
 }
