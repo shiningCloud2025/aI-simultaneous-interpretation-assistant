@@ -2,6 +2,7 @@ package com.lucky.server.agent.listen;
 
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.entity.SysUserApiKey;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.service.SysUserApiKeyService;
@@ -25,11 +26,14 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class TranslateAgent {
 
+
     private final SysUserService sysUserService;
     private final SysUserApiKeyService sysUserApiKeyService;
     private final SysUserModelPreferenceService sysUserModelPreferenceService;
 
 
+
+    private final LlmModelConfig llmModelConfig;
     /** HarnessAgent 缓存（key = userId:sessionId） */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
     /**
@@ -68,6 +72,11 @@ public class TranslateAgent {
         String modelName = llmPreference.modelName();
 
         // 3. 查 baseUrl
+        LlmModelConfig.ProviderInfo providerInfo = llmModelConfig.getProviders().get(provider);
+        if (providerInfo == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "不支持的LLM厂商: " + provider);
+        }
+        String baseUrl = providerInfo.getEndpoint();
         // 4. 查术语库
         // 5. 构建模型
         // 6. 构建 system prompt
