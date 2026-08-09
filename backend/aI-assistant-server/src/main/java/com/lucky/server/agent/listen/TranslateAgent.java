@@ -55,21 +55,23 @@ public class TranslateAgent {
     private HarnessAgent buildAgent(){
         Long userId = sysUserService.getCurrentUser().getId();
 
-        // 1. 查 API Key
-        SysUserApiKey apiKeyEntity = sysUserApiKeyService.getAvailableLlmKey();
-        if (apiKeyEntity == null) {
-            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先配置可用的 LLM API Key");
-        }
-        String apiKey = apiKeyEntity.getApiKey();
-        String provider = apiKeyEntity.getProvider();
 
-        // 2. 查模型偏好
+
+        // 1. 查模型偏好
         List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences();
         SysUserModelPreferenceVO llmPreference = preferences.stream()
                 .filter(p -> "LLM".equals(p.modelType()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
         String modelName = llmPreference.modelName();
+        String provider = llmPreference.provider();  // 从偏好里拿厂商
+
+        // 2. 查 API Key
+        SysUserApiKey apiKeyEntity = sysUserApiKeyService.getAvailableLlmKey(provider);
+        if (apiKeyEntity == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先配置 " + provider + " 的可用 LLM API Key");
+        }
+        String apiKey = apiKeyEntity.getApiKey();
 
         // 3. 查 baseUrl
         LlmModelConfig.ProviderInfo providerInfo = llmModelConfig.getProviders().get(provider);

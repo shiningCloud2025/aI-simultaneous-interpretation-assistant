@@ -120,12 +120,15 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
     }
 
     @Override
-    public SysUserApiKey getAvailableLlmKey() {
+    public SysUserApiKey getAvailableLlmKey(String provider) {
         Long userId = sysUserService.getCurrentUser().getId();
         return lambdaQuery()
                 .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getProvider, provider)
                 .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.LLM)
-                .eq(SysUserApiKey::getStatus, 1) // 状态可用
+                .eq(SysUserApiKey::getStatus, 1)
                 .one();
     }
+
+
 }

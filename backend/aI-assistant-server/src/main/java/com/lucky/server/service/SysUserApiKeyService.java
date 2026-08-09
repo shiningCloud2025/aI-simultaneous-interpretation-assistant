@@ -29,6 +29,7 @@ public interface SysUserApiKeyService {
      *
      * @return API Key 实体，如果没有可用 Key 返回 null
      */
-    SysUserApiKey getAvailableLlmKey();
+    SysUserApiKey getAvailableLlmKey(String provider);
+
 
 }
