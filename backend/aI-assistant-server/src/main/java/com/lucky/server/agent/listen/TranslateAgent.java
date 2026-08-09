@@ -1,5 +1,10 @@
 package com.lucky.server.agent.listen;
 
+import com.lucky.server.common.basic.BusinessException;
+import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.service.SysUserApiKeyService;
+import com.lucky.server.service.SysUserModelPreferenceService;
 import com.lucky.server.service.SysUserService;
 import io.agentscope.harness.agent.HarnessAgent;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +24,8 @@ import java.util.function.Consumer;
 public class TranslateAgent {
 
     private final SysUserService sysUserService;
+    private final SysUserApiKeyService sysUserApiKeyService;
+    private final SysUserModelPreferenceService sysUserModelPreferenceService;
 
 
     /** HarnessAgent 缓存（key = userId:sessionId） */
@@ -43,6 +50,13 @@ public class TranslateAgent {
         Long userId = sysUserService.getCurrentUser().getId();
 
         // 1. 查 API Key
+        SysUserApiKey apiKeyEntity = sysUserApiKeyService.getAvailableLlmKey();
+        if (apiKeyEntity == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先配置可用的 LLM API Key");
+        }
+        String apiKey = apiKeyEntity.getApiKey();
+        String provider = apiKeyEntity.getProvider();
+
         // 2. 查模型偏好
         // 3. 查 baseUrl
         // 4. 查术语库
