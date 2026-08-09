@@ -3,6 +3,7 @@ package com.lucky.server.agent.listen;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.service.SysUserApiKeyService;
 import com.lucky.server.service.SysUserModelPreferenceService;
 import com.lucky.server.service.SysUserService;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -58,6 +60,13 @@ public class TranslateAgent {
         String provider = apiKeyEntity.getProvider();
 
         // 2. 查模型偏好
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences();
+        SysUserModelPreferenceVO llmPreference = preferences.stream()
+                .filter(p -> "LLM".equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+        String modelName = llmPreference.modelName();
+
         // 3. 查 baseUrl
         // 4. 查术语库
         // 5. 构建模型
