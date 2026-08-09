@@ -68,15 +68,15 @@ export const api = {
     request<void>('/sys/user/profile', { method: 'PUT', body: JSON.stringify(data) }),
   // 设置模型偏好
   saveModelPreference: (data: { modelType: string; provider: string; modelName: string }) =>
-    request<void>('/user/model-preference', { method: 'PUT', body: JSON.stringify(data) }),
+    request<void>('/sys/user/model-preference', { method: 'PUT', body: JSON.stringify(data) }),
   // API Key 管理
-  listApiKeys: () => request<any[]>('/user/api-key'),
+  listApiKeys: () => request<any[]>('/sys/user/api-key'),
   saveApiKey: (data: { provider: string; keyType: string; apiKey: string }) =>
-    request<void>('/user/api-key', { method: 'POST', body: JSON.stringify(data) }),
-  deleteApiKey: (id: number) => request<void>(`/user/api-key/${id}`, { method: 'DELETE' }),
-  testApiKey: (id: number) => request<void>(`/user/api-key/${id}/test`, { method: 'POST' }),
+    request<void>('/sys/user/api-key', { method: 'POST', body: JSON.stringify(data) }),
+  deleteApiKey: (id: number) => request<void>(`/sys/user/api-key/${id}`, { method: 'DELETE' }),
+  testApiKey: (id: number) => request<void>(`/sys/user/api-key/${id}/test`, { method: 'POST' }),
   // 模型偏好
-  listModelPreferences: () => request<any[]>('/user/model-preference'),
+  listModelPreferences: () => request<any[]>('/sys/user/model-preference'),
   // 反馈
   submitFeedback: (data: { type: string; title: string; content: string }) =>
     request<void>('/sys/user/feedback/submit', { method: 'POST', body: JSON.stringify(data) }),

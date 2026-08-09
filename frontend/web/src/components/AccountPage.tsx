@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore, api } from '../stores/appStore';
 
 type ModalType = 'profile' | 'password' | 'phone' | 'email' | null;
@@ -6,6 +6,7 @@ type ModalType = 'profile' | 'password' | 'phone' | 'email' | null;
 export function AccountPage() {
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
+  const token = useAppStore((s) => s.token);
   const [modal, setModal] = useState<ModalType>(null);
   const [username, setUsername] = useState(user?.username || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
@@ -18,7 +19,16 @@ export function AccountPage() {
   const [smsCount, setSmsCount] = useState(0);
   const [emailCount, setEmailCount] = useState(0);
   const [toast, setToast] = useState('');
+  const [loading, setLoading] = useState(false);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
+
+  // 进入页面时主动拉取用户信息
+  useEffect(() => {
+    if (!user && token) {
+      setLoading(true);
+      api.getUserInfo().then(u => setUser(u)).catch(() => {}).finally(() => setLoading(false));
+    }
+  }, []);
 
   const openModal = (type: ModalType) => {
     setUsername(user?.username || '');
@@ -66,7 +76,13 @@ export function AccountPage() {
     try { await api.sendEmailCode(email); showToast('验证码已发送'); setEmailCount(60); const t = setInterval(() => setEmailCount(p => { if (p <= 1) { clearInterval(t); return 0; } return p - 1; }), 1000); } catch (e: any) { showToast(e.message || '发送失败'); }
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999', fontSize: 14 }}>
+        {loading ? '加载中...' : '获取用户信息失败，请刷新页面'}
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>

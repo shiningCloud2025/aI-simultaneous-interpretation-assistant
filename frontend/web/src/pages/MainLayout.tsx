@@ -5,13 +5,14 @@ import { StaticTrans } from '../components/StaticTrans';
 import { RealTimeTrans } from '../components/RealTimeTrans';
 import { AudioSettings } from '../components/AudioSettings';
 import { ShortcutSettings } from '../components/ShortcutSettings';
-import { ModelConfig } from '../components/ModelConfig';
+import { ApiKeyConfig } from '../components/ApiKeyConfig';
 import { EduPPT } from '../components/EduPPT';
 import { EduWord } from '../components/EduWord';
 import { EduExcel } from '../components/EduExcel';
 import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
+import { TermLibraryPage } from '../components/TermLibraryPage';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -29,7 +30,8 @@ const navItems = [
     { id: 'account', icon: '👤', label: '个人中心' },
     { id: 'audio', icon: '🎧', label: '音频设备' },
     { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
-    { id: 'model-config', icon: '🧠', label: '模型配置' },
+    { id: 'api-key', icon: '🔑', label: 'API Key 配置' },
+    { id: 'term-library', icon: '📚', label: '术语库' },
     { id: 'help', icon: '❓', label: '帮助反馈' },
     { id: 'about', icon: 'ℹ️', label: '关于' },
   ]},
@@ -37,16 +39,16 @@ const navItems = [
 
 const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'static-trans': StaticTrans, 'translate': RealTimeTrans,
-  'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'model-config': ModelConfig,
+  'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'api-key': ApiKeyConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
-  'account': AccountPage, 'help': HelpPage, 'about': AboutPage,
+  'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
 };
 
 const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'static-trans': '静态转译', 'translate': '实时转译',
-  'audio': '音频设备', 'shortcuts': '快捷键', 'model-config': '模型配置',
+  'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
-  'account': '个人中心', 'help': '帮助反馈', 'about': '关于',
+  'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
 };
 
 export function MainLayout() {
@@ -104,7 +106,7 @@ export function MainLayout() {
                 {[
                   { id: 'account', icon: '👤', label: '个人中心' },
                   { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
-                  { id: 'model-config', icon: '🧠', label: '模型配置' },
+                  { id: 'api-key', icon: '🔑', label: 'API Key 配置' },
                   { id: 'audio', icon: '🎧', label: '音频设备' },
                   { id: 'help', icon: '❓', label: '帮助反馈' },
                 ].map(item => (

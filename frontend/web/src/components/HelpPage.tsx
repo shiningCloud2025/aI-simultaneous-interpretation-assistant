@@ -77,7 +77,7 @@ export function HelpPage() {
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       {/* 顶部 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>意见反馈</div>
