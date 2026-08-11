@@ -8,6 +8,8 @@ import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.SysUserTermEntryVO;
 import com.lucky.server.domain.vo.SysUserTermLibraryVO;
 import com.lucky.server.service.*;
+import io.agentscope.core.model.GenerateOptions;
+import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import io.agentscope.harness.agent.HarnessAgent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,8 +104,19 @@ public class TranslateAgent {
         }
 
         // 5. 构建模型
-
+        OpenAIChatModel model = OpenAIChatModel.builder()
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .baseUrl(baseUrl)
+                .stream(true)
+                .generateOptions(
+                        GenerateOptions.builder()
+                                .temperature(0.3)
+                                .build()
+                )
+                .build();
         // 6. 构建 system prompt
+
         // 7. 构建 HarnessAgent
 
         return null; // TODO
