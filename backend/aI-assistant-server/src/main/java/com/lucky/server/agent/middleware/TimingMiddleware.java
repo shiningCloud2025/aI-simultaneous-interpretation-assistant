@@ -6,12 +6,15 @@ import io.agentscope.core.event.AgentEvent;
 import io.agentscope.core.middleware.MiddlewareBase;
 import io.agentscope.core.middleware.ModelCallInput;
 import java.util.function.Function;
+
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 /**
  * 计时 middleware:下面的 middleware 记录每次模型调用的耗时：
  * @author shiningCloud2025
  */
+@Slf4j
 public class TimingMiddleware implements MiddlewareBase {
     @Override
     public Flux<AgentEvent> onModelCall(
@@ -20,8 +23,9 @@ public class TimingMiddleware implements MiddlewareBase {
         return next.apply(input)
                 .doFinally(sig -> {
                     long ms = (System.nanoTime() - start) / 1_000_000;
-                    System.out.println(
-                            "[timing] " + agent.getName() + ": " + ms + "ms");
+//                    System.out.println(
+//                            "[timing] " + agent.getName() + ": " + ms + "ms");
+                    log.info( "[timing] " + agent.getName() + ": " + ms + "ms");
                 });
     }
 }
