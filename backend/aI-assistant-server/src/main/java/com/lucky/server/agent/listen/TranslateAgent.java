@@ -9,6 +9,9 @@ import com.lucky.server.domain.vo.SysUserTermEntryVO;
 import com.lucky.server.domain.vo.SysUserTermLibraryVO;
 import com.lucky.server.service.*;
 import io.agentscope.core.model.GenerateOptions;
+import io.agentscope.core.tool.Toolkit;
+import io.agentscope.core.tool.builtin.TodoTools;
+import io.agentscope.core.tracing.OtelTracingMiddleware;
 import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import io.agentscope.harness.agent.HarnessAgent;
 import lombok.RequiredArgsConstructor;
@@ -129,11 +132,17 @@ public class TranslateAgent {
         if (!termGlossary.isEmpty()) {
             sysPrompt += "\n术语对照表（必须使用）：\n" + termGlossary;
         }
+
+        Toolkit toolkit = new Toolkit();
+        toolkit.registerTool(new TodoTools());
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()
                 .name("translator-" + userId)
                 .sysPrompt(sysPrompt)
                 .model(model)
+                .middlewares(List.of(new OtelTracingMiddleware()))
+                .enableTaskList(true)
+                .toolkit(toolkit)
                 .build();
     }
 }
