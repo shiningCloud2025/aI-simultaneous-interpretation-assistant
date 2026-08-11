@@ -130,7 +130,10 @@ public class TranslateAgent {
             sysPrompt += "\n术语对照表（必须使用）：\n" + termGlossary;
         }
         // 7. 构建 HarnessAgent
-
-        return null; // TODO
+        return HarnessAgent.builder()
+                .name("translator-" + userId)
+                .sysPrompt(sysPrompt)
+                .model(model)
+                .build();
     }
 }
