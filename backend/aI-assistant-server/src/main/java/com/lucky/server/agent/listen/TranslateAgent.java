@@ -1,5 +1,6 @@
 package com.lucky.server.agent.listen;
 
+import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.LlmModelConfig;
@@ -140,7 +141,7 @@ public class TranslateAgent {
                 .name("translator-" + userId)
                 .sysPrompt(sysPrompt)
                 .model(model)
-                .middlewares(List.of(new OtelTracingMiddleware()))
+                .middlewares(List.of(new OtelTracingMiddleware(), new TimingMiddleware()))
                 .enableTaskList(true)
                 .toolkit(toolkit)
                 .build();
