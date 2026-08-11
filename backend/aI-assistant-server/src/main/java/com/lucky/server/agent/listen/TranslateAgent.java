@@ -116,7 +116,19 @@ public class TranslateAgent {
                 )
                 .build();
         // 6. 构建 system prompt
+        String sysPrompt = """
+            你是实时翻译助手，翻译方向：%s。
+            
+            要求：
+            1. 直接输出译文，不要任何解释或额外内容
+            2. 只翻译本次新增内容，已翻译部分不重复
+            3. 输入不完整时只翻译已确定的词，不猜测后续
+            4. 保持原文语序，逐句对应
+         """.formatted(direction);
 
+        if (!termGlossary.isEmpty()) {
+            sysPrompt += "\n术语对照表（必须使用）：\n" + termGlossary;
+        }
         // 7. 构建 HarnessAgent
 
         return null; // TODO
