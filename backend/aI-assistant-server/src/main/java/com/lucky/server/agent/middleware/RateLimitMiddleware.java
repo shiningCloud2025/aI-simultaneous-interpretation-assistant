@@ -11,8 +11,7 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 /**
- * 计时 middleware
- * 下面的 middleware 记录每次模型调用的耗时：
+ * 限速 middleware:下面的 middleware 在两次模型调用之间强制留出最小间隔：
  * @author shiningCloud2025
  */
 public class RateLimitMiddleware implements MiddlewareBase {

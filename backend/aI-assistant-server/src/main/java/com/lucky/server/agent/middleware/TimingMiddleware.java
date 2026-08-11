@@ -9,8 +9,7 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 
 /**
- * 计时 middleware
- * 下面的 middleware 记录每次模型调用的耗时：
+ * 计时 middleware:下面的 middleware 记录每次模型调用的耗时：
  * @author shiningCloud2025
  */
 public class TimingMiddleware implements MiddlewareBase {
