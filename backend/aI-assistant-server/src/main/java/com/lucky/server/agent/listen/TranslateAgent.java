@@ -10,6 +10,8 @@ import com.lucky.server.domain.vo.SysUserTermEntryVO;
 import com.lucky.server.domain.vo.SysUserTermLibraryVO;
 import com.lucky.server.service.*;
 import io.agentscope.core.model.GenerateOptions;
+import io.agentscope.core.permission.PermissionContextState;
+import io.agentscope.core.permission.PermissionMode;
 import io.agentscope.core.tool.Toolkit;
 import io.agentscope.core.tool.builtin.TodoTools;
 import io.agentscope.core.tracing.OtelTracingMiddleware;
@@ -136,6 +138,12 @@ public class TranslateAgent {
 
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new TodoTools());
+
+        // 自动放行工作目录内的文件操作,主要是因为目前是在规定任务内所以目前几乎无危险,可以带给用户更好体验
+        PermissionContextState permCtx = PermissionContextState.builder()
+                .mode(PermissionMode.BYPASS)
+                .build();
+
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()
                 .name("translator-" + userId)
@@ -144,6 +152,7 @@ public class TranslateAgent {
                 .middlewares(List.of(new OtelTracingMiddleware(), new TimingMiddleware()))
                 .enableTaskList(true)
                 .toolkit(toolkit)
+                .permissionContext(permCtx)
                 .build();
     }
 }
