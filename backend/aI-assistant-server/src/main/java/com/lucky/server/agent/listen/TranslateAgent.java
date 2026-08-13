@@ -12,15 +12,18 @@ import com.lucky.server.service.*;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
+import io.agentscope.core.state.AgentStateStore;
 import io.agentscope.core.tool.Toolkit;
 import io.agentscope.core.tool.builtin.TodoTools;
 import io.agentscope.core.tracing.OtelTracingMiddleware;
 import io.agentscope.extensions.model.openai.OpenAIChatModel;
+import io.agentscope.extensions.mysql.state.MysqlAgentStateStore;
 import io.agentscope.harness.agent.HarnessAgent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +43,7 @@ public class TranslateAgent {
     private final SysUserModelPreferenceService sysUserModelPreferenceService;
     private final SysUserTermLibraryService sysUserTermLibraryService;
     private final SysUserTermEntryService sysUserTermEntryService;
-
+    private final DataSource dataSource;
 
 
 
@@ -144,6 +147,9 @@ public class TranslateAgent {
                 .mode(PermissionMode.BYPASS)
                 .build();
 
+        // 构建 MySQL 状态存储（自动建库建表）
+        AgentStateStore stateStore = new MysqlAgentStateStore(dataSource,true);
+
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()
                 .name("translator-" + userId)
@@ -153,6 +159,7 @@ public class TranslateAgent {
                 .enableTaskList(true)
                 .toolkit(toolkit)
                 .permissionContext(permCtx)
+                .stateStore(stateStore)
                 .build();
     }
 }
