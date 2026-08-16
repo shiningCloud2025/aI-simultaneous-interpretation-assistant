@@ -2,6 +2,7 @@ package com.lucky.server.agent.listen;
 
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
+import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.entity.SysUserApiKey;
@@ -104,7 +105,7 @@ public class TranslateAgent {
         // 1. 查模型偏好
         List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
         SysUserModelPreferenceVO llmPreference = preferences.stream()
-                .filter(p -> "LLM".equals(p.modelType()))
+                .filter(p ->  ApiKeyTypeEnum.LLM.equals(p.modelType()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
         String modelName = llmPreference.modelName();
