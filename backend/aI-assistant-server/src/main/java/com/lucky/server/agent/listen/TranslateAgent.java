@@ -188,6 +188,8 @@ public class TranslateAgent {
                         - 可丢弃：无关闲聊、临时性对话内容、重复信息
                         - 术语按领域分类，相同术语只保留一条
                         """)
+                        // 后台合并间隔30分钟
+                        .consolidationMinGap(Duration.ofMinutes(30))
                         .build()
                 )
                 .build();
