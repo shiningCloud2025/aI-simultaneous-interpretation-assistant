@@ -51,10 +51,8 @@ public class TranslateAgent {
     private final SysUserTermLibraryService sysUserTermLibraryService;
     private final SysUserTermEntryService sysUserTermEntryService;
     private final DataSource dataSource;
-
-
-
     private final LlmModelConfig llmModelConfig;
+
     /**
      * 实时翻译
      *
