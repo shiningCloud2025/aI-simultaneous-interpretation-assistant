@@ -73,10 +73,12 @@ public class TranslateAgent {
         } catch (BusinessException e) {
             log.error("构建翻译 Agent 失败: {}", e.getMessage());
             onToken.accept("[翻译失败: " + e.getMessage() + "]");
+            onComplete.run();
             return;
         }catch (Exception e){
             log.error("构建翻译Agent出现系统异常: {}", e.getMessage());
             onToken.accept("[系统异常: " + e.getMessage() + "]");
+            onComplete.run();
             return;
         }
 
@@ -95,7 +97,11 @@ public class TranslateAgent {
                     log.error("翻译失败", e);
                     onToken.accept("[翻译失败]");
                 })
-                .doFinally(sig->agent.close())
+                .doFinally(sig -> {
+                    agent.close();
+                    onComplete.run();
+                })
+
                 .subscribe();
 
 
