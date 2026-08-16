@@ -140,5 +140,15 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
                 .one();
     }
 
+    @Override
+    public SysUserApiKey getAvailableAsrKey(Long userId, String provider) {
+        return lambdaQuery()
+                .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getProvider, provider)
+                .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.ASR)
+                .eq(SysUserApiKey::getStatus, 1)
+                .one();
+    }
+
 
 }
