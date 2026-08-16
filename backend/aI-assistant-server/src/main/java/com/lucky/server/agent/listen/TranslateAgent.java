@@ -194,7 +194,8 @@ public class TranslateAgent {
                         .dailyFileRetentionDays(30)
                         // 会话日志 45 天后清理
                         .sessionRetentionDays(45)
-
+                        // MEMORY.md 上限 12000
+                        .consolidationMaxTokens(12_000)
                         .build()
                 )
                 .build();
