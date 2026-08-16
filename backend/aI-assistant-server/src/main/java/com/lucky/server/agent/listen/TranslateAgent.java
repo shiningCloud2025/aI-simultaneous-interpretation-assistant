@@ -190,6 +190,9 @@ public class TranslateAgent {
                         """)
                         // 后台合并间隔30分钟
                         .consolidationMinGap(Duration.ofMinutes(30))
+                        // 日流水账 30 天后归档
+                        .dailyFileRetentionDays(30)
+
                         .build()
                 )
                 .build();
