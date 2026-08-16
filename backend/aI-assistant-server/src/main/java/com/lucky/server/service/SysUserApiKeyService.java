@@ -31,5 +31,14 @@ public interface SysUserApiKeyService {
      */
     SysUserApiKey getAvailableLlmKey(String provider);
 
+    /**
+     * 获取指定用户可用的 LLM API Key（真实Key，仅内部使用）
+     *
+     * @param userId   用户ID
+     * @param provider 厂商
+     * @return API Key 实体，如果没有可用 Key 返回 null
+     */
+    SysUserApiKey getAvailableLlmKey(Long userId, String provider);
+
 
 }
