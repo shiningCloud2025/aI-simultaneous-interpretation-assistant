@@ -19,6 +19,7 @@ import io.agentscope.core.tracing.OtelTracingMiddleware;
 import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import io.agentscope.extensions.mysql.state.MysqlAgentStateStore;
 import io.agentscope.harness.agent.HarnessAgent;
+import io.agentscope.harness.agent.memory.compaction.CompactionConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -160,6 +161,13 @@ public class TranslateAgent {
                 .toolkit(toolkit)
                 .permissionContext(permCtx)
                 .stateStore(stateStore)
+                .compaction(CompactionConfig.builder()
+                        // 触发消息数
+                        .triggerMessages(30)
+                        // 保留消息数
+                        .keepMessages(10)
+                        .build()
+                )
                 .build();
     }
 }
