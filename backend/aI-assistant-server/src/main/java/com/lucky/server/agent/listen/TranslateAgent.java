@@ -45,7 +45,6 @@ import java.util.function.Consumer;
 public class TranslateAgent {
 
 
-    private final SysUserService sysUserService;
     private final SysUserApiKeyService sysUserApiKeyService;
     private final SysUserModelPreferenceService sysUserModelPreferenceService;
     private final SysUserTermLibraryService sysUserTermLibraryService;
@@ -61,10 +60,10 @@ public class TranslateAgent {
      * @param sourceText ASR识别的最新原文
      * @param onToken    译文token回调（每个token推送给前端，实现打字机效果）
      */
-    public void translate(String sessionId, String sourceText, String direction, Consumer<String> onToken){
+    public void translate(Long userId,String sessionId, String sourceText, String direction, Consumer<String> onToken){
         HarnessAgent agent;
         try {
-            agent = buildAgent(direction);
+            agent = buildAgent(userId,direction);
         } catch (BusinessException e) {
             log.error("构建翻译 Agent 失败: {}", e.getMessage());
             onToken.accept("[翻译失败: " + e.getMessage() + "]");
@@ -75,7 +74,6 @@ public class TranslateAgent {
             return;
         }
 
-        Long userId = sysUserService.getCurrentUser().getId();
         RuntimeContext ctx = RuntimeContext.builder()
                 .userId(String.valueOf(userId))
                 .sessionId(sessionId)
@@ -101,10 +99,10 @@ public class TranslateAgent {
      * 构建 HarnessAgent
      * 根据当前用户配置（API Key、模型偏好、术语库）创建翻译 Agent
      */
-    private HarnessAgent buildAgent(String direction){
+    private HarnessAgent buildAgent(Long userId, String direction) {
 
         // 1. 查模型偏好
-        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences();
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
         SysUserModelPreferenceVO llmPreference = preferences.stream()
                 .filter(p -> "LLM".equals(p.modelType()))
                 .findFirst()
@@ -113,7 +111,7 @@ public class TranslateAgent {
         String provider = llmPreference.provider();  // 从偏好里拿厂商
 
         // 2. 查 API Key
-        SysUserApiKey apiKeyEntity = sysUserApiKeyService.getAvailableLlmKey(provider);
+        SysUserApiKey apiKeyEntity = sysUserApiKeyService.getAvailableLlmKey(userId,provider);
         if (apiKeyEntity == null) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先配置 " + provider + " 的可用 LLM API Key");
         }
@@ -127,7 +125,7 @@ public class TranslateAgent {
         String baseUrl = providerInfo.getEndpoint();
         // 4. 查术语库
         String termGlossary = "";
-        List<SysUserTermLibraryVO> libraries = sysUserTermLibraryService.listByUserId();
+        List<SysUserTermLibraryVO> libraries = sysUserTermLibraryService.listByUserId(userId);
         SysUserTermLibraryVO defaultLib = libraries.stream()
                 .filter(lib -> lib.isDefault() == 1)
                 .findFirst().orElse(null);
