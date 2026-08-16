@@ -193,6 +193,98 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         };
     }
 
+    /**
+     * 处理 ASR 识别出的文本：推送原文 + 计算增量 + 串行合并翻译
+     *
+     * @param ctx  会话上下文
+     * @param text ASR 最新完整文本（中间结果或最终结果）
+     */
+    private void handleAsrText(SessionContext ctx, String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
+        // 1. 推送原文给前端
+        sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
+
+        // 2. 计算增量（去掉已翻译部分）
+        String increment;
+        if (text.length() <= ctx.lastText.length()) {
+            // 文本没变长（甚至回退），没有新增内容
+            return;
+        }
+        increment = text.substring(ctx.lastText.length());
+        ctx.lastText = text;   // 更新"已翻译到哪"
+
+        // 3. 串行 + 合并：正在翻译就把增量攒着，否则立即翻译
+        if (ctx.translating) {
+            ctx.pendingIncrement = increment;   // 合并：只保留最新的
+        } else {
+            startTranslate(ctx, increment);
+        }
+    }
+
+    /**
+     * 发起一次增量翻译，结束后检查是否有攒下的增量继续翻译
+     *
+     * @param ctx       会话上下文
+     * @param increment 本次要翻译的增量
+     */
+    private void startTranslate(SessionContext ctx, String increment) {
+        ctx.translating = true;
+
+        translateAgent.translate(
+                ctx.userId,
+                ctx.session.getId(),       // sessionId 用 WebSocket session id，保证记忆连续
+                increment,
+                ctx.direction,
+                token -> sendToClient(ctx, "{\"type\":\"target\",\"text\":\"" + escapeJson(token) + "\"}"),
+                () -> {
+                    // 翻译结束（成功或失败），置空闲并检查攒下的增量
+                    ctx.translating = false;
+                    if (ctx.pendingIncrement != null) {
+                        String next = ctx.pendingIncrement;
+                        ctx.pendingIncrement = null;
+                        startTranslate(ctx, next);
+                    }
+                }
+        );
+    }
+
+    /**
+     * 发送文本消息给前端
+     *
+     * @param ctx 会话上下文
+     * @param msg 消息内容
+     */
+    private void sendToClient(SessionContext ctx, String msg) {
+        try {
+            if (ctx.session.isOpen()) {
+                synchronized (ctx.session) {
+                    ctx.session.sendMessage(new org.springframework.web.socket.TextMessage(msg));
+                }
+            }
+        } catch (IOException e) {
+            log.error("推送消息失败, session={}", ctx.session.getId(), e);
+        }
+    }
+
+    /**
+     * 转义 JSON 字符串中的特殊字符，避免拼 JSON 时破坏格式
+     *
+     * @param s 原始字符串
+     * @return 转义后的字符串
+     */
+    private String escapeJson(String s) {
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+    }
+
+
+
+
 
 
 
