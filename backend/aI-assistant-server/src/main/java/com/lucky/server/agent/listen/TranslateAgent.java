@@ -12,6 +12,7 @@ import com.lucky.server.service.*;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
+import io.agentscope.core.skill.repository.mysql.MysqlSkillRepository;
 import io.agentscope.core.state.AgentStateStore;
 import io.agentscope.core.tool.Toolkit;
 import io.agentscope.core.tool.builtin.TodoTools;
@@ -155,6 +156,9 @@ public class TranslateAgent {
         // 构建 MySQL 状态存储（自动建库建表）
         AgentStateStore stateStore = new MysqlAgentStateStore(dataSource,true);
 
+        // 构建 MySQL Skill仓库(自动建库建表)
+        MysqlSkillRepository skillRepository = new MysqlSkillRepository(dataSource,true,false);
+
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()
                 .name("translator-" + userId)
@@ -198,6 +202,7 @@ public class TranslateAgent {
                         .consolidationMaxTokens(12_000)
                         .build()
                 )
+                .skillRepositories(skillRepository)
                 .build();
     }
 }
