@@ -20,6 +20,7 @@ import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import io.agentscope.extensions.mysql.state.MysqlAgentStateStore;
 import io.agentscope.harness.agent.HarnessAgent;
 import io.agentscope.harness.agent.memory.MemoryConfig;
+import io.agentscope.harness.agent.memory.MemoryConsolidator;
 import io.agentscope.harness.agent.memory.MemoryFlushManager;
 import io.agentscope.harness.agent.memory.compaction.CompactionConfig;
 import lombok.RequiredArgsConstructor;
@@ -175,14 +176,19 @@ public class TranslateAgent {
                         .flushTrigger(MemoryConfig.FlushTrigger.throttled(Duration.ofMinutes(10)))
                         .flushPrompt(
                                 MemoryFlushManager.DEFAULT_FLUSH_PROMPT + """
-                            额外规则（翻译场景）：
-                            - 重点记录用户的翻译偏好和常用术语习惯
-                            - 记录用户反复使用的专业领域词汇
-                            - 忽略无关的闲聊内容，只保留对翻译有价值的事实
-                            """
+                                额外规则（翻译场景）：
+                                - 重点记录用户的翻译偏好和常用术语习惯
+                                - 记录用户反复使用的专业领域词汇
+                                - 忽略无关的闲聊内容，只保留对翻译有价值的事实
+                                """
                         )
-
-
+                        .consolidationPrompt(MemoryConsolidator.DEFAULT_CONSOLIDATION_PROMPT + """
+                        额外规则（翻译场景）：
+                        - 重点保留：用户的翻译偏好、常用术语对照、专业领域词汇
+                        - 可丢弃：无关闲聊、临时性对话内容、重复信息
+                        - 术语按领域分类，相同术语只保留一条
+                        """)
+                        .build()
                 )
                 .build();
     }
