@@ -1,5 +1,6 @@
 package com.lucky.server.handler;
 
+import com.lucky.server.asr.stream.AsrService;
 import com.lucky.server.common.util.AudioUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.nio.ByteBuffer;
 
 /**
+ * 实时转译 WebSocket 处理器
+ * 链路：前端音频 -> ASR 识别原文 -> 增量翻译 -> 译文推前端
  * @author shiningCloud2025
  */
 @Slf4j
@@ -28,6 +31,22 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
 
     // 每个 session 一个缓冲区
     private final ConcurrentHashMap<String, ByteArrayOutputStream> bufferMap = new ConcurrentHashMap<>();
+    /** 每个 WebSocket session 一个会话上下文 */
+    private final ConcurrentHashMap<String, SessionContext> sessionMap = new ConcurrentHashMap<>();
+
+    /**
+     * 会话上下文：一个连接对应的用户、ASR、增量翻译状态
+     */
+    private static class SessionContext {
+        Long userId;                    // 用户ID（握手时解析）
+        String direction;               // 翻译方向，如 zh-en
+        WebSocketSession session;       // 这个连接的 WebSocket session（推送用）
+        AsrService asrService;          // 这个连接的 ASR 实例
+        String lastText = "";           // 已翻译到的原文位置（算增量用）
+        String pendingIncrement = null; // 翻译中攒下的最新待翻增量
+        boolean translating = false;    // 是否正在翻译（串行控制）
+    }
+
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
