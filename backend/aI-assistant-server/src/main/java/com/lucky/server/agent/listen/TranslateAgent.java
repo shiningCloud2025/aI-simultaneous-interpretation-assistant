@@ -9,6 +9,9 @@ import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.SysUserTermEntryVO;
 import com.lucky.server.domain.vo.SysUserTermLibraryVO;
 import com.lucky.server.service.*;
+import io.agentscope.core.agent.RuntimeContext;
+import io.agentscope.core.event.AgentEventType;
+import io.agentscope.core.event.TextBlockDeltaEvent;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
@@ -31,8 +34,6 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -54,8 +55,6 @@ public class TranslateAgent {
 
 
     private final LlmModelConfig llmModelConfig;
-    /** HarnessAgent 缓存（key = userId:sessionId） */
-    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
     /**
      * 实时翻译
      * @param sessionId  会话ID（同一用户多次翻译用不同sessionId区分）
@@ -63,9 +62,38 @@ public class TranslateAgent {
      * @param onToken    译文token回调（每个token推送给前端，实现打字机效果）
      */
     public void translate(String sessionId, String sourceText, String direction, Consumer<String> onToken){
+        HarnessAgent agent;
+        try {
+            agent = buildAgent(direction);
+        } catch (BusinessException e) {
+            log.error("构建翻译 Agent 失败: {}", e.getMessage());
+            onToken.accept("[翻译失败: " + e.getMessage() + "]");
+            return;
+        }catch (Exception e){
+            log.error("构建翻译Agent出现系统异常: {}", e.getMessage());
+            onToken.accept("[系统异常: " + e.getMessage() + "]");
+            return;
+        }
 
-        String agentKey = sysUserService.getCurrentUser().getId() + ":" + sessionId;
-        HarnessAgent agent = agentCache.computeIfAbsent(agentKey, k -> buildAgent(direction));
+        Long userId = sysUserService.getCurrentUser().getId();
+        RuntimeContext ctx = RuntimeContext.builder()
+                .userId(String.valueOf(userId))
+                .sessionId(sessionId)
+                .build();
+
+        agent.streamEvents(sourceText,ctx)
+                .doOnNext(event -> {
+                    if (event.getType()== AgentEventType.TEXT_BLOCK_DELTA){
+                        onToken.accept(((TextBlockDeltaEvent) event).getDelta());
+                    }
+                })
+                .doOnError(e -> {
+                    log.error("翻译失败", e);
+                    onToken.accept("[翻译失败]");
+                })
+                .doFinally(sig->agent.close())
+                .subscribe();
+
 
     }
 
@@ -74,7 +102,6 @@ public class TranslateAgent {
      * 根据当前用户配置（API Key、模型偏好、术语库）创建翻译 Agent
      */
     private HarnessAgent buildAgent(String direction){
-        Long userId = sysUserService.getCurrentUser().getId();
 
         // 1. 查模型偏好
         List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences();
@@ -161,7 +188,7 @@ public class TranslateAgent {
 
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()
-                .name("translator-" + userId)
+                .name("translator")
                 .sysPrompt(sysPrompt)
                 .model(model)
                 .middlewares(List.of(new OtelTracingMiddleware(), new TimingMiddleware()))
@@ -202,7 +229,7 @@ public class TranslateAgent {
                         .consolidationMaxTokens(12_000)
                         .build()
                 )
-                .skillRepositories(skillRepository)
+                .skillRepository(skillRepository)
                 .build();
     }
 }
