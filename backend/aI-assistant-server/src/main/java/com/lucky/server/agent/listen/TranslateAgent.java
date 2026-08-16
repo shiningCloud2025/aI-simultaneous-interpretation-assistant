@@ -192,6 +192,8 @@ public class TranslateAgent {
                         .consolidationMinGap(Duration.ofMinutes(30))
                         // 日流水账 30 天后归档
                         .dailyFileRetentionDays(30)
+                        // 会话日志 45 天后清理
+                        .sessionRetentionDays(45)
 
                         .build()
                 )
