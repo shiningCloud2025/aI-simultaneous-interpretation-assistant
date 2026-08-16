@@ -218,7 +218,8 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
 
         // 3. 串行 + 合并：正在翻译就把增量攒着，否则立即翻译
         if (ctx.translating) {
-            ctx.pendingIncrement = increment;   // 合并：只保留最新的
+            // 合并：把新增量追加到待翻译的增量后面（累加，不是覆盖）
+            ctx.pendingIncrement = (ctx.pendingIncrement == null ? "" : ctx.pendingIncrement) + increment;
         } else {
             startTranslate(ctx, increment);
         }

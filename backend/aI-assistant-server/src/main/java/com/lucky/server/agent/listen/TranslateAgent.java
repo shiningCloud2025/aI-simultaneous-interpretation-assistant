@@ -57,11 +57,16 @@ public class TranslateAgent {
     private final LlmModelConfig llmModelConfig;
     /**
      * 实时翻译
+     *
+     * @param userId     用户ID
      * @param sessionId  会话ID（同一用户多次翻译用不同sessionId区分）
-     * @param sourceText ASR识别的最新原文
+     * @param sourceText ASR识别的最新原文（增量）
+     * @param direction  翻译方向，如 zh-en
      * @param onToken    译文token回调（每个token推送给前端，实现打字机效果）
+     * @param onComplete 翻译结束回调（成功或失败都会触发，用于串行续翻）
      */
-    public void translate(Long userId,String sessionId, String sourceText, String direction, Consumer<String> onToken){
+    public void translate(Long userId,String sessionId, String sourceText,
+                          String direction, Consumer<String> onToken,Runnable onComplete){
         HarnessAgent agent;
         try {
             agent = buildAgent(userId,direction);
