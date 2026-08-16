@@ -13,6 +13,8 @@ import com.lucky.server.service.SysUserApiKeyService;
 import com.lucky.server.service.SysUserModelPreferenceService;
 import com.lucky.server.service.SysUserTermEntryService;
 import com.lucky.server.service.SysUserTermLibraryService;
+import io.agentscope.core.agent.RuntimeContext;
+import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
@@ -33,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
@@ -55,9 +56,62 @@ public class CorrectionAgent {
     private final LlmModelConfig llmModelConfig;
     private final DataSource dataSource;
 
-    public void correct(Long userId, String sessionId, String sourceText, String targetText,
-                        String direction, Consumer<String> onToken, Runnable onComplete){
 
+    /**
+     * 纠错
+     *
+     * @param userId     用户ID
+     * @param sessionId  会话ID（内部会加 "correction_" 前缀，与翻译记忆隔离）
+     * @param sourceText 待纠错的原文
+     * @param targetText 待纠错的译文
+     * @param direction  翻译方向，如 zh-en
+     * @param onResult   成功回调：完整纠错结果
+     * @param onError    失败回调：错误提示
+     * @param onComplete 结束回调（成功或失败都会触发）
+     */
+    public void correct(Long userId, String sessionId, String sourceText, String targetText,
+                        String direction, Consumer<CorrectionResult> onResult,
+                        Consumer<String> onError, Runnable onComplete) {
+        HarnessAgent agent;
+        try {
+            agent = buildAgent(userId, direction);
+        } catch (BusinessException e) {
+            log.error("构建纠错 Agent 失败: {}", e.getMessage());
+            onError.accept(e.getMessage());
+            onComplete.run();
+            return;
+        } catch (Exception e) {
+            log.error("构建纠错Agent出现系统异常: {}", e.getMessage());
+            onError.accept("系统异常");
+            onComplete.run();
+            return;
+        }
+
+        // 会话前缀隔离：纠错与翻译的记忆/状态分开
+        RuntimeContext ctx = RuntimeContext.builder()
+                .userId(String.valueOf(userId))
+                .sessionId("correction_" + sessionId)
+                .build();
+
+        // 拼装纠错输入：原文 + 译文
+        String input = buildCorrectionPrompt(sourceText, targetText);
+
+        agent.call(List.of(new UserMessage(input)), CorrectionResult.class)
+                .doOnNext(msg -> {
+                    CorrectionResult r = msg.getStructuredData(CorrectionResult.class);
+                    if (r != null) {
+                        onResult.accept(r);
+                    }
+                })
+                .doOnError(e -> {
+                    log.error("纠错失败", e);
+                    onError.accept("纠错失败");
+                })
+                .doFinally(sig -> {
+                    agent.close();
+                    onComplete.run();
+                })
+                .subscribe();
     }
 
     /**
@@ -125,22 +179,21 @@ public class CorrectionAgent {
 
         // 6. 构建纠错 system prompt
         String sysPrompt = """
-        你是一个实时转译纠错助手，翻译方向：%s。
+                你是一个实时转译纠错助手，翻译方向：%s。
 
-        你会收到一组"原文 + 译文"，两者都可能存在错误：
-        - 原文来自实时语音识别，可能存在同音字、漏字、多字、断句错误
-        - 译文来自机器翻译，可能存在错译、漏译、语序不通顺
+                你会收到一组"原文 + 译文"，两者都可能存在错误：
+                - 原文来自实时语音识别，可能存在同音字、漏字、多字、断句错误
+                - 译文来自机器翻译，可能存在错译、漏译、语序不通顺
 
-        你的任务：
-        1. 纠正原文中的识别错误，但不改变原意
-        2. 纠正译文中的翻译错误，使其准确、通顺、自然
-        3. 原文和译文逐句对应，不合并、不拆分、不增删内容
-        4. 没有错误的部分原样保留，不要为了"纠错"而改写
+                你的任务：
+                1. 纠正原文中的识别错误，但不改变原意
+                2. 纠正译文中的翻译错误，使其准确、通顺、自然
+                3. 原文和译文逐句对应，不合并、不拆分、不增删内容
+                4. 没有错误的部分原样保留，不要为了"纠错"而改写
 
-        输出格式（严格按此输出，不要任何解释）：
-        原文：<纠错后的原文>
-        译文：<纠错后的译文>
-        """.formatted(direction);
+                输出格式（严格按此输出，不要任何解释）：
+                {"source": "纠错后的原文", "target": "纠错后的译文"}
+                """.formatted(direction);
 
 
         if (!termGlossary.isEmpty()) {
@@ -201,5 +254,28 @@ public class CorrectionAgent {
                 .skillRepository(skillRepository)
                 .build();
     }
+
+    /**
+     * 拼装纠错输入 prompt（规则和输出格式已在 sysPrompt 中定义，这里只给数据）
+     *
+     * @param sourceText 原文
+     * @param targetText 译文
+     * @return 纠错输入文本
+     */
+    private String buildCorrectionPrompt(String sourceText, String targetText) {
+        return """
+            请纠错以下内容：
+
+            原文：%s
+            译文：%s
+            """.formatted(sourceText, targetText);
+    }
+
+    /**
+     * 纠错结果：source 纠错后原文，target 纠错后译文
+     */
+    public record CorrectionResult(String source, String target) {}
+
+
 
 }
