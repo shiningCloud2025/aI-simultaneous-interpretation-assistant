@@ -164,8 +164,12 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         SessionContext ctx = sessionMap.remove(session.getId());
-        if (ctx != null && ctx.asrService != null) {
-            ctx.asrService.stop();
+        if (ctx != null) {
+            if (ctx.asrService != null) {
+                ctx.asrService.stop();
+            }
+            // 销毁会话级的翻译 Agent
+            translateAgent.destroy(ctx.userId, session.getId());
         }
         log.info("WebSocket连接断开: {}, 状态: {}", session.getId(), status);
     }
