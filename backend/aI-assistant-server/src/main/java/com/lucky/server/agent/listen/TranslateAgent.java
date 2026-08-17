@@ -73,12 +73,10 @@ public class TranslateAgent {
                           String direction, Consumer<String> onToken,Runnable onComplete){
 
         String cacheKey = userId + ":" + sessionId;
-        // 从缓存取 Agent，没有就 build 并缓存
-        HarnessAgent agent = agentCache.get(cacheKey);
-        if (agent == null) {
+        HarnessAgent agent;
             try {
-                agent = buildAgent(userId, direction);
-                agentCache.put(cacheKey, agent);
+                // 并发安全保障
+                agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId, direction));
             } catch (BusinessException e) {
                 log.error("构建翻译 Agent 失败: {}", e.getMessage());
                 onToken.accept("[翻译失败: " + e.getMessage() + "]");
@@ -90,7 +88,6 @@ public class TranslateAgent {
                 onComplete.run();
                 return;
             }
-        }
 
         RuntimeContext ctx = RuntimeContext.builder()
                 .userId(String.valueOf(userId))
