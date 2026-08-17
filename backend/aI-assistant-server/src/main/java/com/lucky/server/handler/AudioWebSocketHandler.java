@@ -1,5 +1,6 @@
 package com.lucky.server.handler;
 
+import com.lucky.server.agent.listen.CorrectionAgent;
 import com.lucky.server.agent.listen.TranslateAgent;
 import com.lucky.server.asr.AsrFactory;
 import com.lucky.server.asr.stream.AsrCallback;
@@ -41,10 +42,13 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
     private final AsrModelConfig asrModelConfig;
     private final AsrFactory asrFactory;
     private final TranslateAgent translateAgent;
+    private final CorrectionAgent correctionAgent;
 
 
     /** 每个 WebSocket session 一个会话上下文 */
     private final ConcurrentHashMap<String, SessionContext> sessionMap = new ConcurrentHashMap<>();
+    /** 每 N 句纠错一次 */
+    private static final int CORRECT_BATCH_SIZE = 5;
 
     /**
      * 会话上下文：一个连接对应的用户、ASR、增量翻译状态
@@ -57,6 +61,10 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         String lastText = "";           // 已翻译到的原文位置（算增量用）
         String pendingIncrement = null; // 翻译中攒下的最新待翻增量
         boolean translating = false;    // 是否正在翻译（串行控制）
+        // 纠错累积：原文 / 译文 / 句数
+        StringBuilder sourceBuffer = new StringBuilder();   // 累积的原文
+        StringBuilder targetBuffer = new StringBuilder();   // 累积的译文
+        int sentenceCount = 0;                               // 已累积句数
     }
 
 
@@ -163,6 +171,65 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
     }
 
     /**
+     * 累积一句原文到纠错 buffer，攒够 N 句触发纠错
+     *
+     * @param ctx        会话上下文
+     * @param sourceText 这句的原文
+     */
+    private void accumulateAndCorrect(SessionContext ctx, String sourceText) {
+        // 累积原文，句子之间用换行分隔
+        if (ctx.sourceBuffer.length() > 0) {
+            ctx.sourceBuffer.append("\n");
+        }
+        ctx.sourceBuffer.append(sourceText);
+        ctx.sentenceCount++;
+
+        // 攒够 N 句，触发纠错
+        if (ctx.sentenceCount >= CORRECT_BATCH_SIZE) {
+            triggerCorrection(ctx);
+        }
+    }
+
+    /**
+     * 触发纠错：把累积的原文 + 译文交给纠错 Agent
+     *
+     * @param ctx 会话上下文
+     */
+    private void triggerCorrection(SessionContext ctx) {
+        String sourceText = ctx.sourceBuffer.toString();
+        String targetText = ctx.targetBuffer.toString();
+
+        // 先清空，准备下一批
+        ctx.sourceBuffer.setLength(0);
+        ctx.targetBuffer.setLength(0);
+        ctx.sentenceCount = 0;
+
+        if (sourceText.isEmpty() || targetText.isEmpty()) {
+            return;
+        }
+
+        correctionAgent.correct(
+                ctx.userId,
+                ctx.session.getId(),
+                sourceText,
+                targetText,
+                ctx.direction,
+                result -> {
+                    // 纠错成功：推给前端替换
+                    String json = "{\"type\":\"correction\",\"source\":\"" + escapeJson(result.source())
+                            + "\",\"target\":\"" + escapeJson(result.target()) + "\"}";
+                    sendToClient(ctx, json);
+                },
+                err -> {
+                    // 纠错失败：也告诉前端
+                    sendToClient(ctx, "{\"type\":\"correction_error\",\"text\":\"" + escapeJson(err) + "\"}");
+                },
+                () -> log.info("纠错完成, session={}", ctx.session.getId())
+        );
+    }
+
+
+    /**
      * 构建 ASR 结果回调：识别到原文后，推送原文 + 增量翻译
      *
      * @param ctx 会话上下文
@@ -178,6 +245,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             @Override
             public void onFinalResult(String text) {
                 handleAsrText(ctx, text);
+                accumulateAndCorrect(ctx, text);   // 一句结束，累积并判断是否触发纠错
             }
 
             @Override
@@ -239,7 +307,10 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
                 ctx.session.getId(),       // sessionId 用 WebSocket session id，保证记忆连续
                 increment,
                 ctx.direction,
-                token -> sendToClient(ctx, "{\"type\":\"target\",\"text\":\"" + escapeJson(token) + "\"}"),
+                token -> {
+                    ctx.targetBuffer.append(token);   // 累积译文，供纠错使用
+                    sendToClient(ctx, "{\"type\":\"target\",\"text\":\"" + escapeJson(token) + "\"}");
+                },
                 () -> {
                     // 翻译结束（成功或失败），置空闲并检查攒下的增量
                     ctx.translating = false;
