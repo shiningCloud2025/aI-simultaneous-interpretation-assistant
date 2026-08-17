@@ -35,6 +35,8 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -53,6 +55,10 @@ public class TranslateAgent {
     private final DataSource dataSource;
     private final LlmModelConfig llmModelConfig;
 
+    /** 会话级 Agent 缓存：key = userId:sessionId */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+
+
     /**
      * 实时翻译
      *
@@ -65,19 +71,25 @@ public class TranslateAgent {
      */
     public void translate(Long userId,String sessionId, String sourceText,
                           String direction, Consumer<String> onToken,Runnable onComplete){
-        HarnessAgent agent;
-        try {
-            agent = buildAgent(userId,direction);
-        } catch (BusinessException e) {
-            log.error("构建翻译 Agent 失败: {}", e.getMessage());
-            onToken.accept("[翻译失败: " + e.getMessage() + "]");
-            onComplete.run();
-            return;
-        }catch (Exception e){
-            log.error("构建翻译Agent出现系统异常: {}", e.getMessage());
-            onToken.accept("[系统异常: " + e.getMessage() + "]");
-            onComplete.run();
-            return;
+
+        String cacheKey = userId + ":" + sessionId;
+        // 从缓存取 Agent，没有就 build 并缓存
+        HarnessAgent agent = agentCache.get(cacheKey);
+        if (agent == null) {
+            try {
+                agent = buildAgent(userId, direction);
+                agentCache.put(cacheKey, agent);
+            } catch (BusinessException e) {
+                log.error("构建翻译 Agent 失败: {}", e.getMessage());
+                onToken.accept("[翻译失败: " + e.getMessage() + "]");
+                onComplete.run();
+                return;
+            } catch (Exception e) {
+                log.error("构建翻译Agent出现系统异常: {}", e.getMessage());
+                onToken.accept("[系统异常: " + e.getMessage() + "]");
+                onComplete.run();
+                return;
+            }
         }
 
         RuntimeContext ctx = RuntimeContext.builder()
@@ -96,7 +108,6 @@ public class TranslateAgent {
                     onToken.accept("[翻译失败]");
                 })
                 .doFinally(sig -> {
-                    agent.close();
                     onComplete.run();
                 })
 
@@ -239,5 +250,19 @@ public class TranslateAgent {
                 )
                 .skillRepository(skillRepository)
                 .build();
+    }
+
+
+    /**
+     * 销毁指定会话的翻译 Agent（WebSocket 断开时调用）
+     *
+     * @param userId    用户ID
+     * @param sessionId 会话ID
+     */
+    public void destroy(Long userId, String sessionId) {
+        HarnessAgent agent = agentCache.remove(userId + ":" + sessionId);
+        if (agent != null) {
+            agent.close();
+        }
     }
 }
