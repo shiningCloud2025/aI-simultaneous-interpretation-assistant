@@ -37,6 +37,8 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -56,6 +58,9 @@ public class CorrectionAgent {
     private final LlmModelConfig llmModelConfig;
     private final DataSource dataSource;
 
+    /** 会话级 Agent 缓存：key = userId:sessionId */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+
 
     /**
      * 纠错
@@ -72,9 +77,12 @@ public class CorrectionAgent {
     public void correct(Long userId, String sessionId, String sourceText, String targetText,
                         String direction, Consumer<CorrectionResult> onResult,
                         Consumer<String> onError, Runnable onComplete) {
+
+        String cacheKey = userId + ":" + sessionId;
+        // 从缓存取 Agent，没有就原子地 build 并缓存
         HarnessAgent agent;
         try {
-            agent = buildAgent(userId, direction);
+            agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId, direction));
         } catch (BusinessException e) {
             log.error("构建纠错 Agent 失败: {}", e.getMessage());
             onError.accept(e.getMessage());
@@ -272,10 +280,22 @@ public class CorrectionAgent {
     }
 
     /**
+     * 销毁指定会话的纠错 Agent（WebSocket 断开时调用）
+     *
+     * @param userId    用户ID
+     * @param sessionId 会话ID
+     */
+    public void destroy(Long userId, String sessionId) {
+        HarnessAgent agent = agentCache.remove(userId + ":" + sessionId);
+        if (agent != null) {
+            agent.close();
+        }
+    }
+
+
+    /**
      * 纠错结果：source 纠错后原文，target 纠错后译文
      */
     public record CorrectionResult(String source, String target) {}
-
-
 
 }
