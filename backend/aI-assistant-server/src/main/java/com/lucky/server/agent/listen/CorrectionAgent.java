@@ -116,7 +116,6 @@ public class CorrectionAgent {
                     onError.accept("纠错失败");
                 })
                 .doFinally(sig -> {
-                    agent.close();
                     onComplete.run();
                 })
                 .subscribe();
