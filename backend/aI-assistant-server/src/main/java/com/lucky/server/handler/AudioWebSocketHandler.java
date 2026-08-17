@@ -170,6 +170,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             }
             // 销毁会话级的翻译 Agent
             translateAgent.destroy(ctx.userId, session.getId());
+            correctionAgent.destroy(ctx.userId, session.getId());
         }
         log.info("WebSocket连接断开: {}, 状态: {}", session.getId(), status);
     }
