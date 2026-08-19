@@ -30,10 +30,6 @@ export function ApiKeyConfig() {
   const [showModal, setShowModal] = useState(false);
   const [testing, setTesting] = useState<number | null>(null);
   const [form, setForm] = useState({ provider: '', keyType: 'LLM', apiKey: '' });
-  // 表单内测试状态
-  const [formTested, setFormTested] = useState(false);          // 是否点过测试
-  const [formTesting, setFormTesting] = useState(false);        // 测试中
-  const [formTestResult, setFormTestResult] = useState<null | 'success' | 'fail'>(null);
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
@@ -67,14 +63,16 @@ export function ApiKeyConfig() {
 
   const saveKey = async () => {
     if (!form.provider || !form.apiKey.trim()) return showToast('请填写完整信息');
-    if (!formTested) return showToast('请先点击「测试」按钮测试连通性');
-    // 保存语义改为「确认」：因为测试时已经临时保存 + 测过了，再调 saveApiKey 会触发 UPDATE 重置 status
-    // 所以这里只关弹窗、刷新列表即可
-    setShowModal(false);
-    setFormTested(false);
-    setFormTestResult(null);
-    loadKeys();
-    showToast(formTestResult === 'success' ? '已配置并测试通过' : '已保存（测试失败）');
+    try {
+      const res = await fetch(API, { method: 'POST', headers: h(), body: JSON.stringify(form) });
+      const json = await res.json();
+      if (json.code === 200) {
+        setShowModal(false);
+        loadKeys();
+        showToast('保存成功');
+      }
+      else showToast(json.detail || json.message || '保存失败');
+    } catch { showToast('请求失败'); }
   };
 
   const deleteKey = async (id: number) => {
@@ -96,48 +94,6 @@ export function ApiKeyConfig() {
       else showToast(json.detail || json.message || '测试失败');
     } catch { showToast('测试请求失败'); }
     finally { setTesting(null); }
-  };
-
-  // 弹窗里的「测试」按钮：先临时保存 → 拿到 id → 调测试 → 删掉临时记录
-  const testFormKey = async () => {
-    if (!form.provider || !form.apiKey.trim()) return showToast('请先填写厂商和 API Key');
-    if (formTesting) return;
-    setFormTesting(true);
-    try {
-      // 临时保存（后端不区分临时保存还是正式保存，status=0 未测试）
-      const saveRes = await fetch(API, { method: 'POST', headers: h(), body: JSON.stringify(form) });
-      const saveJson = await saveRes.json();
-      if (saveJson.code !== 200) {
-        showToast(saveJson.detail || saveJson.message || '保存失败');
-        return;
-      }
-      // 找到刚保存的 key
-      const listRes = await fetch(API, { headers: h() });
-      const listJson = await listRes.json();
-      if (listJson.code !== 200) { showToast('查询失败'); return; }
-      const newest = (listJson.data as ApiKeyVO[])
-        .filter(k => k.provider === form.provider && k.keyType === form.keyType)
-        .sort((a, b) => +new Date(b.createTime) - +new Date(a.createTime))[0];
-      if (!newest) { showToast('找不到刚保存的记录'); return; }
-      // 测试
-      const testRes = await fetch(`${API}/${newest.id}/test`, { method: 'POST', headers: h() });
-      const testJson = await testRes.json();
-      if (testJson.code === 200) {
-        setFormTested(true);
-        setFormTestResult('success');
-        showToast('连通性测试通过');
-      } else {
-        // 测试失败也算「点过测试」，可以保存（用户要的：成功失败都能保存，但必须点）
-        setFormTested(true);
-        setFormTestResult('fail');
-        showToast(testJson.detail || testJson.message || '测试失败，但仍可保存');
-      }
-      loadKeys();
-    } catch {
-      showToast('测试请求失败');
-    } finally {
-      setFormTesting(false);
-    }
   };
 
   // 按类型分组
@@ -191,7 +147,7 @@ export function ApiKeyConfig() {
               <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>厂商</div>
               <select
                 value={form.provider}
-                onChange={e => { setForm({ ...form, provider: e.target.value }); setFormTested(false); setFormTestResult(null); }}
+                onChange={e => setForm({ ...form, provider: e.target.value })}
                 style={selectStyle}
               >
                 <option value="">请选择厂商</option>
@@ -204,58 +160,25 @@ export function ApiKeyConfig() {
               <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>类型</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['LLM', 'ASR'] as const).map(t => (
-                  <button key={t} onClick={() => { setForm({ ...form, keyType: t }); setFormTested(false); setFormTestResult(null); }}
+                  <button key={t} onClick={() => setForm({ ...form, keyType: t })}
                     style={typeBtn(form.keyType === t)}>
                     {t === 'LLM' ? '🧠 LLM' : '🎤 ASR'}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>API Key</div>
               <input
                 value={form.apiKey}
-                onChange={e => { setForm({ ...form, apiKey: e.target.value }); setFormTested(false); setFormTestResult(null); }}
+                onChange={e => setForm({ ...form, apiKey: e.target.value })}
                 style={inp}
                 placeholder="粘贴你的 API Key"
               />
             </div>
-
-            {/* 测试按钮 + 状态 */}
-            <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button
-                onClick={testFormKey}
-                disabled={formTesting || !form.provider || !form.apiKey.trim()}
-                style={{
-                  padding: '8px 16px', borderRadius: 8, fontSize: 13,
-                  background: (formTesting || !form.provider || !form.apiKey.trim()) ? '#ccc' : '#fff',
-                  border: '1px solid #e0ded8', color: '#666',
-                  cursor: (formTesting || !form.provider || !form.apiKey.trim()) ? 'not-allowed' : 'pointer',
-                  fontWeight: 500,
-                }}
-              >{formTesting ? '测试中...' : '🔌 测试连通性'}</button>
-              {formTestResult === 'success' && (
-                <span style={{ fontSize: 12, color: '#52c41a' }}>✓ 测试通过</span>
-              )}
-              {formTestResult === 'fail' && (
-                <span style={{ fontSize: 12, color: '#e55c5c' }}>✗ 测试失败（仍可保存）</span>
-              )}
-              {formTested && (
-                <span style={{ fontSize: 11, color: '#bbb', marginLeft: 'auto' }}>已测试</span>
-              )}
-            </div>
-
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={saveKey}
-                disabled={!formTested}
-                style={{
-                  ...btnPrimary, flex: 1,
-                  background: formTested ? '#2c2c2c' : '#ccc',
-                  cursor: formTested ? 'pointer' : 'not-allowed',
-                }}
-              >保存</button>
-              <button onClick={() => { setShowModal(false); setFormTested(false); setFormTestResult(null); }} style={{ ...btnCancel, flex: 1 }}>取消</button>
+              <button onClick={saveKey} style={{ ...btnPrimary, flex: 1 }}>保存</button>
+              <button onClick={() => setShowModal(false)} style={{ ...btnCancel, flex: 1 }}>取消</button>
             </div>
           </div>
         </div>
