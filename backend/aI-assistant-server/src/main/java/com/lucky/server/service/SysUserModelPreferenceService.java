@@ -16,4 +16,10 @@ public interface SysUserModelPreferenceService {
 
     /** 获取当前用户所有偏好 */
     List<SysUserModelPreferenceVO> listPreferences();
+
+    /**
+     * 获取指定用户所有偏好
+     */
+    List<SysUserModelPreferenceVO> listPreferences(Long userId);
+
 }

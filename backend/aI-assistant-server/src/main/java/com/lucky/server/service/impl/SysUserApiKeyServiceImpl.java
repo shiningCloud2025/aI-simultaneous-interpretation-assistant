@@ -118,4 +118,37 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
                 .set(SysUserApiKey::getLastTestTime, LocalDateTime.now())
                 .update();
     }
+
+    @Override
+    public SysUserApiKey getAvailableLlmKey(String provider) {
+        Long userId = sysUserService.getCurrentUser().getId();
+        return lambdaQuery()
+                .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getProvider, provider)
+                .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.LLM)
+                .eq(SysUserApiKey::getStatus, 1)
+                .one();
+    }
+
+    @Override
+    public SysUserApiKey getAvailableLlmKey(Long userId, String provider) {
+        return lambdaQuery()
+                .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getProvider, provider)
+                .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.LLM)
+                .eq(SysUserApiKey::getStatus, 1)
+                .one();
+    }
+
+    @Override
+    public SysUserApiKey getAvailableAsrKey(Long userId, String provider) {
+        return lambdaQuery()
+                .eq(SysUserApiKey::getUserId, userId)
+                .eq(SysUserApiKey::getProvider, provider)
+                .eq(SysUserApiKey::getKeyType, ApiKeyTypeEnum.ASR)
+                .eq(SysUserApiKey::getStatus, 1)
+                .one();
+    }
+
+
 }

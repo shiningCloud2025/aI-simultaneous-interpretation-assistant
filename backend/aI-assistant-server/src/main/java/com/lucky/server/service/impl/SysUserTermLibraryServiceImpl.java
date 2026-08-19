@@ -56,6 +56,25 @@ public class SysUserTermLibraryServiceImpl extends ServiceImpl<SysUserTermLibrar
     }
 
     @Override
+    public List<SysUserTermLibraryVO> listByUserId(Long userId) {
+        List<SysUserTermLibrary> libraries = lambdaQuery()
+                .eq(SysUserTermLibrary::getUserId, userId).list();
+        if (libraries.isEmpty()) return List.of();
+
+        List<Long> libraryIds = libraries.stream()
+                .map(SysUserTermLibrary::getId).toList();
+        Map<Long, Long> countMap = termEntryMapper.selectList(null).stream()
+                .filter(e -> libraryIds.contains(e.getLibraryId()))
+                .collect(Collectors.groupingBy(SysUserTermEntry::getLibraryId, Collectors.counting()));
+
+        return libraries.stream().map(lib -> new SysUserTermLibraryVO(
+                lib.getId(), lib.getName(), lib.getIsDefault(),
+                countMap.getOrDefault(lib.getId(), 0L),
+                lib.getCreateTime(), lib.getUpdateTime()
+        )).toList();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public SysUserTermLibraryVO create(SysUserTermLibrarySaveDTO dto) {
         Long userId = sysUserService.getCurrentUser().getId();

@@ -1,6 +1,7 @@
 package com.lucky.server.config;
 
 import com.lucky.server.handler.AudioWebSocketHandler;
+import com.lucky.server.handler.AuthHandshakeInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -14,15 +15,19 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class WebSocketConfig implements WebSocketConfigurer{
 
     private final AudioWebSocketHandler audioHandler;
+    private final AuthHandshakeInterceptor authHandshakeInterceptor;
 
 
-    public WebSocketConfig(AudioWebSocketHandler audioHandler){
+    public WebSocketConfig(AudioWebSocketHandler audioHandler, AuthHandshakeInterceptor authHandshakeInterceptor){
         this.audioHandler = audioHandler;
+        this.authHandshakeInterceptor = authHandshakeInterceptor;
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(audioHandler,"/asia/audio")
+                //  握手鉴权
+                .addInterceptors(authHandshakeInterceptor)
                 .setAllowedOrigins("*");
     }
 }

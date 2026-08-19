@@ -19,6 +19,11 @@ public interface SysUserTermLibraryService extends IService<SysUserTermLibrary> 
     List<SysUserTermLibraryVO> listByUserId();
 
     /**
+     * 获取指定用户的全部术语库列表（含条目数量）
+     */
+    List<SysUserTermLibraryVO> listByUserId(Long userId);
+
+    /**
      * 创建术语库
      */
     SysUserTermLibraryVO create(SysUserTermLibrarySaveDTO dto);

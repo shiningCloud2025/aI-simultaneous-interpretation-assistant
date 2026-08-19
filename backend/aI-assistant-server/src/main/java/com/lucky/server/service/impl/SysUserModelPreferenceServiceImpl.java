@@ -85,4 +85,15 @@ public class SysUserModelPreferenceServiceImpl extends ServiceImpl<SysUserModelP
                 .map(SysUserModelPreferenceVO::from)
                 .toList();
     }
+
+    @Override
+    public List<SysUserModelPreferenceVO> listPreferences(Long userId) {
+        return lambdaQuery()
+                .eq(SysUserModelPreference::getUserId, userId)
+                .eq(SysUserModelPreference::getDeleted, DeletedStatusEnum.NORMAL)
+                .list()
+                .stream()
+                .map(SysUserModelPreferenceVO::from)
+                .toList();
+    }
 }
