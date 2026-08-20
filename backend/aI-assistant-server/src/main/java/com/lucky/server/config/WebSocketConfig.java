@@ -25,7 +25,7 @@ public class WebSocketConfig implements WebSocketConfigurer{
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(audioHandler,"/asia/audio")
+        registry.addHandler(audioHandler,"/asr/audio")
                 //  握手鉴权
                 .addInterceptors(authHandshakeInterceptor)
                 .setAllowedOrigins("*");
