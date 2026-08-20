@@ -85,17 +85,45 @@ export function RealTimeTrans() {
   const finishedSourceIdRef = useRef<number | null>(null); // 上一句结束时的 segId（收到 correction 时定位）
 
   // ============== 模型加载 ==============
+  // modelName → provider 的映射，用于保存偏好时反查 provider
+  const [asrModelProviderMap, setAsrModelProviderMap] = useState<Record<string, string>>({});
+  const [llmModelProviderMap, setLlmModelProviderMap] = useState<Record<string, string>>({});
+
   useEffect(() => {
-    fetch('/api/sys/user/ai/asr/providers').then(r => r.json()).then(d => {
-      if (d.code === 200) setAsrProviders(d.data);
+    // 1. 拉厂商列表
+    Promise.all([
+      fetch('/api/sys/user/ai/asr/providers').then(r => r.json()),
+      fetch('/api/sys/user/ai/llm/providers').then(r => r.json()),
+    ]).then(([asrRes, llmRes]) => {
+      const aps: Provider[] = asrRes.code === 200 ? asrRes.data : [];
+      const lps: Provider[] = llmRes.code === 200 ? llmRes.data : [];
+      setAsrProviders(aps);
+      setLlmProviders(lps);
+
+      // 2. 并行拉每个厂商下的模型，建映射
+      const asrMap: Record<string, string> = {};
+      const llmMap: Record<string, string> = {};
+      Promise.all([
+        ...aps.map(p =>
+          fetch(`/api/sys/user/ai/asr/models?provider=${p.key}`).then(r => r.json()).then(d => {
+            if (d.code === 200) (d.data as ModelInfo[]).forEach(m => { asrMap[m.name] = p.key; });
+          }).catch(() => {})
+        ),
+        ...lps.map(p =>
+          fetch(`/api/sys/user/ai/llm/models?provider=${p.key}`).then(r => r.json()).then(d => {
+            if (d.code === 200) (d.data as ModelInfo[]).forEach(m => { llmMap[m.name] = p.key; });
+          }).catch(() => {})
+        ),
+      ]).then(() => {
+        setAsrModelProviderMap(asrMap);
+        setLlmModelProviderMap(llmMap);
+        // 加载推荐模型（用于下拉默认显示）
+        loadAsrModels('');
+        loadLlmModels('');
+      });
     }).catch(() => {});
-    fetch('/api/sys/user/ai/llm/providers').then(r => r.json()).then(d => {
-      if (d.code === 200) setLlmProviders(d.data);
-    }).catch(() => {});
-    // 默认加载推荐模型（不传 provider）
-    loadAsrModels('');
-    loadLlmModels('');
-    // 加载已保存的偏好
+
+    // 3. 加载已保存的偏好
     api.listModelPreferences().then((prefs: Preference[]) => {
       const asrP = prefs.find(p => p.modelType === 'ASR');
       const llmP = prefs.find(p => p.modelType === 'LLM');
@@ -126,7 +154,11 @@ export function RealTimeTrans() {
     if (d.code === 200) setLlmModels(d.data);
   };
 
-  const savePreference = async (modelType: string, provider: string, modelName: string) => {
+  const savePreference = async (modelType: string, _provider: string, modelName: string) => {
+    // 从映射表反查真实的 provider（避免选推荐模型时 provider 为空导致 @NotBlank 报错）
+    const provider =
+      (modelType === 'ASR' ? asrModelProviderMap[modelName] : llmModelProviderMap[modelName]) || _provider;
+    if (!provider) { showToast(`无法识别模型 ${modelName} 对应的厂商`); return; }
     try {
       await api.saveModelPreference({ modelType, provider, modelName });
     } catch (e: any) { showToast(e.message || '保存失败'); }
@@ -285,10 +317,12 @@ export function RealTimeTrans() {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log('[WS open]', ws.url);
         setStatus('running');
         setStatusText('● 翻译中');
       };
-      ws.onerror = () => {
+      ws.onerror = (ev) => {
+        console.error('[WS error]', ws.readyState, ws.url, ev);
         setStatus('error');
         setStatusText('● 连接失败');
         showToast('WebSocket 连接失败');
@@ -309,6 +343,8 @@ export function RealTimeTrans() {
         }
       };
 
+      console.log('[audio] stream got, tracks=', stream.getAudioTracks().map(t => ({ label: t.label, enabled: t.enabled, muted: t.muted, readyState: t.readyState })));
+
       // 4. 接麦克风 → ScriptProcessor → 转 PCM Int16 → WS 二进制
       const source = audioCtx.createMediaStreamSource(stream);
       sourceRef.current = source;
@@ -316,8 +352,20 @@ export function RealTimeTrans() {
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
+      let frameCount = 0;
       processor.onaudioprocess = (e) => {
+        frameCount++;
+        if (frameCount === 1 || frameCount % 100 === 0) {
+          console.log('[audio] frame', frameCount, 'wsState=', ws.readyState);
+        }
         const input = e.inputBuffer.getChannelData(0);
+        // RMS 估算静音检测（前 200 帧打一次）
+        if (frameCount <= 3) {
+          let rms = 0;
+          for (let i = 0; i < input.length; i++) rms += input[i] * input[i];
+          rms = Math.sqrt(rms / input.length);
+          console.log('[audio] rms=', rms.toFixed(4));
+        }
         const pcm = floatTo16BitPCM(input);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(pcm);
@@ -325,8 +373,13 @@ export function RealTimeTrans() {
       };
 
       source.connect(processor);
-      // 不接到 destination，避免回声
-      // processor.connect(audioCtx.destination);
+      // 必须连到 destination（即使静音）才能真正驱动 onaudioprocess；
+      // MuteNode 把声音压成 0，避免回声外放
+      const mute = audioCtx.createGain();
+      mute.gain.value = 0;
+      processor.connect(mute);
+      mute.connect(audioCtx.destination);
+      console.log('[audio] graph connected, ctxState=', audioCtx.state);
 
       setRecording(true);
     } catch (e: any) {
