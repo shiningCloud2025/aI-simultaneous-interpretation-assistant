@@ -21,13 +21,23 @@ public class AlibabaAsrService implements AsrService {
 
     private Recognition recognition;
     private AsrCallback callback;
+    private AsrConfig config;   // 保存配置，用于断线重连
 
     @Override
     public void start(AsrConfig config, AsrCallback callBack) {
         this.callback = callBack;
+        this.config = config;
 
         // 不同地域的 WebSocket 地址不同，默认北京
         Constants.baseWebsocketApiUrl = config.getWsUrl();
+        connect();
+    }
+
+    /**
+     * 建立/重建与阿里 ASR 的 WebSocket 连接
+     * （超时或出错后可通过 reconnect() 复用本方法重建连接）
+     */
+    private void connect() {
         RecognitionParam param = RecognitionParam.builder()
                 .model(config.getModel())
                 .apiKey(config.getApiKey())
@@ -63,6 +73,8 @@ public class AlibabaAsrService implements AsrService {
             public void onError(Exception e) {
                 log.error("[AlibabaAsr] 识别出错", e);
                 callback.onError(e);
+                // 断线/超时后尝试重建连接，避免本会话 ASR 永久失效
+                reconnect();
             }
         };
 
@@ -71,8 +83,25 @@ public class AlibabaAsrService implements AsrService {
         }catch (Exception e){
             log.error("[AlibabaAsr] 启动失败", e);
             callback.onError(e);
+            reconnect();
         }
+    }
 
+    /**
+     * 延迟重建连接（带 0.5s 防抖，避免服务端未释放时疯狂重连）
+     */
+    private void reconnect() {
+        try {
+            Thread.sleep(500);   // 等 0.5s 再重连，避免服务端未释放
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+        try {
+            connect();
+            log.info("[AlibabaAsr] ASR 连接已重建");
+        } catch (Exception e) {
+            log.error("[AlibabaAsr] ASR 重连失败", e);
+        }
     }
 
     @Override
