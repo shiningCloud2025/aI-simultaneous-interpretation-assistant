@@ -299,8 +299,14 @@ export function RealTimeTrans() {
           dm.getTracks().forEach(t => t.stop());
           throw new Error('未共享音频，请在共享弹窗里勾选「共享标签页音频」');
         }
-        // 只保留 audio track
-        dm.getVideoTracks().forEach(t => t.stop());
+        // 关键：不能 stop video track！Chrome 的 tab capture 里，audio 是「附着」在 video 上的，
+        // 一旦 stop video，捕获会话被释放，audio 也会变成静音（这就是「No talking」的根因）。
+        // 用隐藏 video 元素消费 video track，保持捕获会话存活，audio 才持续推数据。
+        const hiddenVideo = document.createElement('video');
+        hiddenVideo.muted = true;
+        hiddenVideo.autoplay = true;
+        hiddenVideo.srcObject = dm;
+        hiddenVideo.play().catch(() => {});
         stream = new MediaStream(audioTracks);
       }
       streamRef.current = stream;
@@ -309,6 +315,8 @@ export function RealTimeTrans() {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AC({ sampleRate: 16000 });
       audioCtxRef.current = audioCtx;
+      // 注意：sampleRate 只是「请求值」，浏览器通常按硬件采样率（44100/48000）跑，需重采样对齐后端 ASR 的 16k
+      console.log('[audio] requested sampleRate=16000, actual=', audioCtx.sampleRate);
 
       // 3. 建 WebSocket
       const direction = `${srcLang}-${tgtLang}`;
@@ -349,23 +357,27 @@ export function RealTimeTrans() {
       const source = audioCtx.createMediaStreamSource(stream);
       sourceRef.current = source;
       // bufferSize 必须是 2 的幂；onAudioProcess 拿到的是 Float32Array（-1..1）
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+      const processor = audioCtx.createScriptProcessor(2048, 1, 1);
       processorRef.current = processor;
 
       let frameCount = 0;
       processor.onaudioprocess = (e) => {
         frameCount++;
         if (frameCount === 1 || frameCount % 100 === 0) {
-          console.log('[audio] frame', frameCount, 'wsState=', ws.readyState);
+          console.log('[audio] frame', frameCount, 'wsState=', ws.readyState, 'ctxRate=', audioCtx.sampleRate);
         }
-        const input = e.inputBuffer.getChannelData(0);
-        // RMS 估算静音检测（前 200 帧打一次）
+        const rawInput = e.inputBuffer.getChannelData(0);
+        // RMS 估算静音检测（前 3 帧打一次，用原始输入判断是否真静音）
         if (frameCount <= 3) {
           let rms = 0;
-          for (let i = 0; i < input.length; i++) rms += input[i] * input[i];
-          rms = Math.sqrt(rms / input.length);
+          for (let i = 0; i < rawInput.length; i++) rms += rawInput[i] * rawInput[i];
+          rms = Math.sqrt(rms / rawInput.length);
           console.log('[audio] rms=', rms.toFixed(4));
         }
+        // 关键：AudioContext 实际采样率 ≠ 16000 时必须重采样，否则后端 ASR 按 16k 解析会「读一个字就断句」
+        const input = audioCtx.sampleRate !== 16000
+          ? downsampleTo16k(rawInput, audioCtx.sampleRate)
+          : rawInput;
         const pcm = floatTo16BitPCM(input);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(pcm);
@@ -633,6 +645,27 @@ function Div() { return <div style={{ width: 1, height: 28, background: '#f0efec
 const btn: React.CSSProperties = { padding: '4px 10px', borderRadius: 6, fontSize: 11, background: '#f5f3f0', border: 'none', color: '#888', cursor: 'pointer' };
 
 // ============== 工具 ==============
+/**
+ * 把任意采样率的 Float32 PCM 重采样到 16kHz（后端 ASR 固定按 16k 解析）。
+ * 用「滑窗平均 + 抽取」做抗混叠，比纯抽取更稳；只处理降采样场景（实际采样率 > 16k）。
+ */
+function downsampleTo16k(input: Float32Array, fromRate: number): Float32Array {
+  const targetRate = 16000;
+  const ratio = fromRate / targetRate;
+  if (ratio <= 1) return input;
+  const outLen = Math.floor(input.length / ratio);
+  const out = new Float32Array(outLen);
+  const windowSize = Math.round(ratio);
+  for (let i = 0; i < outLen; i++) {
+    const start = i * windowSize;
+    let sum = 0;
+    const end = Math.min(start + windowSize, input.length);
+    for (let j = start; j < end; j++) sum += input[j];
+    out[i] = sum / (end - start);
+  }
+  return out;
+}
+
 function floatTo16BitPCM(float32Array: Float32Array): ArrayBuffer {
   const len = float32Array.length;
   const buffer = new ArrayBuffer(len * 2);
