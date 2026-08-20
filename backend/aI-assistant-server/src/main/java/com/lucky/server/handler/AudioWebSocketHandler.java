@@ -59,6 +59,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         WebSocketSession session;       // 这个连接的 WebSocket session（推送用）
         AsrService asrService;          // 这个连接的 ASR 实例
         String lastText = "";           // 已翻译到的原文位置（算增量用）
+        String lastSourceText = "";     // 已推送给前端的最新原文（去重）
         String pendingIncrement = null; // 翻译中攒下的最新待翻增量
         boolean translating = false;    // 是否正在翻译（串行控制）
         // 纠错累积：原文 / 译文 / 句数
@@ -281,13 +282,22 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
 
         // 2. 计算增量（去掉已翻译部分）
-        String increment;
-        if (text.length() <= ctx.lastText.length()) {
-            // 文本没变长（甚至回退），没有新增内容
+        // 新代码：基于子串判断是否有"真的新内容"，避免空字符串/字符串回退时漏翻
+        if (text == null || text.isEmpty()) {
             return;
         }
-        increment = text.substring(ctx.lastText.length());
-        ctx.lastText = text;   // 更新"已翻译到哪"
+        String increment;
+        if (!ctx.lastText.isEmpty() && text.startsWith(ctx.lastText)) {
+            // 新文本以旧文本开头 → 取新增部分
+            increment = text.substring(ctx.lastText.length());
+        } else if (text.equals(ctx.lastText)) {
+            // 完全相同 → 重复推送，无新内容
+            return;
+        } else {
+            // 不以旧文本开头（可能重置、重连、或者 lastText 被某个空值污染）→ 全量翻译
+            increment = text;
+        }
+        ctx.lastText = text;
 
         // 3. 串行 + 合并：正在翻译就把增量攒着，否则立即翻译
         if (ctx.translating) {
