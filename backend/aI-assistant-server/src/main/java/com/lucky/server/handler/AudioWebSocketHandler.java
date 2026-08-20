@@ -278,23 +278,27 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
-        // 1. 推送原文给前端
-        sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
+        // 1. 推送原文给前端（去重：同一文本不重复推，避免前端重复刷）
+        if (!text.equals(ctx.lastSourceText)) {
+            sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
+            ctx.lastSourceText = text;
+        }
 
-        // 2. 计算增量（去掉已翻译部分）
-        // 新代码：基于子串判断是否有"真的新内容"，避免空字符串/字符串回退时漏翻
-        if (text == null || text.isEmpty()) {
+        // 2. 计算增量（基于子串判断，兼容"新文本是旧文本的前缀/扩展/重置"多种情况）
+        String increment;
+        if (text.equals(ctx.lastText)) {
+            // 完全一样 → ASR 重复推送，无新内容，跳过
             return;
         }
-        String increment;
-        if (!ctx.lastText.isEmpty() && text.startsWith(ctx.lastText)) {
-            // 新文本以旧文本开头 → 取新增部分
+        if (ctx.lastText.isEmpty()) {
+            // 第一次翻译 → 全文
+            increment = text;
+        } else if (text.startsWith(ctx.lastText)) {
+            // 正常扩展 → 取新增部分
             increment = text.substring(ctx.lastText.length());
-        } else if (text.equals(ctx.lastText)) {
-            // 完全相同 → 重复推送，无新内容
-            return;
+            if (increment.isEmpty()) return;
         } else {
-            // 不以旧文本开头（可能重置、重连、或者 lastText 被某个空值污染）→ 全量翻译
+            // 不连续（VAD 重置 / 重连 / 上一句残留） → 全量翻译
             increment = text;
         }
         ctx.lastText = text;

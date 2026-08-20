@@ -31,8 +31,8 @@ const LANGS = [
 ];
 
 const AUDIO_SOURCES = [
-  { code: 'mic', label: '🎤 麦克风' },
-  { code: 'speaker', label: '🔊 扬声器（系统声音）' },
+  { code: 'mic', label: '🎤 麦克风', tip: '采集麦克风输入的语音' },
+  { code: 'speaker', label: '🔊 扬声器（屏幕共享）', tip: '需要勾选「共享音频」。可采集浏览器内视频/共享标签页/共享屏幕范围的声音；后台独立播放的桌面 app 音频采集不到。系统级采集需安装虚拟声卡（macOS BlackHole / Windows VB-Cable）。' },
 ];
 
 export function RealTimeTrans() {
@@ -396,12 +396,15 @@ export function RealTimeTrans() {
   useEffect(() => { statusRef.current = status; }, [status]);
 
   const handleServerMessage = (msg: any) => {
+    console.log('[WS-RX]', JSON.stringify(msg));
     switch (msg.type) {
       case 'source': {
         const text: string = msg.text || '';
         if (text === lastSourceTextRef.current) return;
-        const isNewSentence = !text.startsWith(lastSourceTextRef.current);
+        const prev = lastSourceTextRef.current;
         lastSourceTextRef.current = text;
+        // 判断新句：当前文本不是上一段的后缀，且上一段已较完整 → 视为新句开新段
+        const isNewSentence = prev.length > 0 && !text.startsWith(prev) && prev.length >= 4;
         if (isNewSentence) {
           pushNewSeg(text);
         } else {
@@ -473,6 +476,7 @@ export function RealTimeTrans() {
           <Select
             options={AUDIO_SOURCES.map(s => s.code)}
             labels={Object.fromEntries(AUDIO_SOURCES.map(s => [s.code, s.label]))}
+            titles={Object.fromEntries(AUDIO_SOURCES.map(s => [s.code, s.tip]))}
             value={audioSource}
             onChange={(v: string) => setAudioSource(v as 'mic' | 'speaker')}
           />
