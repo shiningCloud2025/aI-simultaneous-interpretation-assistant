@@ -70,7 +70,7 @@ export function RealTimeTrans() {
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
-  // —— 流式输出（按句切分） ——
+  // —— 流式输出（只展示当前最新一句） ——
   const [segs, setSegs] = useState<SegItem[]>([]);
   const segIdRef = useRef(0);
   const currentTargetRef = useRef<{ id: number; startedAt: number } | null>(null);
@@ -80,8 +80,11 @@ export function RealTimeTrans() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const muteRef = useRef<GainNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const lastSourceTextRef = useRef('');   // 服务端最近一次推过来的原文（用来判断新句）
+  const displayStreamRef = useRef<MediaStream | null>(null);
+  const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
+  const lastSourceTextRef = useRef('');   // 服务端最近一次推过来的原文（用来判断是否进入新句）
   const finishedSourceIdRef = useRef<number | null>(null); // 上一句结束时的 segId（收到 correction 时定位）
 
   // ============== 模型加载 ==============
@@ -208,9 +211,12 @@ export function RealTimeTrans() {
   const fmtTime = (d = new Date()) =>
     d.toTimeString().slice(0, 8);
 
-  const pushNewSeg = (source: string) => {
+  const ensureLatestSeg = (source = '') => {
+    if (currentTargetRef.current) {
+      return currentTargetRef.current.id;
+    }
     const id = ++segIdRef.current;
-    setSegs(prev => [...prev, {
+    setSegs([{
       id, time: fmtTime(), source, target: '',
     }]);
     currentTargetRef.current = { id, startedAt: Date.now() };
@@ -218,24 +224,41 @@ export function RealTimeTrans() {
     return id;
   };
 
-  const updateLastSource = (fullText: string) => {
-    // 增量更新最后一条原文（流式 ASR）
+  const setLatestSource = (text: string, resetTarget: boolean) => {
+    const id = ensureLatestSeg(text);
     setSegs(prev => {
-      if (prev.length === 0) {
-        return [{ id: ++segIdRef.current, time: fmtTime(), source: fullText, target: '' }];
-      }
       const next = prev.slice();
-      next[next.length - 1] = { ...next[next.length - 1], source: fullText };
+      const idx = next.findIndex(s => s.id === id);
+      if (idx >= 0) {
+        next[idx] = {
+          ...next[idx],
+          time: resetTarget ? fmtTime() : next[idx].time,
+          source: text,
+          target: resetTarget ? '' : next[idx].target,
+        };
+      }
       return next;
     });
   };
 
+  const updateLatestSource = (text: string) => {
+    const prev = lastSourceTextRef.current;
+    if (text === prev) return;
+
+    const isSameSentence = !!prev && text.startsWith(prev);
+    lastSourceTextRef.current = text;
+    setLatestSource(text, !isSameSentence);
+  };
+
   const appendTargetToken = (token: string) => {
+    const id = ensureLatestSeg();
     setSegs(prev => {
-      if (prev.length === 0) return prev;
       const next = prev.slice();
-      const cur = next[next.length - 1];
-      next[next.length - 1] = { ...cur, target: cur.target + token };
+      const idx = next.findIndex(s => s.id === id);
+      if (idx >= 0) {
+        const cur = next[idx];
+        next[idx] = { ...cur, target: cur.target + token };
+      }
       return next;
     });
     if (currentTargetRef.current) {
@@ -248,13 +271,24 @@ export function RealTimeTrans() {
   const stopAll = useCallback(() => {
     try { wsRef.current?.close(); } catch {}
     try { processorRef.current?.disconnect(); } catch {}
+    try { muteRef.current?.disconnect(); } catch {}
     try { sourceRef.current?.disconnect(); } catch {}
     try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch {}
+    try { displayStreamRef.current?.getTracks().forEach(t => t.stop()); } catch {}
+    try {
+      if (hiddenVideoRef.current) {
+        hiddenVideoRef.current.pause();
+        hiddenVideoRef.current.srcObject = null;
+      }
+    } catch {}
     try { audioCtxRef.current?.close(); } catch {}
     wsRef.current = null;
     processorRef.current = null;
+    muteRef.current = null;
     sourceRef.current = null;
     streamRef.current = null;
+    displayStreamRef.current = null;
+    hiddenVideoRef.current = null;
     audioCtxRef.current = null;
     setRecording(false);
     setStatus('idle');
@@ -307,6 +341,8 @@ export function RealTimeTrans() {
         hiddenVideo.autoplay = true;
         hiddenVideo.srcObject = dm;
         hiddenVideo.play().catch(() => {});
+        displayStreamRef.current = dm;
+        hiddenVideoRef.current = hiddenVideo;
         stream = new MediaStream(audioTracks);
       }
       streamRef.current = stream;
@@ -315,6 +351,9 @@ export function RealTimeTrans() {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AC({ sampleRate: 16000 });
       audioCtxRef.current = audioCtx;
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
       // 注意：sampleRate 只是「请求值」，浏览器通常按硬件采样率（44100/48000）跑，需重采样对齐后端 ASR 的 16k
       console.log('[audio] requested sampleRate=16000, actual=', audioCtx.sampleRate);
 
@@ -322,6 +361,7 @@ export function RealTimeTrans() {
       const direction = `${srcLang}-${tgtLang}`;
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
       const ws = new WebSocket(`${proto}://${location.host}/asr/audio?token=${encodeURIComponent(token)}&direction=${direction}`);
+      ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -367,12 +407,18 @@ export function RealTimeTrans() {
           console.log('[audio] frame', frameCount, 'wsState=', ws.readyState, 'ctxRate=', audioCtx.sampleRate);
         }
         const rawInput = e.inputBuffer.getChannelData(0);
-        // RMS 估算静音检测（前 3 帧打一次，用原始输入判断是否真静音）
-        if (frameCount <= 3) {
-          let rms = 0;
-          for (let i = 0; i < rawInput.length; i++) rms += rawInput[i] * rawInput[i];
-          rms = Math.sqrt(rms / rawInput.length);
-          console.log('[audio] rms=', rms.toFixed(4));
+        // RMS/峰值 持续打印（每 25 帧约 3 秒一次），实时看「说话时音量是否真的进来」
+        if (frameCount <= 3 || frameCount % 25 === 0) {
+          let sum = 0;
+          let peak = 0;
+          for (let i = 0; i < rawInput.length; i++) {
+            const v = rawInput[i];
+            sum += v * v;
+            const a = Math.abs(v);
+            if (a > peak) peak = a;
+          }
+          const rms = Math.sqrt(sum / rawInput.length);
+          console.log('[audio] rms=', rms.toFixed(4), 'peak=', peak.toFixed(4), 'frame=', frameCount);
         }
         // 关键：AudioContext 实际采样率 ≠ 16000 时必须重采样，否则后端 ASR 按 16k 解析会「读一个字就断句」
         const input = audioCtx.sampleRate !== 16000
@@ -386,9 +432,10 @@ export function RealTimeTrans() {
 
       source.connect(processor);
       // 必须连到 destination（即使静音）才能真正驱动 onaudioprocess；
-      // MuteNode 把声音压成 0，避免回声外放
+      // MuteNode 把声音压成 0，避免回声外放。这里必须用 ref 持有，避免节点被 GC 后处理链路停摆。
       const mute = audioCtx.createGain();
       mute.gain.value = 0;
+      muteRef.current = mute;
       processor.connect(mute);
       mute.connect(audioCtx.destination);
       console.log('[audio] graph connected, ctxState=', audioCtx.state);
@@ -412,16 +459,7 @@ export function RealTimeTrans() {
     switch (msg.type) {
       case 'source': {
         const text: string = msg.text || '';
-        if (text === lastSourceTextRef.current) return;
-        const prev = lastSourceTextRef.current;
-        lastSourceTextRef.current = text;
-        // 判断新句：当前文本不是上一段的后缀，且上一段已较完整 → 视为新句开新段
-        const isNewSentence = prev.length > 0 && !text.startsWith(prev) && prev.length >= 4;
-        if (isNewSentence) {
-          pushNewSeg(text);
-        } else {
-          updateLastSource(text);
-        }
+        updateLatestSource(text);
         break;
       }
       case 'target': {
@@ -429,8 +467,8 @@ export function RealTimeTrans() {
         break;
       }
       case 'correction': {
-        // 后端纠错：source/target 是被纠正后的完整原文+译文
-        // 用最近一批句子的 seg id 做替换（这里简化：替换最后一条）
+        // 合并展示模式下，纠错结果通常只覆盖后端的一批句子。
+        // 这里不再用它替换整段转写稿，避免把当前会话的完整记录截断。
         setSegs(prev => {
           if (prev.length === 0) return prev;
           const next = prev.slice();
@@ -438,7 +476,7 @@ export function RealTimeTrans() {
             ? next.findIndex(s => s.id === finishedSourceIdRef.current)
             : next.length - 1;
           if (idx >= 0) {
-            next[idx] = { ...next[idx], source: msg.source, target: msg.target, corrected: true };
+            next[idx] = { ...next[idx], corrected: true };
           }
           return next;
         });
