@@ -4,6 +4,7 @@ import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.entity.SysUserApiKey;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
@@ -54,6 +55,7 @@ public class TranslateAgent {
     private final SysUserTermEntryService sysUserTermEntryService;
     private final DataSource dataSource;
     private final LlmModelConfig llmModelConfig;
+    private final AgentScopeMysqlProperties agentScopeMysqlProperties;
 
     /** 会话级 Agent 缓存：key = userId:sessionId */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -197,10 +199,21 @@ public class TranslateAgent {
                 .build();
 
         // 构建 MySQL 状态存储（自动建库建表）
-        AgentStateStore stateStore = new MysqlAgentStateStore(dataSource,true);
+        AgentStateStore stateStore = new MysqlAgentStateStore(
+                dataSource,
+                agentScopeMysqlProperties.getDatabase(),
+                agentScopeMysqlProperties.getSessionTable(),
+                agentScopeMysqlProperties.isCreateIfNotExist()
+        );
 
         // 构建 MySQL Skill仓库(自动建库建表)
-        MysqlSkillRepository skillRepository = new MysqlSkillRepository(dataSource,true,false);
+        MysqlSkillRepository skillRepository = MysqlSkillRepository.builder(dataSource)
+                .databaseName(agentScopeMysqlProperties.getDatabase())
+                .skillsTableName(agentScopeMysqlProperties.getSkillTable())
+                .resourcesTableName(agentScopeMysqlProperties.getSkillResourceTable())
+                .createIfNotExist(agentScopeMysqlProperties.isCreateIfNotExist())
+                .writeable(agentScopeMysqlProperties.isSkillWriteable())
+                .build();
 
         // 7. 构建 HarnessAgent
         return HarnessAgent.builder()

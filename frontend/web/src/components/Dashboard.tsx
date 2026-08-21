@@ -89,7 +89,6 @@ export function Dashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
               { id: 'translate', icon: '🎤', label: '实时转译', desc: '开始录音，AI 实时语音识别与翻译' },
-              { id: 'static-trans', icon: '📁', label: '静态转译', desc: '上传音频文件，生成翻译文稿' },
             ].map(item => (
               <div
                 key={item.id}

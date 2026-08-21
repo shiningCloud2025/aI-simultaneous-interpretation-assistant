@@ -66,7 +66,11 @@ export function ApiKeyConfig() {
     try {
       const res = await fetch(API, { method: 'POST', headers: h(), body: JSON.stringify(form) });
       const json = await res.json();
-      if (json.code === 200) { setShowModal(false); loadKeys(); showToast('保存成功'); }
+      if (json.code === 200) {
+        setShowModal(false);
+        loadKeys();
+        showToast('保存成功');
+      }
       else showToast(json.detail || json.message || '保存失败');
     } catch { showToast('请求失败'); }
   };

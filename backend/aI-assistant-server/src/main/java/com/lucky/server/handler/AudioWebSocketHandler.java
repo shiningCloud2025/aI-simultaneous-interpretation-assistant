@@ -20,7 +20,6 @@ import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,6 +58,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         WebSocketSession session;       // 这个连接的 WebSocket session（推送用）
         AsrService asrService;          // 这个连接的 ASR 实例
         String lastText = "";           // 已翻译到的原文位置（算增量用）
+        String lastSourceText = "";     // 已推送给前端的最新原文（去重）
         String pendingIncrement = null; // 翻译中攒下的最新待翻增量
         boolean translating = false;    // 是否正在翻译（串行控制）
         // 纠错累积：原文 / 译文 / 句数
@@ -122,10 +122,17 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
+
+        // ASR 不强制 language_hints，避免翻译方向选错或中英混说时模型被错误语种提示带偏。
+        // 翻译方向仍由 direction 控制，只影响后续译文方向。
+        String sourceLang = null;
+
         // 5. 组装 AsrConfig 并启动 ASR
+
         AsrConfig asrConfig = AsrConfig.builder()
                 .apiKey(apiKey)
                 .model(modelName)
+                .language(sourceLang)
                 .format("pcm")
                 .sampleRate(16000)
                 .wsUrl(wsUrl)
@@ -157,7 +164,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         ByteBuffer buf = message.getPayload();
         byte[] chunk = new byte[buf.remaining()];
         buf.get(chunk);
-        ctx.asrService.sendAudio(chunk);   // 直送，不攒
+        ctx.asrService.sendAudio(chunk);
     }
 
 
@@ -277,17 +284,30 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
-        // 1. 推送原文给前端
-        sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
+        // 1. 推送原文给前端（去重：同一文本不重复推，避免前端重复刷）
+        if (!text.equals(ctx.lastSourceText)) {
+            sendToClient(ctx, "{\"type\":\"source\",\"text\":\"" + escapeJson(text) + "\"}");
+            ctx.lastSourceText = text;
+        }
 
-        // 2. 计算增量（去掉已翻译部分）
+        // 2. 计算增量（基于子串判断，兼容"新文本是旧文本的前缀/扩展/重置"多种情况）
         String increment;
-        if (text.length() <= ctx.lastText.length()) {
-            // 文本没变长（甚至回退），没有新增内容
+        if (text.equals(ctx.lastText)) {
+            // 完全一样 → ASR 重复推送，无新内容，跳过
             return;
         }
-        increment = text.substring(ctx.lastText.length());
-        ctx.lastText = text;   // 更新"已翻译到哪"
+        if (ctx.lastText.isEmpty()) {
+            // 第一次翻译 → 全文
+            increment = text;
+        } else if (text.startsWith(ctx.lastText)) {
+            // 正常扩展 → 取新增部分
+            increment = text.substring(ctx.lastText.length());
+            if (increment.isEmpty()) return;
+        } else {
+            // 不连续（VAD 重置 / 重连 / 上一句残留） → 全量翻译
+            increment = text;
+        }
+        ctx.lastText = text;
 
         // 3. 串行 + 合并：正在翻译就把增量攒着，否则立即翻译
         if (ctx.translating) {
@@ -358,11 +378,5 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r");
     }
-
-
-
-
-
-
 
 }

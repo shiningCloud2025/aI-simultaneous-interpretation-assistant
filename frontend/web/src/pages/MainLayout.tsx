@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
 import { Dashboard } from '../components/Dashboard';
-import { StaticTrans } from '../components/StaticTrans';
 import { RealTimeTrans } from '../components/RealTimeTrans';
 import { AudioSettings } from '../components/AudioSettings';
 import { ShortcutSettings } from '../components/ShortcutSettings';
@@ -24,7 +23,6 @@ const navItems = [
   ]},
   { group: '智慧英语课堂-听力', items: [
     { id: 'translate', icon: '🎧', label: '实时转译' },
-    { id: 'static-trans', icon: '📁', label: '静态转译' },
   ]},
   { group: '设置与个人', items: [
     { id: 'account', icon: '👤', label: '个人中心' },
@@ -38,14 +36,14 @@ const navItems = [
 ];
 
 const panelComponents: Record<string, React.FC> = {
-  'dashboard': Dashboard, 'static-trans': StaticTrans, 'translate': RealTimeTrans,
+  'dashboard': Dashboard, 'translate': RealTimeTrans,
   'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'api-key': ApiKeyConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
 };
 
 const panelTitles: Record<string, string> = {
-  'dashboard': '仪表盘', 'static-trans': '静态转译', 'translate': '实时转译',
+  'dashboard': '仪表盘', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
