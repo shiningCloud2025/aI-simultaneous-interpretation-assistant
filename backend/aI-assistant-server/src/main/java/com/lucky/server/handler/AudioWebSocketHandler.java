@@ -123,10 +123,17 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
+
+        // 从方向解析源语言：en-zh → en（识别语言 = 源语言）
+        String sourceLang = (direction != null && direction.contains("-"))
+                ? direction.split("-")[0] : null;
+
         // 5. 组装 AsrConfig 并启动 ASR
+
         AsrConfig asrConfig = AsrConfig.builder()
                 .apiKey(apiKey)
                 .model(modelName)
+                .language(sourceLang)
                 .format("pcm")
                 .sampleRate(16000)
                 .wsUrl(wsUrl)

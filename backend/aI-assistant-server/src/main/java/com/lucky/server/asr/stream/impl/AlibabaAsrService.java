@@ -5,6 +5,7 @@ import com.alibaba.dashscope.audio.asr.recognition.RecognitionParam;
 import com.alibaba.dashscope.audio.asr.recognition.RecognitionResult;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.utils.Constants;
+import com.google.gson.Gson;
 import com.lucky.server.asr.stream.AsrCallback;
 import com.lucky.server.asr.stream.AsrConfig;
 import com.lucky.server.asr.stream.AsrService;
@@ -22,6 +23,8 @@ public class AlibabaAsrService implements AsrService {
     private Recognition recognition;
     private AsrCallback callback;
     private AsrConfig config;   // 保存配置，用于断线重连
+
+    private int audioFrameCount = 0;
 
     @Override
     public void start(AsrConfig config, AsrCallback callBack) {
@@ -43,6 +46,9 @@ public class AlibabaAsrService implements AsrService {
                 .apiKey(config.getApiKey())
                 .format(config.getFormat())
                 .sampleRate(config.getSampleRate())
+                // 关键：开启心跳，静音/停顿时不因超时断连（默认 false 会 23 秒超时断开）
+                .parameter("heartbeat", true)
+                .parameter("language_hints", new String[]{config.getLanguage()})
                 .build();
 
         this.recognition = new Recognition();
@@ -79,6 +85,9 @@ public class AlibabaAsrService implements AsrService {
         };
 
         try{
+            log.info("[AlibabaAsr] 连接参数: model={}, language={}, heartbeat=true",
+                    config.getModel(), config.getLanguage());
+            log.info("[AlibabaAsr] 完整请求参数 JSON: {}", new Gson().toJson(param.getParameters()));
             recognition.call(param,internalCallback);
         }catch (Exception e){
             log.error("[AlibabaAsr] 启动失败", e);
@@ -104,10 +113,16 @@ public class AlibabaAsrService implements AsrService {
         }
     }
 
+
+
     @Override
     public void sendAudio(byte[] pcmChunk) {
         if (recognition == null) {
             return;
+        }
+        audioFrameCount++;
+        if (audioFrameCount <= 3 || audioFrameCount % 100 == 0) {
+            log.info("[AlibabaAsr] sendAudio 第{}帧, 字节数={}", audioFrameCount, pcmChunk.length);
         }
         try{
             recognition.sendAudioFrame(ByteBuffer.wrap(pcmChunk));
