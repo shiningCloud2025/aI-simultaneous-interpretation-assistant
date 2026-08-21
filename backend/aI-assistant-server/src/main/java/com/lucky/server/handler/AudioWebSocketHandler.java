@@ -20,7 +20,6 @@ import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,8 +65,6 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         StringBuilder sourceBuffer = new StringBuilder();   // 累积的原文
         StringBuilder targetBuffer = new StringBuilder();   // 累积的译文
         int sentenceCount = 0;                               // 已累积句数
-        // ASR 连接就绪前，缓冲前端音频，避免提前灌入导致连接错乱
-        ByteArrayOutputStream asrPendingBuffer = new ByteArrayOutputStream();
     }
 
 
@@ -126,9 +123,9 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         }
 
 
-        // 从方向解析源语言：en-zh → en（识别语言 = 源语言）
-        String sourceLang = (direction != null && direction.contains("-"))
-                ? direction.split("-")[0] : null;
+        // ASR 不强制 language_hints，避免翻译方向选错或中英混说时模型被错误语种提示带偏。
+        // 翻译方向仍由 direction 控制，只影响后续译文方向。
+        String sourceLang = null;
 
         // 5. 组装 AsrConfig 并启动 ASR
 
@@ -167,19 +164,7 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
         ByteBuffer buf = message.getPayload();
         byte[] chunk = new byte[buf.remaining()];
         buf.get(chunk);
-        if (ctx.asrService.isReady()) {
-            // 已就绪：先把之前缓冲的音频发出去（保持顺序），再发当前帧
-            flushPendingAudio(ctx);
-            ctx.asrService.sendAudio(chunk);
-        } else {
-            // ASR 未就绪：先缓冲，避免提前灌入导致连接错乱
-            try {
-                ctx.asrPendingBuffer.write(chunk);
-            } catch (IOException e) {
-                log.error("缓冲音频失败", e);
-            }
-        }
-        ctx.asrService.sendAudio(chunk);   // 直送，不攒
+        ctx.asrService.sendAudio(chunk);
     }
 
 
@@ -393,23 +378,5 @@ public class AudioWebSocketHandler extends BinaryWebSocketHandler {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r");
     }
-
-    /**
-     * 把 ASR 就绪前缓冲的音频一次性发出去
-     */
-    private void flushPendingAudio(SessionContext ctx) {
-        if (ctx.asrPendingBuffer.size() == 0) {
-            return;
-        }
-        byte[] buffered = ctx.asrPendingBuffer.toByteArray();
-        ctx.asrPendingBuffer.reset();
-        ctx.asrService.sendAudio(buffered);
-    }
-
-
-
-
-
-
 
 }
