@@ -25,6 +25,8 @@ public class AlibabaAsrService implements AsrService {
     private AsrConfig config;   // 保存配置，用于断线重连
 
     private int audioFrameCount = 0;
+    /** ASR 连接是否已就绪（收到首个服务端结果后置 true） */
+    private volatile boolean ready = false;
 
     @Override
     public void start(AsrConfig config, AsrCallback callBack) {
@@ -51,11 +53,13 @@ public class AlibabaAsrService implements AsrService {
                 .parameter("language_hints", new String[]{config.getLanguage()})
                 .build();
 
+        ready = false;
         this.recognition = new Recognition();
 
         ResultCallback<RecognitionResult> internalCallback = new ResultCallback<RecognitionResult>() {
             @Override
             public void onEvent(RecognitionResult result) {
+                ready = true;   // 收到任意结果，说明 ASR 连接已就绪
                 if (result.getSentence() == null){
                     return ;
                 }
@@ -113,6 +117,10 @@ public class AlibabaAsrService implements AsrService {
         }
     }
 
+    @Override
+    public boolean isReady() {
+        return ready;
+    }
 
 
     @Override
