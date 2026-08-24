@@ -75,6 +75,7 @@ public class WritingCompositionGenerateAgent {
      */
     public Mono<WritingCompositionGenerateResultVO> generate(WritingCompositionGenerateDTO dto) {
         Long userId = sysUserService.getCurrentUser().getId();
+        SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
         HarnessAgent agent = agentCache.computeIfAbsent(userId,this::buildAgent);
 
 
@@ -106,7 +107,6 @@ public class WritingCompositionGenerateAgent {
 
         // 落库数据
         AtomicBoolean failureSaved = new AtomicBoolean(false);
-        SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
 
         return agent.call(List.of(new UserMessage(input)), WritingCompositionGenerateResultVO.class, ctx)
                 .map(msg -> {
@@ -131,8 +131,12 @@ public class WritingCompositionGenerateAgent {
                         }
 
                 )
-
-                .doOnError(e -> log.error("作文题目生成失败", e));
+                .doOnError(e -> {
+                    if (!failureSaved.get()) {
+                        saveFailureSafely(dto, userId, llmPreference, "model_generate", e, null);
+                    }
+                    log.error("作文题目生成失败", e);
+                });
 
     }
 
@@ -313,14 +317,14 @@ public class WritingCompositionGenerateAgent {
         try {
             WritingCompositionGenerationFailure entity = new WritingCompositionGenerationFailure();
             entity.setUserId(userId);
-            entity.setLanguageCode(dto.languageCode());
-            entity.setStageCode(dto.stageCode());
-            entity.setGenreCode(dto.genreCode());
-            entity.setDifficultyCode(dto.difficultyCode());
-            entity.setSceneCode(dto.sceneCode());
-            entity.setCustomScene(dto.customScene());
-            entity.setProvider(llmPreference.provider());
-            entity.setModelName(llmPreference.modelName());
+            entity.setLanguageCode(dto == null ? null : dto.languageCode());
+            entity.setStageCode(dto == null ? null : dto.stageCode());
+            entity.setGenreCode(dto == null ? null : dto.genreCode());
+            entity.setDifficultyCode(dto == null ? null : dto.difficultyCode());
+            entity.setSceneCode(dto == null ? null : dto.sceneCode());
+            entity.setCustomScene(dto == null ? null : dto.customScene());
+            entity.setProvider(llmPreference == null ? null : llmPreference.provider());
+            entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
             entity.setFailureStage(failureStage);
             entity.setErrorCode(error.getClass().getSimpleName());
             entity.setErrorMessage(error.getMessage());
