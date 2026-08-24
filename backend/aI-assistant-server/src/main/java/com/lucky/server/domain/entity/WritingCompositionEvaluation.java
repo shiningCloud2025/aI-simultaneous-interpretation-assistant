@@ -73,9 +73,9 @@ public class WritingCompositionEvaluation implements Serializable {
     @Schema(description = "作文正文")
     private String content;
 
-    @TableField("image_url")
-    @Schema(description = "作文图片URL")
-    private String imageUrl;
+    @TableField("image_urls_json")
+    @Schema(description = "作文图片URL列表JSON")
+    private String imageUrlsJson;
 
     @TableField("ocr_text")
     @Schema(description = "图片识别文本")
