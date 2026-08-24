@@ -1,4 +1,4 @@
-package com.lucky.server.agent.writing;
+package com.lucky.server.agent.write;
 
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
