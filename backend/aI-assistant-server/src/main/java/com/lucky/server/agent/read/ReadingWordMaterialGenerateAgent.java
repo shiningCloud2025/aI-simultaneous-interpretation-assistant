@@ -3,16 +3,17 @@ package com.lucky.server.agent.read;
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
+import com.lucky.server.common.enums.ReadingWordMaterialFailureStageEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.dto.ReadingWordMaterialGenerateDTO;
+import com.lucky.server.domain.entity.ReadingWordMaterial;
+import com.lucky.server.domain.entity.ReadingWordMaterialFailure;
 import com.lucky.server.domain.entity.SysUserApiKey;
 import com.lucky.server.domain.vo.ReadingWordMaterialGenerateResultVO;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
-import com.lucky.server.service.SysUserApiKeyService;
-import com.lucky.server.service.SysUserModelPreferenceService;
-import com.lucky.server.service.SysUserService;
+import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
@@ -40,6 +41,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 阅读单词素材生成 Agent
@@ -56,6 +58,8 @@ public class ReadingWordMaterialGenerateAgent {
     private final LlmModelConfig llmModelConfig;
     private final AgentScopeMysqlProperties agentScopeMysqlProperties;
     private final DataSource dataSource;
+    private final ReadingWordMaterialService readingWordMaterialService;
+    private final ReadingWordMaterialFailureService readingWordMaterialFailureService;
 
     /** 用户级 Agent 缓存：key = userId */
     private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -68,7 +72,7 @@ public class ReadingWordMaterialGenerateAgent {
      */
     public Mono<ReadingWordMaterialGenerateResultVO> generate(ReadingWordMaterialGenerateDTO dto) {
         Long userId = sysUserService.getCurrentUser().getId();
-
+        SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
         if (!dto.stageCode().belongsToLanguage(dto.languageCode().getCode())) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "学习阶段与语言不匹配");
         }
@@ -92,6 +96,7 @@ public class ReadingWordMaterialGenerateAgent {
                 dto.stageCode().getDesc()
         );
 
+        AtomicBoolean failureSaved = new AtomicBoolean(false);
         return agent.call(List.of(new UserMessage(input)), ReadingWordMaterialGenerateResultVO.class, ctx)
                 .map(msg -> {
                     ReadingWordMaterialGenerateResultVO result =
@@ -103,7 +108,22 @@ public class ReadingWordMaterialGenerateAgent {
 
                     return result;
                 })
-                .doOnError(e -> log.error("阅读单词素材生成失败", e));
+                .map(result -> {
+                    try {
+                        saveMaterial(dto, userId, llmPreference, result);
+                        return result;
+                    } catch (Exception e) {
+                        failureSaved.set(true);
+                        saveFailureSafely(dto, userId, llmPreference, ReadingWordMaterialFailureStageEnum.PERSIST, e, safeRawResponse(result));
+                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材保存失败");
+                    }
+                })
+                .doOnError(e -> {
+                    if (!failureSaved.get()) {
+                        saveFailureSafely(dto, userId, llmPreference, ReadingWordMaterialFailureStageEnum.SENTENCE_GENERATE, e, null);
+                    }
+                    log.error("阅读单词素材生成失败", e);
+                });
     }
 
     /**
@@ -229,5 +249,76 @@ public class ReadingWordMaterialGenerateAgent {
                 )
                 .skillRepository(skillRepository)
                 .build();
+    }
+
+    private SysUserModelPreferenceVO getLlmPreference(Long userId) {
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
+        return preferences.stream()
+                .filter(p -> ApiKeyTypeEnum.LLM.equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+    }
+
+    private void saveMaterial(ReadingWordMaterialGenerateDTO dto,
+                              Long userId,
+                              SysUserModelPreferenceVO llmPreference,
+                              ReadingWordMaterialGenerateResultVO result) {
+        ReadingWordMaterial entity = new ReadingWordMaterial();
+        entity.setWord(dto.word().trim());
+        entity.setLanguageCode(dto.languageCode());
+        entity.setStageCode(dto.stageCode());
+        entity.setSentence(result.sentence());
+        entity.setTranslation(result.translation());
+        entity.setImageUrl(blankToNull(result.imageUrl()));
+        entity.setProvider(llmPreference.provider());
+        entity.setModelName(llmPreference.modelName());
+        entity.setImageProvider(llmPreference.provider());
+        entity.setImageModelName(llmPreference.modelName());
+        entity.setCreatedById(userId);
+
+        readingWordMaterialService.saveMaterial(entity);
+    }
+
+    private void saveFailureSafely(ReadingWordMaterialGenerateDTO dto,
+                                   Long userId,
+                                   SysUserModelPreferenceVO llmPreference,
+                                   ReadingWordMaterialFailureStageEnum failureStage,
+                                   Throwable error,
+                                   String rawResponse) {
+        try {
+            ReadingWordMaterialFailure entity = new ReadingWordMaterialFailure();
+            entity.setWord(dto == null || dto.word() == null || dto.word().isBlank() ? "未知" : dto.word().trim());
+            entity.setLanguageCode(dto == null ? null : dto.languageCode());
+            entity.setStageCode(dto == null ? null : dto.stageCode());
+            entity.setProvider(llmPreference == null ? null : llmPreference.provider());
+            entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
+            entity.setImageProvider(llmPreference == null ? null : llmPreference.provider());
+            entity.setImageModelName(llmPreference == null ? null : llmPreference.modelName());
+            entity.setFailureStage(failureStage);
+            entity.setErrorCode(error.getClass().getSimpleName());
+            entity.setErrorMessage(error.getMessage());
+            entity.setRawResponse(rawResponse);
+            entity.setCreatedById(userId);
+
+            readingWordMaterialFailureService.saveFailure(entity);
+        } catch (Exception e) {
+            log.error("保存阅读单词素材失败记录异常", e);
+        }
+    }
+
+    private String safeRawResponse(ReadingWordMaterialGenerateResultVO result) {
+        try {
+            return result == null
+                    ? null
+                    : "sentence=" + result.sentence()
+                    + ", translation=" + result.translation()
+                    + ", imageUrl=" + result.imageUrl();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }

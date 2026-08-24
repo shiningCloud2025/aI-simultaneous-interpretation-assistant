@@ -1,5 +1,7 @@
 package com.lucky.server.agent.write;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
@@ -9,11 +11,11 @@ import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.dto.WritingCompositionEvaluateDTO;
 import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.domain.entity.WritingCompositionEvaluation;
+import com.lucky.server.domain.entity.WritingCompositionEvaluationFailure;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.WritingCompositionEvaluateResultVO;
-import com.lucky.server.service.SysUserApiKeyService;
-import com.lucky.server.service.SysUserModelPreferenceService;
-import com.lucky.server.service.SysUserService;
+import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
@@ -41,6 +43,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 写作作文评估 Agent
@@ -57,6 +60,9 @@ public class WritingCompositionEvaluateAgent {
     private final LlmModelConfig llmModelConfig;
     private final AgentScopeMysqlProperties agentScopeMysqlProperties;
     private final DataSource dataSource;
+    private final WritingCompositionEvaluationService writingCompositionEvaluationService;
+    private final WritingCompositionEvaluationFailureService writingCompositionEvaluationFailureService;
+    private final ObjectMapper objectMapper;
 
     /** 用户级 Agent 缓存：key = userId */
     private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -69,6 +75,7 @@ public class WritingCompositionEvaluateAgent {
      */
     public Mono<WritingCompositionEvaluateResultVO> evaluate(WritingCompositionEvaluateDTO dto) {
         Long userId = sysUserService.getCurrentUser().getId();
+        SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
         HarnessAgent agent = agentCache.computeIfAbsent(userId, this::buildAgent);
 
         RuntimeContext ctx = RuntimeContext.builder()
@@ -133,6 +140,7 @@ public class WritingCompositionEvaluateAgent {
                     formatImageUrls(dto.imageUrls())
             );
         }
+        AtomicBoolean failureSaved = new AtomicBoolean(false);
 
         return agent.call(List.of(new UserMessage(input)), WritingCompositionEvaluateResultVO.class, ctx)
                 .map(msg -> {
@@ -145,7 +153,22 @@ public class WritingCompositionEvaluateAgent {
 
                     return result;
                 })
-                .doOnError(e -> log.error("作文评估失败", e));
+                .map(result -> {
+                    try {
+                        saveEvaluation(dto, userId, llmPreference, result);
+                        return result;
+                    } catch (Exception e) {
+                        failureSaved.set(true);
+                        saveFailureSafely(dto, userId, llmPreference, "persist", e, safeRawResponse(result));
+                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估记录保存失败");
+                    }
+                })
+                .doOnError(e -> {
+                    if (!failureSaved.get()) {
+                        saveFailureSafely(dto, userId, llmPreference, "model_evaluate", e, null);
+                    }
+                    log.error("作文评估失败", e);
+                });
     }
 
     /**
@@ -298,5 +321,96 @@ public class WritingCompositionEvaluateAgent {
 
     private String blankToPlaceholder(String value) {
         return value == null || value.isBlank() ? "无" : value;
+    }
+
+    private SysUserModelPreferenceVO getLlmPreference(Long userId) {
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
+        return preferences.stream()
+                .filter(p -> ApiKeyTypeEnum.LLM.equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+    }
+
+    private void saveEvaluation(WritingCompositionEvaluateDTO dto,
+                                Long userId,
+                                SysUserModelPreferenceVO llmPreference,
+                                WritingCompositionEvaluateResultVO result) throws JsonProcessingException {
+        WritingCompositionEvaluation entity = new WritingCompositionEvaluation();
+        entity.setUserId(userId);
+        entity.setGenerationId(dto.generationId());
+        entity.setSubmitType(dto.submitType());
+        entity.setLanguageCode(dto.languageCode());
+        entity.setStageCode(dto.stageCode());
+        entity.setGenreCode(dto.genreCode());
+        entity.setTitle(dto.title());
+        entity.setPrompt(dto.prompt());
+        entity.setScoringCriteria(dto.scoringCriteria());
+        entity.setContent(dto.content());
+        entity.setImageUrlsJson(toJson(dto.imageUrls()));
+        entity.setScore(result.score());
+        entity.setFeedback(result.feedback());
+        entity.setSuggestion(result.suggestion());
+        entity.setHighlightsJson(toJson(result.highlights()));
+        entity.setImprovementPointsJson(toJson(result.improvementPoints()));
+        entity.setSentenceFeedbackJson(toJson(result.sentenceFeedback()));
+        entity.setImprovedVersion(result.improvedVersion());
+        entity.setProvider(llmPreference.provider());
+        entity.setModelName(llmPreference.modelName());
+        entity.setCreatedById(userId);
+
+        writingCompositionEvaluationService.saveEvaluation(entity);
+    }
+
+    private void saveFailureSafely(WritingCompositionEvaluateDTO dto,
+                                   Long userId,
+                                   SysUserModelPreferenceVO llmPreference,
+                                   String failureStage,
+                                   Throwable error,
+                                   String rawResponse) {
+        try {
+            WritingCompositionEvaluationFailure entity = new WritingCompositionEvaluationFailure();
+            entity.setUserId(userId);
+            entity.setGenerationId(dto == null ? null : dto.generationId());
+            entity.setSubmitType(dto == null ? null : dto.submitType());
+            entity.setLanguageCode(dto == null ? null : dto.languageCode());
+            entity.setStageCode(dto == null ? null : dto.stageCode());
+            entity.setGenreCode(dto == null ? null : dto.genreCode());
+            entity.setTitle(dto == null ? null : dto.title());
+            entity.setPrompt(dto == null ? null : dto.prompt());
+            entity.setScoringCriteria(dto == null ? null : dto.scoringCriteria());
+            entity.setContent(dto == null ? null : dto.content());
+            entity.setImageUrlsJson(dto == null ? null : safeToJson(dto.imageUrls()));
+            entity.setProvider(llmPreference == null ? null : llmPreference.provider());
+            entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
+            entity.setFailureStage(failureStage);
+            entity.setErrorCode(error.getClass().getSimpleName());
+            entity.setErrorMessage(error.getMessage());
+            entity.setRawResponse(rawResponse);
+            entity.setCreatedById(userId);
+
+            writingCompositionEvaluationFailureService.saveFailure(entity);
+        } catch (Exception e) {
+            log.error("保存作文评估失败记录异常", e);
+        }
+    }
+
+    private String toJson(Object value) throws JsonProcessingException {
+        return value == null ? null : objectMapper.writeValueAsString(value);
+    }
+
+    private String safeToJson(Object value) {
+        try {
+            return value == null ? null : objectMapper.writeValueAsString(value);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String safeRawResponse(WritingCompositionEvaluateResultVO result) {
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
