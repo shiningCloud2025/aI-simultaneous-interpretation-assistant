@@ -1,5 +1,7 @@
 package com.lucky.server.agent.write;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
@@ -9,11 +11,11 @@ import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.dto.WritingCompositionGenerateDTO;
 import com.lucky.server.domain.entity.SysUserApiKey;
+import com.lucky.server.domain.entity.WritingCompositionGeneration;
+import com.lucky.server.domain.entity.WritingCompositionGenerationFailure;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.WritingCompositionGenerateResultVO;
-import com.lucky.server.service.SysUserApiKeyService;
-import com.lucky.server.service.SysUserModelPreferenceService;
-import com.lucky.server.service.SysUserService;
+import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
@@ -41,6 +43,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 写作作文题目生成 Agent
@@ -57,7 +60,9 @@ public class WritingCompositionGenerateAgent {
     private final LlmModelConfig llmModelConfig;
     private final AgentScopeMysqlProperties agentScopeMysqlProperties;
     private final DataSource dataSource;
-
+    private final WritingCompositionGenerationService writingCompositionGenerationService;
+    private final WritingCompositionGenerationFailureService writingCompositionGenerationFailureService;
+    private final ObjectMapper objectMapper;
 
     /** 用户级 Agent 缓存：key = userId */
     private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -99,6 +104,10 @@ public class WritingCompositionGenerateAgent {
                 scene
         );
 
+        // 落库数据
+        AtomicBoolean failureSaved = new AtomicBoolean(false);
+        SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
+
         return agent.call(List.of(new UserMessage(input)), WritingCompositionGenerateResultVO.class, ctx)
                 .map(msg -> {
                     WritingCompositionGenerateResultVO result =
@@ -110,6 +119,19 @@ public class WritingCompositionGenerateAgent {
 
                     return result;
                 })
+                .map(result ->{
+                    try {
+                        saveGeneration(dto, userId, llmPreference, result);
+                        return result;
+                    } catch (Exception e) {
+                        failureSaved.set(true);
+                        saveFailureSafely(dto, userId, llmPreference, "persist", e, safeRawResponse(result));
+                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成记录保存失败");
+                    }
+                        }
+
+                )
+
                 .doOnError(e -> log.error("作文题目生成失败", e));
 
     }
@@ -246,7 +268,82 @@ public class WritingCompositionGenerateAgent {
 
     }
 
+    private SysUserModelPreferenceVO getLlmPreference(Long userId) {
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
+        return preferences.stream()
+                .filter(p -> ApiKeyTypeEnum.LLM.equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+    }
 
+    private void saveGeneration(WritingCompositionGenerateDTO dto,
+                                Long userId,
+                                SysUserModelPreferenceVO llmPreference,
+                                WritingCompositionGenerateResultVO result) throws JsonProcessingException {
+        WritingCompositionGeneration entity = new WritingCompositionGeneration();
+        entity.setUserId(userId);
+        entity.setLanguageCode(dto.languageCode());
+        entity.setStageCode(dto.stageCode());
+        entity.setGenreCode(dto.genreCode());
+        entity.setDifficultyCode(dto.difficultyCode());
+        entity.setSceneCode(dto.sceneCode());
+        entity.setCustomScene(dto.customScene());
+        entity.setTitle(result.title());
+        entity.setPrompt(result.prompt());
+        entity.setRequirement(result.requirement());
+        entity.setWordLimitMin(result.wordLimitMin());
+        entity.setWordLimitMax(result.wordLimitMax());
+        entity.setKeyPointsJson(toJson(result.keyPoints()));
+        entity.setVocabularyHintsJson(toJson(result.vocabularyHints()));
+        entity.setStructureHintsJson(toJson(result.structureHints()));
+        entity.setScoringCriteriaJson(toJson(result.scoringCriteria()));
+        entity.setProvider(llmPreference.provider());
+        entity.setModelName(llmPreference.modelName());
+        entity.setCreatedById(userId);
+
+        writingCompositionGenerationService.saveGeneration(entity);
+    }
+
+    private void saveFailureSafely(WritingCompositionGenerateDTO dto,
+                                   Long userId,
+                                   SysUserModelPreferenceVO llmPreference,
+                                   String failureStage,
+                                   Throwable error,
+                                   String rawResponse) {
+        try {
+            WritingCompositionGenerationFailure entity = new WritingCompositionGenerationFailure();
+            entity.setUserId(userId);
+            entity.setLanguageCode(dto.languageCode());
+            entity.setStageCode(dto.stageCode());
+            entity.setGenreCode(dto.genreCode());
+            entity.setDifficultyCode(dto.difficultyCode());
+            entity.setSceneCode(dto.sceneCode());
+            entity.setCustomScene(dto.customScene());
+            entity.setProvider(llmPreference.provider());
+            entity.setModelName(llmPreference.modelName());
+            entity.setFailureStage(failureStage);
+            entity.setErrorCode(error.getClass().getSimpleName());
+            entity.setErrorMessage(error.getMessage());
+            entity.setRawResponse(rawResponse);
+            entity.setCreatedById(userId);
+
+            writingCompositionGenerationFailureService.saveFailure(entity);
+        } catch (Exception e) {
+            log.error("保存作文题目生成失败记录异常", e);
+        }
+    }
+
+    private String toJson(Object value) throws JsonProcessingException {
+        return value == null ? null : objectMapper.writeValueAsString(value);
+    }
+
+    private String safeRawResponse(WritingCompositionGenerateResultVO result) {
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 
 }
