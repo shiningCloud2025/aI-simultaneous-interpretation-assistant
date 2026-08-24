@@ -3,14 +3,19 @@ package com.lucky.server.agent.writing;
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
+import com.lucky.server.common.enums.CompositionSceneEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
+import com.lucky.server.domain.dto.WritingCompositionGenerateDTO;
 import com.lucky.server.domain.entity.SysUserApiKey;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
+import com.lucky.server.domain.vo.WritingCompositionGenerateResultVO;
 import com.lucky.server.service.SysUserApiKeyService;
 import com.lucky.server.service.SysUserModelPreferenceService;
 import com.lucky.server.service.SysUserService;
+import io.agentscope.core.agent.RuntimeContext;
+import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
@@ -29,6 +34,7 @@ import io.agentscope.harness.agent.memory.compaction.CompactionConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 import java.time.Duration;
@@ -56,6 +62,57 @@ public class WritingCompositionGenerateAgent {
     /** 用户级 Agent 缓存：key = userId */
     private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
+    /**
+     * 生成作文题目
+     *
+     * @param dto 生成参数
+     * @return 作文生成结果
+     */
+    public Mono<WritingCompositionGenerateResultVO> generate(WritingCompositionGenerateDTO dto) {
+        Long userId = sysUserService.getCurrentUser().getId();
+        HarnessAgent agent = agentCache.computeIfAbsent(userId,this::buildAgent);
+
+
+        RuntimeContext ctx = RuntimeContext.builder()
+                .userId(String.valueOf(userId))
+                .sessionId("writing_composition_generate_" + userId)
+                .build();
+
+        String scene = CompositionSceneEnum.CUSTOM.equals(dto.sceneCode())
+                ?dto.customScene()
+                :dto.sceneCode().getDesc();
+
+
+        String input = """
+                请生成一份作文训练题。
+
+                语言：%s
+                学习阶段：%s
+                题型：%s
+                难度：%s
+                场景：%s
+                """.formatted(
+                dto.languageCode().getDesc(),
+                dto.stageCode().getDesc(),
+                dto.genreCode().getDesc(),
+                dto.difficultyCode().getDesc(),
+                scene
+        );
+
+        return agent.call(List.of(new UserMessage(input)), WritingCompositionGenerateResultVO.class, ctx)
+                .map(msg -> {
+                    WritingCompositionGenerateResultVO result =
+                            msg.getStructuredData(WritingCompositionGenerateResultVO.class);
+
+                    if (result == null) {
+                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成结果为空");
+                    }
+
+                    return result;
+                })
+                .doOnError(e -> log.error("作文题目生成失败", e));
+
+    }
 
 
     /**
