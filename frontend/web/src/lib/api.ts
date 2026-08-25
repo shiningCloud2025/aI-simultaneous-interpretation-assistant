@@ -20,3 +20,20 @@ export async function apiCall<T = unknown>(
   }
   return (json?.data ?? json) as T;
 }
+
+export async function uploadFile<T = unknown>(file: File): Promise<T> {
+  const token = localStorage.getItem('token') || '';
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/common/file/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (json && typeof json === 'object' && 'code' in json && json.code !== 200) {
+    throw new Error(json.detail || json.message || `上传失败 (code=${json.code})`);
+  }
+  return (json?.data ?? json) as T;
+}

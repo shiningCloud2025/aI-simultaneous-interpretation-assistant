@@ -177,6 +177,9 @@ public class WritingCompositionGenerateAgent {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .baseUrl(baseUrl)
+                // 降低时间消耗，把结构化输出能力从厂商移到框架
+                .nativeStructuredOutput(false)
+                .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
                         GenerateOptions.builder()

@@ -2,6 +2,21 @@ import { useState } from 'react';
 import { Card, PageBanner } from './ui';
 import { apiCall } from '../lib/api';
 
+const LANGUAGES = [
+  { code: 'english', desc: '英语' },
+  { code: 'japanese', desc: '日语' },
+  { code: 'korean', desc: '韩语' },
+];
+
+const STAGES = [
+  { code: 'en_primary', desc: '小学英语', language: 'english' },
+  { code: 'en_junior', desc: '初中英语', language: 'english' },
+  { code: 'en_senior', desc: '高中英语', language: 'english' },
+  { code: 'en_postgraduate', desc: '考研英语', language: 'english' },
+  { code: 'en_ielts', desc: '雅思', language: 'english' },
+  { code: 'en_toefl', desc: '托福', language: 'english' },
+];
+
 interface VocabCard {
   word: string;
   sentence?: string;
@@ -12,8 +27,18 @@ interface VocabCard {
 
 export function EduVocab() {
   const [raw, setRaw] = useState('');
+  const [language, setLanguage] = useState(LANGUAGES[0].code);
+  const [stage, setStage] = useState(STAGES[2].code);
   const [loading, setLoading] = useState(false);
   const [cards, setCards] = useState<VocabCard[]>([]);
+
+  const currentStages = STAGES.filter(s => s.language === language);
+
+  const changeLanguage = (nextLanguage: string) => {
+    setLanguage(nextLanguage);
+    const firstStage = STAGES.find(s => s.language === nextLanguage);
+    if (firstStage) setStage(firstStage.code);
+  };
 
   const handleGenerate = async () => {
     const words = raw.split(/[\n,，\s]+/).map(w => w.trim()).filter(Boolean).slice(0, 20);
@@ -26,7 +51,7 @@ export function EduVocab() {
           try {
             const data = await apiCall<{ sentence?: string; translation?: string; imageUrl?: string }>(
               '/reading/word/material/generate',
-              { method: 'POST', body: JSON.stringify({ word: w, languageCode: 'english', stageCode: 'en_senior' }) }
+              { method: 'POST', body: JSON.stringify({ word: w, languageCode: language, stageCode: stage }) }
             );
             return { word: w, ...data };
           } catch (e: any) {
@@ -44,6 +69,14 @@ export function EduVocab() {
     <>
       <PageBanner icon="📖" title="单词记忆 · 智能背诵" desc="输入单词，一键生成带例句、译文与配图的记忆素材，助力高效背诵" />
       <Card title="单词输入">
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
+          <Field label="语言">
+            <PlainSelect options={LANGUAGES} value={language} onChange={changeLanguage} />
+          </Field>
+          <Field label="学习阶段">
+            <PlainSelect options={currentStages} value={stage} onChange={setStage} />
+          </Field>
+        </div>
         <textarea
           value={raw}
           onChange={e => setRaw(e.target.value)}
@@ -85,5 +118,22 @@ export function EduVocab() {
         </Card>
       )}
     </>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function PlainSelect({ options, value, onChange }: { options: { code: string; desc: string }[]; value: string; onChange: (c: string) => void }) {
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)} style={{ padding: '6px 12px', border: '1px solid #e8e6e1', borderRadius: 8, fontSize: 13, outline: 'none', minWidth: 150, background: '#fff' }}>
+      {options.map(o => <option key={o.code} value={o.code}>{o.desc}</option>)}
+    </select>
   );
 }
