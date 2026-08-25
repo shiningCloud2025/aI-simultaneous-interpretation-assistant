@@ -8,6 +8,9 @@ import { ApiKeyConfig } from '../components/ApiKeyConfig';
 import { EduPPT } from '../components/EduPPT';
 import { EduWord } from '../components/EduWord';
 import { EduExcel } from '../components/EduExcel';
+import { EduVocab } from '../components/EduVocab';
+import { EduWriting } from '../components/EduWriting';
+import { EduWritingReview } from '../components/EduWritingReview';
 import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
@@ -24,6 +27,13 @@ const navItems = [
   { group: '智慧英语课堂-听力', items: [
     { id: 'translate', icon: '🎧', label: '实时转译' },
   ]},
+  { group: '智慧英语课堂-阅读', items: [
+    { id: 'vocab', icon: '📖', label: '单词记忆' },
+  ]},
+  { group: '智慧英语课堂-写作', items: [
+    { id: 'writing', icon: '✍️', label: '生成写作题目' },
+    { id: 'writing-review', icon: '📝', label: '批阅作文' },
+  ]},
   { group: '设置与个人', items: [
     { id: 'account', icon: '👤', label: '个人中心' },
     { id: 'audio', icon: '🎧', label: '音频设备' },
@@ -39,6 +49,7 @@ const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'translate': RealTimeTrans,
   'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'api-key': ApiKeyConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
+  'vocab': EduVocab, 'writing': EduWriting, 'writing-review': EduWritingReview,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
 };
 
@@ -46,6 +57,7 @@ const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
+  'vocab': '单词记忆', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
 };
 
