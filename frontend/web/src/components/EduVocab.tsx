@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, PageBanner } from './ui';
 import { apiCall } from '../lib/api';
+import { LlmModelPreference } from './LlmModelPreference';
 
 const LANGUAGES = [
   { code: 'english', desc: '英语' },
@@ -26,40 +27,46 @@ interface VocabCard {
 }
 
 export function EduVocab() {
-  const [raw, setRaw] = useState('');
+  const [word, setWord] = useState('');
   const [language, setLanguage] = useState(LANGUAGES[0].code);
   const [stage, setStage] = useState(STAGES[2].code);
   const [loading, setLoading] = useState(false);
-  const [cards, setCards] = useState<VocabCard[]>([]);
+  const [card, setCard] = useState<VocabCard | null>(null);
+  const [error, setError] = useState('');
 
   const currentStages = STAGES.filter(s => s.language === language);
 
   const changeLanguage = (nextLanguage: string) => {
     setLanguage(nextLanguage);
     const firstStage = STAGES.find(s => s.language === nextLanguage);
-    if (firstStage) setStage(firstStage.code);
+    setStage(firstStage?.code || '');
+    setError('');
   };
 
   const handleGenerate = async () => {
-    const words = raw.split(/[\n,，\s]+/).map(w => w.trim()).filter(Boolean).slice(0, 20);
-    if (words.length === 0) return;
+    const normalizedWord = word.trim();
+    const parts = normalizedWord.split(/[\n,，\s]+/).filter(Boolean);
+    if (!normalizedWord) return;
+    if (!stage) {
+      setError('当前语言暂未配置学习阶段，后续补充后即可使用。');
+      return;
+    }
+    if (parts.length > 1) {
+      setError('一次只能输入一个单词。');
+      return;
+    }
+
     setLoading(true);
-    setCards([]);
+    setError('');
+    setCard(null);
     try {
-      const results = await Promise.all(
-        words.map(async (w) => {
-          try {
-            const data = await apiCall<{ sentence?: string; translation?: string; imageUrl?: string }>(
-              '/reading/word/material/generate',
-              { method: 'POST', body: JSON.stringify({ word: w, languageCode: language, stageCode: stage }) }
-            );
-            return { word: w, ...data };
-          } catch (e: any) {
-            return { word: w, error: e?.message || '生成失败' };
-          }
-        })
+      const data = await apiCall<{ sentence?: string; translation?: string; imageUrl?: string }>(
+        '/reading/word/material/generate',
+        { method: 'POST', body: JSON.stringify({ word: normalizedWord, languageCode: language, stageCode: stage }) }
       );
-      setCards(results);
+      setCard({ word: normalizedWord, ...data });
+    } catch (e: any) {
+      setCard({ word: normalizedWord, error: e?.message || '生成失败' });
     } finally {
       setLoading(false);
     }
@@ -69,6 +76,7 @@ export function EduVocab() {
     <>
       <PageBanner icon="📖" title="单词记忆 · 智能背诵" desc="输入单词，一键生成带例句、译文与配图的记忆素材，助力高效背诵" />
       <Card title="单词输入">
+        <LlmModelPreference label="生成模型" />
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
           <Field label="语言">
             <PlainSelect options={LANGUAGES} value={language} onChange={changeLanguage} />
@@ -77,43 +85,46 @@ export function EduVocab() {
             <PlainSelect options={currentStages} value={stage} onChange={setStage} />
           </Field>
         </div>
-        <textarea
-          value={raw}
-          onChange={e => setRaw(e.target.value)}
-          placeholder="每行一个单词，或用空格 / 逗号分隔。例如：&#10;apple&#10;happy&#10;book"
-          style={{ width: '100%', minHeight: 120, padding: 12, border: '1px solid #e8e6e1', borderRadius: 10, fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+        <input
+          value={word}
+          onChange={e => {
+            setWord(e.target.value);
+            setError('');
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleGenerate();
+          }}
+          placeholder="请输入一个单词，例如：apple"
+          style={{ width: '100%', height: 44, padding: '0 12px', border: '1px solid #e8e6e1', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
           <button
             onClick={handleGenerate}
-            disabled={loading || !raw.trim()}
+            disabled={loading || !word.trim() || !stage}
             style={{ padding: '10px 24px', borderRadius: 10, fontSize: 13, background: '#2c2c2c', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: loading ? 0.6 : 1 }}
           >
             {loading ? '生成中...' : '✨ 生成记忆素材'}
           </button>
-          <span style={{ fontSize: 12, color: '#bbb' }}>支持最多 20 个单词</span>
+          <span style={{ fontSize: 12, color: '#bbb' }}>一次只能生成一个单词</span>
         </div>
+        {error && <div style={{ fontSize: 12, color: '#e74c3c', marginTop: 10 }}>{error}</div>}
       </Card>
 
-      {cards.length > 0 && (
-        <Card title={`记忆素材（${cards.length}）`}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-            {cards.map((c, i) => (
-              <div key={i} style={{ border: '1px solid #f0efec', borderRadius: 12, padding: 16, background: '#fff' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{c.word}</div>
-                {c.error ? (
-                  <div style={{ fontSize: 12, color: '#e74c3c', marginTop: 8 }}>⚠ {c.error}</div>
-                ) : (
-                  <>
-                    {c.imageUrl && (
-                      <img src={c.imageUrl} alt={c.word} style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8, marginTop: 10 }} />
-                    )}
-                    <div style={{ fontSize: 14, color: '#333', marginTop: 10, fontStyle: 'italic' }}>{c.sentence}</div>
-                    <div style={{ fontSize: 13, color: '#888', marginTop: 6 }}>{c.translation}</div>
-                  </>
+      {card && (
+        <Card title="记忆素材">
+          <div style={{ border: '1px solid #f0efec', borderRadius: 12, padding: 16, background: '#fff' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{card.word}</div>
+            {card.error ? (
+              <div style={{ fontSize: 12, color: '#e74c3c', marginTop: 8 }}>⚠ {card.error}</div>
+            ) : (
+              <>
+                {card.imageUrl && (
+                  <img src={card.imageUrl} alt={card.word} style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 8, marginTop: 10 }} />
                 )}
-              </div>
-            ))}
+                <div style={{ fontSize: 14, color: '#333', marginTop: 10, fontStyle: 'italic' }}>{card.sentence}</div>
+                <div style={{ fontSize: 13, color: '#888', marginTop: 6 }}>{card.translation}</div>
+              </>
+            )}
           </div>
         </Card>
       )}

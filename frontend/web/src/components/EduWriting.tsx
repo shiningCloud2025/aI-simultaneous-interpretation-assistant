@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, PageBanner, Select } from './ui';
 import { apiCall } from '../lib/api';
+import { LlmModelPreference } from './LlmModelPreference';
 
 // 与后端枚举保持一致（code 值）
 const LANGUAGES = [
@@ -88,6 +89,7 @@ export function EduWriting() {
   const [history, setHistory] = useState<GenerationRecord[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(0);
+  const [historyUseCurrentFilter, setHistoryUseCurrentFilter] = useState(false);
   const [detail, setDetail] = useState<GenerationRecord | null>(null);
 
   const currentStages = STAGES.filter(s => s.language === language);
@@ -135,17 +137,25 @@ export function EduWriting() {
 
   useEffect(() => {
     loadHistory(1, historySuccess);
-  }, [historySuccess]);
+  }, [historySuccess, historyUseCurrentFilter, language, stage, genre, difficulty, scene]);
 
   const loadHistory = async (page = historyPage, success = historySuccess) => {
     setHistoryLoading(true);
     try {
+      const filter: Record<string, unknown> = { success };
+      if (historyUseCurrentFilter) {
+        filter.languageCode = language || undefined;
+        filter.stageCode = stage || undefined;
+        filter.genreCode = genre || undefined;
+        filter.difficultyCode = difficulty || undefined;
+        filter.sceneCode = scene || undefined;
+      }
       const data = await apiCall<PageResult<GenerationRecord>>('/writing/composition/generation/history/page', {
         method: 'POST',
         body: JSON.stringify({
           page,
           size: 5,
-          filter: { success },
+          filter,
         }),
       });
       setHistory(data.records || []);
@@ -157,6 +167,12 @@ export function EduWriting() {
     } finally {
       setHistoryLoading(false);
     }
+  };
+
+  const useHistoryTopic = (record: GenerationRecord) => {
+    setTopic(record);
+    setDetail(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleGenerate = async () => {
@@ -191,6 +207,7 @@ export function EduWriting() {
     <>
       <PageBanner icon="✍️" title="写作题目生成" desc="选择学段、题型与场景，一键生成贴合考纲的写作题目、要点与高级表达提示" />
       <Card title="题目设置">
+        <LlmModelPreference label="出题模型" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
           <Field label="语言">
             <Select options={LANGUAGES.map(s => s.desc)} value={LANGUAGES.find(s => s.code === language)!.desc} onChange={d => changeLanguage(LANGUAGES.find(s => s.desc === d)!.code)} />
@@ -230,10 +247,18 @@ export function EduWriting() {
       )}
 
       <Card title="生成历史">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setHistorySuccess(true)} style={tabBtn(historySuccess)}>成功记录</button>
             <button onClick={() => setHistorySuccess(false)} style={tabBtn(!historySuccess)}>失败记录</button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={historyUseCurrentFilter}
+                onChange={e => setHistoryUseCurrentFilter(e.target.checked)}
+              />
+              按当前条件筛选
+            </label>
           </div>
           <button onClick={() => loadHistory(1, historySuccess)} disabled={historyLoading} style={ghostBtn}>{historyLoading ? '刷新中...' : '刷新'}</button>
         </div>
@@ -256,7 +281,10 @@ export function EduWriting() {
                 {item.success ? (
                   <>
                     <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.prompt}</div>
-                    <button onClick={() => setDetail(item)} style={{ ...ghostBtn, marginTop: 10 }}>查看题目</button>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                      <button onClick={() => setDetail(item)} style={ghostBtn}>查看题目</button>
+                      <button onClick={() => useHistoryTopic(item)} style={ghostBtn}>载入结果</button>
+                    </div>
                   </>
                 ) : (
                   <div style={{ fontSize: 13, color: '#c62828', lineHeight: 1.6, marginTop: 8 }}>{item.errorMessage || item.failureStage || '生成失败'}</div>
@@ -288,6 +316,11 @@ export function EduWriting() {
               <button onClick={() => setDetail(null)} style={closeBtn}>×</button>
             </div>
             <TopicDetail topic={detail} />
+            {detail.success && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                <button onClick={() => useHistoryTopic(detail)} style={primaryBtn}>载入到生成结果</button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -317,6 +350,16 @@ const ghostBtn: React.CSSProperties = {
   border: '1px solid #e8e6e1',
   background: '#fff',
   color: '#666',
+  fontSize: 12,
+  cursor: 'pointer',
+};
+
+const primaryBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 8,
+  border: 'none',
+  background: '#2c2c2c',
+  color: '#fff',
   fontSize: 12,
   cursor: 'pointer',
 };
