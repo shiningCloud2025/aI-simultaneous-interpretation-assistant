@@ -143,16 +143,7 @@ public class WritingCompositionEvaluateAgent {
         AtomicBoolean failureSaved = new AtomicBoolean(false);
         UserMessage userMessage = buildUserMessage(dto, input);
         return agent.call(List.of(userMessage), WritingCompositionEvaluateResultVO.class, ctx)
-                .map(msg -> {
-                    WritingCompositionEvaluateResultVO result =
-                            msg.getStructuredData(WritingCompositionEvaluateResultVO.class);
-
-                    if (result == null) {
-                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果为空");
-                    }
-
-                    return result;
-                })
+                .map(this::parseResult)
                 .map(result -> {
                     try {
                         saveEvaluation(dto, userId, llmPreference, result);
@@ -467,5 +458,45 @@ public class WritingCompositionEvaluateAgent {
 
     private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
         return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
+    }
+
+    private WritingCompositionEvaluateResultVO parseResult(Msg msg) {
+        if (msg.hasStructuredData()) {
+            WritingCompositionEvaluateResultVO result = msg.getStructuredData(WritingCompositionEvaluateResultVO.class);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        String text = msg.getTextContent();
+        if (text == null || text.isBlank()) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果为空");
+        }
+
+        try {
+            return objectMapper.readValue(extractJson(text), WritingCompositionEvaluateResultVO.class);
+        } catch (Exception e) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果解析失败");
+        }
+    }
+
+    private String extractJson(String text) {
+        String value = text.trim();
+
+        if (value.startsWith("```")) {
+            int firstLineEnd = value.indexOf('\n');
+            int lastFence = value.lastIndexOf("```");
+            if (firstLineEnd >= 0 && lastFence > firstLineEnd) {
+                return value.substring(firstLineEnd + 1, lastFence).trim();
+            }
+        }
+
+        int start = value.indexOf('{');
+        int end = value.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return value.substring(start, end + 1);
+        }
+
+        return value;
     }
 }
