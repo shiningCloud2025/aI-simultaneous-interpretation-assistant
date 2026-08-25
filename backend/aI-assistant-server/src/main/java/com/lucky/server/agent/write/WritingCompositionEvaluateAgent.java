@@ -17,7 +17,7 @@ import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.WritingCompositionEvaluateResultVO;
 import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
-import io.agentscope.core.message.UserMessage;
+import io.agentscope.core.message.*;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
 import io.agentscope.core.permission.PermissionMode;
@@ -40,6 +40,7 @@ import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,35 +115,31 @@ public class WritingCompositionEvaluateAgent {
             );
         } else {
             input = """
-                    请评估以下图片作文。
+        请评估以下图片作文。
 
-                    语言：%s
-                    学习阶段：%s
-                    题型：%s
+        语言：%s
+        学习阶段：%s
+        题型：%s
 
-                    作文题干：
-                    %s
+        作文题干：
+        %s
 
-                    评分标准：
-                    %s
+        评分标准：
+        %s
 
-                    作文图片URL列表：
-                    %s
-
-                    请先从图片中识别学生作文正文；如果图片中包含作文题目，也一并理解。
-                    然后根据作文题干和评分标准进行评估。
-                    """.formatted(
+        请先从图片中识别学生作文正文；如果图片中包含作文题目，也一并理解。
+        然后根据作文题干和评分标准进行评估。
+        """.formatted(
                     dto.languageCode().getDesc(),
                     dto.stageCode().getDesc(),
                     dto.genreCode().getDesc(),
                     dto.prompt(),
-                    dto.scoringCriteria(),
-                    formatImageUrls(dto.imageUrls())
+                    dto.scoringCriteria()
             );
         }
         AtomicBoolean failureSaved = new AtomicBoolean(false);
-
-        return agent.call(List.of(new UserMessage(input)), WritingCompositionEvaluateResultVO.class, ctx)
+        UserMessage userMessage = buildUserMessage(dto, input);
+        return agent.call(List.of(userMessage), WritingCompositionEvaluateResultVO.class, ctx)
                 .map(msg -> {
                     WritingCompositionEvaluateResultVO result =
                             msg.getStructuredData(WritingCompositionEvaluateResultVO.class);
@@ -308,16 +305,6 @@ public class WritingCompositionEvaluateAgent {
                 .build();
     }
 
-    private String formatImageUrls(List<String> imageUrls) {
-        if (imageUrls == null || imageUrls.isEmpty()) {
-            return "无";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < imageUrls.size(); i++) {
-            sb.append(i + 1).append(". ").append(imageUrls.get(i)).append("\n");
-        }
-        return sb.toString();
-    }
 
     private String blankToPlaceholder(String value) {
         return value == null || value.isBlank() ? "无" : value;
@@ -412,5 +399,37 @@ public class WritingCompositionEvaluateAgent {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 构建用户消息
+     * 文本提交使用纯文本消息；图片提交使用文本 + 图片的多模态消息
+     *
+     * @param dto 评估参数
+     * @param input 文本提示词
+     * @return 用户消息
+     */
+    private UserMessage buildUserMessage(WritingCompositionEvaluateDTO dto, String input) {
+        if (CompositionSubmitTypeEnum.TEXT.equals(dto.submitType())) {
+            return new UserMessage(input);
+        }
+
+        List<ContentBlock> blocks = new ArrayList<>();
+
+        blocks.add(TextBlock.builder()
+                .text(input)
+                .build());
+
+        for (String imageUrl : dto.imageUrls()) {
+            blocks.add(ImageBlock.builder()
+                    .source(URLSource.builder()
+                            .url(imageUrl)
+                            .build())
+                    .build());
+        }
+
+        return UserMessage.builder()
+                .content(blocks)
+                .build();
     }
 }
