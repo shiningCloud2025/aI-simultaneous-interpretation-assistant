@@ -61,8 +61,8 @@ public class ReadingWordMaterialGenerateAgent {
     private final ReadingWordMaterialService readingWordMaterialService;
     private final ReadingWordMaterialFailureService readingWordMaterialFailureService;
 
-    /** 用户级 Agent 缓存：key = userId */
-    private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+    /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
     /**
      * 生成阅读单词素材
@@ -77,7 +77,8 @@ public class ReadingWordMaterialGenerateAgent {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "学习阶段与语言不匹配");
         }
 
-        HarnessAgent agent = agentCache.computeIfAbsent(userId, this::buildAgent);
+        String cacheKey = buildCacheKey(userId, llmPreference);
+        HarnessAgent agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId));
 
         RuntimeContext ctx = RuntimeContext.builder()
                 .userId(String.valueOf(userId))
@@ -316,6 +317,10 @@ public class ReadingWordMaterialGenerateAgent {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
 
     private String blankToNull(String value) {
