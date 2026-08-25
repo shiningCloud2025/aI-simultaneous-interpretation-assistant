@@ -56,6 +56,7 @@ com/lucky/server/domain/vo/SysUserLoginTokenVO.class
 com/lucky/server/domain/vo/SysUserTermEntryVO.class
 com/lucky/server/common/storage/impl/TencentCosStorageServiceImpl.class
 com/lucky/server/common/basic/BaseResult.class
+com/lucky/server/domain/dto/WritingCompositionGenerationPageQueryDTO.class
 com/lucky/server/mapper/SysUserMapper.class
 com/lucky/server/controller/api/SysUserModelPreferenceController.class
 com/lucky/server/common/enums/CompositionStageEnum.class
@@ -107,6 +108,7 @@ com/lucky/server/domain/vo/WritingCompositionGenerateResultVO.class
 com/lucky/server/controller/api/SysUserController.class
 com/lucky/server/domain/vo/SysUserShortcutConfigVO.class
 com/lucky/server/service/impl/SysUserTermEntryServiceImpl.class
+com/lucky/server/domain/dto/WritingCompositionGenerationPageQueryDTO$Filter.class
 com/lucky/server/service/impl/SysUserAiModelServiceImpl.class
 com/lucky/server/controller/api/SysUserSmsController.class
 com/lucky/server/mapper/SysUserApiKeyMapper.class
@@ -147,7 +149,9 @@ com/lucky/server/domain/dto/SysUserShortcutConfigSaveDTO.class
 com/lucky/server/service/SysUserService.class
 com/lucky/server/common/util/WebUtil.class
 com/lucky/server/domain/dto/WritingCompositionGenerateDTO.class
+com/lucky/server/domain/vo/WritingCompositionGenerationRecordVO.class
 com/lucky/server/config/CosProperties.class
+com/lucky/server/service/impl/WritingCompositionGenerationServiceImpl$1.class
 com/lucky/server/service/impl/WritingCompositionGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermEntryService.class
 com/lucky/server/service/impl/SysUserModelPreferenceServiceImpl.class
