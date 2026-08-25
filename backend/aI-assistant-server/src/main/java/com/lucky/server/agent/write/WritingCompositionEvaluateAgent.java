@@ -75,6 +75,8 @@ public class WritingCompositionEvaluateAgent {
      * @return 作文评估结果
      */
     public Mono<WritingCompositionEvaluateResultVO> evaluate(WritingCompositionEvaluateDTO dto) {
+        validateSubmitContent(dto);
+
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
         HarnessAgent agent = agentCache.computeIfAbsent(userId, this::buildAgent);
@@ -305,6 +307,32 @@ public class WritingCompositionEvaluateAgent {
                 .build();
     }
 
+
+    /**
+     * 校验作文提交内容
+     *
+     * @param dto 评估参数
+     */
+    private void validateSubmitContent(WritingCompositionEvaluateDTO dto) {
+        if (CompositionSubmitTypeEnum.TEXT.equals(dto.submitType())) {
+            if (dto.content() == null || dto.content().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "文本作文内容不能为空");
+            }
+            return;
+        }
+
+        if (CompositionSubmitTypeEnum.IMAGE.equals(dto.submitType())) {
+            if (dto.imageUrls() == null || dto.imageUrls().isEmpty()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片作文不能为空");
+            }
+
+            boolean hasBlankUrl = dto.imageUrls().stream()
+                    .anyMatch(url -> url == null || url.isBlank());
+            if (hasBlankUrl) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片作文URL不能为空");
+            }
+        }
+    }
 
     private String blankToPlaceholder(String value) {
         return value == null || value.isBlank() ? "无" : value;
