@@ -86,6 +86,7 @@ com/lucky/server/agent/middleware/StopOnAllDeniedMiddleware.class
 com/lucky/server/mapper/SysUserFeedbackMapper.class
 com/lucky/server/asr/stream/AsrConfig.class
 com/lucky/server/mapper/SysUserTermEntryMapper.class
+com/lucky/server/domain/vo/ReadingWordMaterialRecordVO.class
 com/lucky/server/service/impl/SysUserEmailServiceImpl.class
 com/lucky/server/config/CorsConfig.class
 com/lucky/server/mapper/SysUserTermLibraryMapper.class
@@ -112,6 +113,7 @@ com/lucky/server/common/util/RedisCacheUtil.class
 com/lucky/server/domain/dto/SysUserRegisterDTO.class
 com/lucky/server/asr/AsrFactory$1.class
 com/lucky/server/asr/stream/AsrConfig$AsrConfigBuilder.class
+com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO$Filter.class
 com/lucky/server/domain/entity/SysUserModelPreference.class
 com/lucky/server/agent/listen/CorrectionAgent.class
 com/lucky/server/service/impl/WritingCompositionGenerationServiceImpl.class
@@ -121,6 +123,7 @@ com/lucky/server/config/WebSocketConfig.class
 com/lucky/server/common/enums/ResultCodeEnum.class
 com/lucky/server/domain/entity/SysUser.class
 com/lucky/server/asr/stream/AsrStreamProperties.class
+com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO.class
 com/lucky/server/service/impl/WritingCompositionEvaluationServiceImpl$2.class
 com/lucky/server/common/enums/FeedbackStatusEnum.class
 com/lucky/server/service/SysUserShortcutConfigService.class
