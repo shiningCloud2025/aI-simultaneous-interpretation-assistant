@@ -64,8 +64,8 @@ public class WritingCompositionGenerateAgent {
     private final WritingCompositionGenerationFailureService writingCompositionGenerationFailureService;
     private final ObjectMapper objectMapper;
 
-    /** 用户级 Agent 缓存：key = userId */
-    private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+    /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
     /**
      * 生成作文题目
@@ -76,7 +76,8 @@ public class WritingCompositionGenerateAgent {
     public Mono<WritingCompositionGenerateResultVO> generate(WritingCompositionGenerateDTO dto) {
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
-        HarnessAgent agent = agentCache.computeIfAbsent(userId,this::buildAgent);
+        String cacheKey = buildCacheKey(userId, llmPreference);
+        HarnessAgent agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId));
 
 
         RuntimeContext ctx = RuntimeContext.builder()
@@ -350,6 +351,10 @@ public class WritingCompositionGenerateAgent {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
 
 

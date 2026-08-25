@@ -65,8 +65,8 @@ public class WritingCompositionEvaluateAgent {
     private final WritingCompositionEvaluationFailureService writingCompositionEvaluationFailureService;
     private final ObjectMapper objectMapper;
 
-    /** 用户级 Agent 缓存：key = userId */
-    private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+    /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
     /**
      * 评估作文
@@ -79,7 +79,8 @@ public class WritingCompositionEvaluateAgent {
 
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
-        HarnessAgent agent = agentCache.computeIfAbsent(userId, this::buildAgent);
+        String cacheKey = buildCacheKey(userId, llmPreference);
+        HarnessAgent agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId));
 
         RuntimeContext ctx = RuntimeContext.builder()
                 .userId(String.valueOf(userId))
@@ -206,6 +207,9 @@ public class WritingCompositionEvaluateAgent {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .baseUrl(baseUrl)
+                // 降低时间消耗，把结构化输出能力从厂商移到框架
+                .nativeStructuredOutput(false)
+                .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
                         GenerateOptions.builder()
@@ -459,5 +463,9 @@ public class WritingCompositionEvaluateAgent {
         return UserMessage.builder()
                 .content(blocks)
                 .build();
+    }
+
+    private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
 }
