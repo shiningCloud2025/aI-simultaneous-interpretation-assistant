@@ -88,7 +88,7 @@ export function AccountPage() {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* 头像区 */}
       <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
-        <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', fontWeight: 600, overflow: 'hidden', boxShadow: '0 4px 24px rgba(102,126,234,.3)' }}>
+        <div style={{ width: 100, height: 100, borderRadius: '50%', background: '#234b49', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', fontWeight: 700, overflow: 'hidden', boxShadow: '0 4px 24px rgba(35,75,73,.18)' }}>
           {user.avatar ? <img src={user.avatar} style={{ width: 100, height: 100, objectFit: 'cover' }} /> : user.username?.[0]?.toUpperCase()}
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginTop: 16 }}>{user.username}</div>

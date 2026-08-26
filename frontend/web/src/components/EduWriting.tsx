@@ -169,7 +169,7 @@ export function EduWriting() {
     }
   };
 
-  const useHistoryTopic = (record: GenerationRecord) => {
+  const applyHistoryTopic = (record: GenerationRecord) => {
     setTopic(record);
     setDetail(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -283,7 +283,7 @@ export function EduWriting() {
                     <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.prompt}</div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                       <button onClick={() => setDetail(item)} style={ghostBtn}>查看题目</button>
-                      <button onClick={() => useHistoryTopic(item)} style={ghostBtn}>载入结果</button>
+                      <button onClick={() => applyHistoryTopic(item)} style={ghostBtn}>载入结果</button>
                     </div>
                   </>
                 ) : (
@@ -318,7 +318,7 @@ export function EduWriting() {
             <TopicDetail topic={detail} />
             {detail.success && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                <button onClick={() => useHistoryTopic(detail)} style={primaryBtn}>载入到生成结果</button>
+                <button onClick={() => applyHistoryTopic(detail)} style={primaryBtn}>载入到生成结果</button>
               </div>
             )}
           </div>
@@ -404,7 +404,7 @@ function TopicDetail({ topic }: { topic: Topic }) {
       <div style={{ fontSize: 14, color: '#444', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{topic.prompt}</div>
       {topic.requirement && <div style={{ fontSize: 14, color: '#555', marginTop: 10, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{topic.requirement}</div>}
       {(topic.wordLimitMin || topic.wordLimitMax) && (
-        <div style={{ fontSize: 13, color: '#764ba2', marginTop: 10 }}>📏 字数建议：{topic.wordLimitMin ?? '—'} ~ {topic.wordLimitMax ?? '—'} 词</div>
+        <div style={{ fontSize: 13, color: '#8f4b2e', marginTop: 10 }}>📏 字数建议：{topic.wordLimitMin ?? '—'} ~ {topic.wordLimitMax ?? '—'} 词</div>
       )}
 
       <Section title="写作要点" items={topic.keyPoints} />
@@ -416,7 +416,7 @@ function TopicDetail({ topic }: { topic: Topic }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: '#555', marginTop: 16, marginBottom: 8 }}>推荐高级表达</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {topic.vocabularyHints.map((w, i) => (
-              <span key={i} style={{ fontSize: 12, color: '#667eea', background: 'rgba(102,126,234,.1)', padding: '4px 10px', borderRadius: 6 }}>{w}</span>
+              <span key={i} style={{ fontSize: 12, color: '#234b49', background: 'rgba(35,75,73,.1)', padding: '4px 10px', borderRadius: 6 }}>{w}</span>
             ))}
           </div>
         </>

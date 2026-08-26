@@ -16,7 +16,6 @@ export function HelpPage() {
   const [toast, setToast] = useState('');
   const [list, setList] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [fileIds, setFileIds] = useState<number[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
@@ -30,7 +29,6 @@ export function HelpPage() {
     try {
       const data = await api.getFeedbacks({ page: p, size: 5 });
       setList(data.records || []);
-      setTotal(data.total || 0);
       setTotalPages(Math.ceil((data.total || 0) / 5));
       setPage(p);
     } catch (e: any) { showToast(e.message || '加载失败'); }

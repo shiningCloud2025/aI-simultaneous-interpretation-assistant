@@ -48,9 +48,9 @@ export function Select({ options, value, onChange, labels, titles }: { options: 
 
 export function PageBanner({ icon, title, desc }: { icon: string; title: string; desc: string }) {
   return (
-    <div style={{ marginBottom: 16, padding: 24, background: 'linear-gradient(135deg,#667eea,#764ba2)', borderRadius: 14, color: '#fff' }}>
-      <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{icon} {title}</div>
-      <div style={{ fontSize: 13, opacity: .85 }}>{desc}</div>
+    <div style={{ marginBottom: 16, padding: 24, background: '#fff', border: '1px solid #e8e2d8', borderLeft: '5px solid #234b49', borderRadius: 14, color: '#253332', boxShadow: '0 6px 18px rgba(64,54,40,.035)' }}>
+      <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 5 }}>{icon} {title}</div>
+      <div style={{ fontSize: 13, color: '#7a817e', lineHeight: 1.6 }}>{desc}</div>
     </div>
   );
 }

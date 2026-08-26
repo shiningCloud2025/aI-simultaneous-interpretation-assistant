@@ -87,7 +87,7 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthBox title="创建账号" subtitle="加入智慧英语课堂">
+    <AuthBox title="创建账号" subtitle="加入智语同航-多智能体外语课堂">
       <Fg label="账号"><input value={account} onChange={e => setAccount(e.target.value)} placeholder="5-12位数字账号" style={inp} /></Fg>
       <Fg label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} placeholder="请输入用户名/昵称" style={inp} /></Fg>
       <Fg label="密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位密码" style={inp} /></Fg>
@@ -128,7 +128,11 @@ export function RegisterPage() {
       </div>
 
       <Btn onClick={doRegister} disabled={loading}>{loading ? '注册中...' : '注 册'}</Btn>
-      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#999' }}>已有账号？<Link to="/login" style={{ color: '#2c2c2c', fontWeight: 500, textDecoration: 'none' }}>立即登录</Link></div>
+      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#999' }}>
+        已有账号？<Link to="/login" style={{ color: '#2c2c2c', fontWeight: 500, textDecoration: 'none' }}>立即登录</Link>
+        <span style={{ margin: '0 8px', color: '#d2cec6' }}>/</span>
+        <Link to="/" style={{ color: '#234b49', fontWeight: 500, textDecoration: 'none' }}>返回官网</Link>
+      </div>
       {toast && <T msg={toast} />}
       {confirmDialog && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

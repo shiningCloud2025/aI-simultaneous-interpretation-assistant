@@ -90,6 +90,7 @@ export function EduWritingReview() {
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(0);
   const [detail, setDetail] = useState<EvaluationRecord | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const currentStages = STAGES.filter(s => s.language === language);
@@ -205,7 +206,7 @@ export function EduWritingReview() {
     }
   };
 
-  const useHistoryReview = (record: EvaluationRecord) => {
+  const applyHistoryReview = (record: EvaluationRecord) => {
     if (!record.success || record.score == null) return;
     setReview({
       score: record.score,
@@ -298,7 +299,7 @@ export function EduWritingReview() {
         <Card title={`批阅报告 · 总分 ${review.score ?? '—'}`}>
           {review.score != null && (
             <div style={{ height: 10, background: '#f0efec', borderRadius: 5, overflow: 'hidden', marginBottom: 16 }}>
-              <div style={{ width: `${Math.max(0, Math.min(100, review.score))}%`, height: '100%', background: 'linear-gradient(135deg,#667eea,#764ba2)' }} />
+              <div style={{ width: `${Math.max(0, Math.min(100, review.score))}%`, height: '100%', background: '#234b49' }} />
             </div>
           )}
 
@@ -316,7 +317,7 @@ export function EduWritingReview() {
                     <div style={{ fontSize: 12, color: '#999' }}>第 {(s.index ?? i + 1)} 句</div>
                     <div style={{ fontSize: 13, color: '#444', marginTop: 4, fontStyle: 'italic' }}>{s.original}</div>
                     {s.feedback && <div style={{ fontSize: 13, color: '#555', marginTop: 6 }}>💬 {s.feedback}</div>}
-                    {s.suggestion && <div style={{ fontSize: 13, color: '#764ba2', marginTop: 4 }}>✏️ {s.suggestion}</div>}
+                    {s.suggestion && <div style={{ fontSize: 13, color: '#8f4b2e', marginTop: 4 }}>✏️ {s.suggestion}</div>}
                   </div>
                 ))}
               </div>
@@ -369,7 +370,7 @@ export function EduWritingReview() {
                     <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.feedback || item.suggestion || item.prompt}</div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                       <button onClick={() => setDetail(item)} style={ghostBtn}>查看报告</button>
-                      <button onClick={() => useHistoryReview(item)} style={ghostBtn}>载入报告</button>
+                      <button onClick={() => applyHistoryReview(item)} style={ghostBtn}>载入报告</button>
                     </div>
                   </>
                 ) : (
@@ -404,19 +405,26 @@ export function EduWritingReview() {
 
             {detail.success ? (
               <>
-                <HistoryBaseInfo record={detail} />
+                <HistoryBaseInfo record={detail} onPreview={setPreviewUrl} />
                 {detail.score != null && <ReviewDetail review={{ score: detail.score, feedback: detail.feedback, suggestion: detail.suggestion, highlights: detail.highlights || [], improvementPoints: detail.improvementPoints || [], sentenceFeedback: detail.sentenceFeedback || [], improvedVersion: detail.improvedVersion }} />}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                  <button onClick={() => useHistoryReview(detail)} style={primaryBtn}>载入到批阅报告</button>
+                  <button onClick={() => applyHistoryReview(detail)} style={primaryBtn}>载入到批阅报告</button>
                 </div>
               </>
             ) : (
               <>
-                <HistoryBaseInfo record={detail} />
+                <HistoryBaseInfo record={detail} onPreview={setPreviewUrl} />
                 <Block title="失败原因" text={detail.errorMessage || detail.failureStage || '批阅失败'} />
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {previewUrl && (
+        <div onClick={() => setPreviewUrl(null)} style={previewOverlay}>
+          <img src={previewUrl} alt="作文图片预览" style={previewImage} />
+          <span onClick={() => setPreviewUrl(null)} style={previewClose}>×</span>
         </div>
       )}
     </>
@@ -427,7 +435,7 @@ function ReviewDetail({ review }: { review: Review }) {
   return (
     <>
       <div style={{ height: 10, background: '#f0efec', borderRadius: 5, overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ width: `${Math.max(0, Math.min(100, review.score))}%`, height: '100%', background: 'linear-gradient(135deg,#667eea,#764ba2)' }} />
+        <div style={{ width: `${Math.max(0, Math.min(100, review.score))}%`, height: '100%', background: '#234b49' }} />
       </div>
 
       {review.feedback && <Block title="整体反馈" text={review.feedback} />}
@@ -443,7 +451,7 @@ function ReviewDetail({ review }: { review: Review }) {
                 <div style={{ fontSize: 12, color: '#999' }}>第 {(s.index ?? i + 1)} 句</div>
                 <div style={{ fontSize: 13, color: '#444', marginTop: 4, fontStyle: 'italic' }}>{s.original}</div>
                 {s.feedback && <div style={{ fontSize: 13, color: '#555', marginTop: 6 }}>💬 {s.feedback}</div>}
-                {s.suggestion && <div style={{ fontSize: 13, color: '#764ba2', marginTop: 4 }}>✏️ {s.suggestion}</div>}
+                {s.suggestion && <div style={{ fontSize: 13, color: '#8f4b2e', marginTop: 4 }}>✏️ {s.suggestion}</div>}
               </div>
             ))}
           </div>
@@ -460,7 +468,7 @@ function ReviewDetail({ review }: { review: Review }) {
   );
 }
 
-function HistoryBaseInfo({ record }: { record: EvaluationRecord }) {
+function HistoryBaseInfo({ record, onPreview }: { record: EvaluationRecord; onPreview: (url: string) => void }) {
   return (
     <>
       {record.title && <Block title="作文题目" text={record.title} />}
@@ -472,7 +480,7 @@ function HistoryBaseInfo({ record }: { record: EvaluationRecord }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: '#555', marginTop: 16, marginBottom: 8 }}>作文图片</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {record.imageUrls.map((url, i) => (
-              <img key={url} src={url} alt={`作文图片${i + 1}`} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #f0efec' }} />
+              <img key={url} src={url} alt={`作文图片${i + 1}`} onClick={() => onPreview(url)} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #f0efec', cursor: 'pointer' }} />
             ))}
           </div>
         </>
@@ -595,4 +603,31 @@ const closeBtn: React.CSSProperties = {
   fontSize: 20,
   cursor: 'pointer',
   lineHeight: '24px',
+};
+
+const previewOverlay: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0,0,0,.7)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1100,
+};
+
+const previewImage: React.CSSProperties = {
+  maxWidth: '80vw',
+  maxHeight: '80vh',
+  borderRadius: 12,
+  boxShadow: '0 8px 30px rgba(0,0,0,.3)',
+};
+
+const previewClose: React.CSSProperties = {
+  position: 'fixed',
+  top: 24,
+  right: 32,
+  color: '#fff',
+  fontSize: 28,
+  cursor: 'pointer',
+  lineHeight: 1,
 };

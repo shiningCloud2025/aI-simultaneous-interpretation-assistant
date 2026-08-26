@@ -24,13 +24,13 @@ const navItems = [
     { id: 'edu-word', icon: '📝', label: 'Word 集成' },
     { id: 'edu-excel', icon: '📈', label: 'Excel 集成' },
   ]},
-  { group: '智慧英语课堂-听力', items: [
+  { group: '智语同航-听力', items: [
     { id: 'translate', icon: '🎧', label: '实时转译' },
   ]},
-  { group: '智慧英语课堂-阅读', items: [
+  { group: '智语同航-阅读', items: [
     { id: 'vocab', icon: '📖', label: '单词记忆' },
   ]},
-  { group: '智慧英语课堂-写作', items: [
+  { group: '智语同航-写作', items: [
     { id: 'writing', icon: '✍️', label: '生成写作题目' },
     { id: 'writing-review', icon: '📝', label: '批阅作文' },
   ]},
@@ -89,8 +89,8 @@ export function MainLayout() {
       {/* 侧边栏 */}
       <div className="sidebar">
         <div className="sidebar-header">
-          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700 }}>E</div>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>智慧英语课堂</span>
+          <div style={{ width: 32, height: 32, background: '#234b49', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700 }}>语</div>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>智语同航</span>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {navItems.map((group) => (
@@ -106,7 +106,9 @@ export function MainLayout() {
         </div>
         <div className="sidebar-footer" style={{ position: 'relative' }}>
           <div onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6, cursor: 'pointer' }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>{user?.username?.[0]?.toUpperCase() || 'U'}</div>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2c2c2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600, overflow: 'hidden' }}>
+              {user?.avatar ? <img src={user.avatar} alt={user.username || '用户头像'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user?.username?.[0]?.toUpperCase() || 'U'}
+            </div>
             <div style={{ fontSize: 12 }}>{user?.username || '未登录'}</div>
           </div>
           {showUserMenu && (
@@ -141,6 +143,7 @@ export function MainLayout() {
         <div className="topbar">
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={() => nav('/')} className="btn">官网</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
               <option value="dark">🌙 深色</option>
@@ -157,5 +160,3 @@ export function MainLayout() {
     </div>
   );
 }
-
-const btn: React.CSSProperties = { padding: '6px 14px', borderRadius: 8, fontSize: 12, background: '#f5f3f0', border: 'none', color: '#666', cursor: 'pointer' };
