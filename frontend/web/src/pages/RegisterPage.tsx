@@ -87,7 +87,7 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthBox title="创建账号" subtitle="加入智语同航-多智能体外语课堂">
+    <AuthBox title="创建账号" subtitle="加入智语同航 - 基于多 Harness 智能体协作与编排的智慧外语课堂">
       <Fg label="账号"><input value={account} onChange={e => setAccount(e.target.value)} placeholder="5-12位数字账号" style={inp} /></Fg>
       <Fg label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} placeholder="请输入用户名/昵称" style={inp} /></Fg>
       <Fg label="密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位密码" style={inp} /></Fg>

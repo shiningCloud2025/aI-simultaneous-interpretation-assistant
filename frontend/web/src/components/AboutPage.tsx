@@ -5,7 +5,7 @@ export function AboutPage() {
       <div style={{ textAlign: 'center', padding: '40px 0 32px' }}>
         <div style={{ width: 80, height: 80, margin: '0 auto 20px', background: '#234b49', borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', fontWeight: 800, boxShadow: '0 6px 24px rgba(35,75,73,.18)' }}>语</div>
         <div style={{ fontSize: 24, fontWeight: 800, color: '#1f2d2b', marginBottom: 6 }}>智语同航</div>
-        <div style={{ fontSize: 14, color: '#8b918e' }}>多智能体外语课堂</div>
+        <div style={{ fontSize: 14, color: '#8b918e' }}>基于多 Harness 智能体协作与编排的智慧外语课堂</div>
       </div>
 
       {/* 帮你解决 - 3 列特性卡片 */}

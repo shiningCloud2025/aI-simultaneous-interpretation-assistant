@@ -108,7 +108,7 @@ export function LoginPage() {
   };
 
   return (
-    <AuthBox title="智语同航" subtitle="多智能体外语课堂">
+    <AuthBox title="智语同航" subtitle="基于多 Harness 智能体协作与编排的智慧外语课堂">
       <div style={{ display: 'flex', marginBottom: 24, background: '#f5f3f0', borderRadius: 10, padding: 4 }}>
         <button onClick={() => setTab('password')} style={tb(tab === 'password')}>密码登录</button>
         <button onClick={() => setTab('sms')} style={tb(tab === 'sms')}>短信登录</button>

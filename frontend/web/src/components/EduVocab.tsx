@@ -137,7 +137,7 @@ export function EduVocab() {
     }
   };
 
-  const useHistoryMaterial = (record: MaterialRecord) => {
+  const applyHistoryMaterial = (record: MaterialRecord) => {
     if (!record.success) return;
     setCard({
       word: record.word,
@@ -231,7 +231,7 @@ export function EduVocab() {
                     <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sentence}</div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                       <button onClick={() => setDetail(item)} style={ghostBtn}>查看素材</button>
-                      <button onClick={() => useHistoryMaterial(item)} style={ghostBtn}>载入素材</button>
+                      <button onClick={() => applyHistoryMaterial(item)} style={ghostBtn}>载入素材</button>
                     </div>
                   </>
                 ) : (
@@ -268,7 +268,7 @@ export function EduVocab() {
               <>
                 <MaterialCard card={detail} />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                  <button onClick={() => useHistoryMaterial(detail)} style={primaryBtn}>载入到记忆素材</button>
+                  <button onClick={() => applyHistoryMaterial(detail)} style={primaryBtn}>载入到记忆素材</button>
                 </div>
               </>
             ) : (

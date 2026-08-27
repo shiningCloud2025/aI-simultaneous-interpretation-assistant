@@ -22,10 +22,10 @@ export function OfficialSitePage() {
       <main>
         <section className="official-hero">
           <div className="official-hero-copy">
-            <div className="official-kicker">Multi-Agent Language Classroom</div>
-            <h1>智语同航-多智能体外语课堂</h1>
+            <div className="official-kicker">Multi-Harness Agent Language Classroom</div>
+            <h1>智语同航</h1>
             <p>
-              面向课堂与课后训练，围绕听、写、读三类核心学习任务，提供实时转译、作文训练与词汇语境化学习支持。
+              基于多 Harness 智能体协作与编排的智慧外语课堂，围绕听、写、读三类核心学习任务，提供实时转译、作文训练与词汇语境化学习支持。
             </p>
             <div className="official-actions">
               <Link to={token ? '/dashboard' : '/login'} className="official-action-main">{token ? '进入平台' : '登录平台'}</Link>

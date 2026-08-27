@@ -112,7 +112,7 @@ export function Dashboard() {
           </div>
           <div className="dashboard-title">欢迎回来，{user?.username || '同学'}</div>
           <div className="dashboard-subtitle">
-            {user?.lastLoginTime ? `上次登录：${new Date(user.lastLoginTime).toLocaleString('zh-CN')}` : '听、写、读三条学习链路已就绪'}
+            {user?.lastLoginTime ? `上次登录：${new Date(user.lastLoginTime).toLocaleString('zh-CN')}` : '多 Harness 智能体协作支撑听、写、读三条学习链路'}
           </div>
         </div>
         <div className="dashboard-hero-right">

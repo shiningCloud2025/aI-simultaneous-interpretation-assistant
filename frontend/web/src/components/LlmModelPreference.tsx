@@ -21,9 +21,7 @@ interface Preference {
 export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [models, setModels] = useState<ModelInfo[]>([]);
-  const [provider, setProvider] = useState('');
   const [model, setModel] = useState('');
-  const [modelProviderMap, setModelProviderMap] = useState<Record<string, string>>({});
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerProvider, setPickerProvider] = useState('');
   const [pickerModel, setPickerModel] = useState('');
@@ -41,22 +39,9 @@ export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string })
         const providerList = await apiCall<Provider[]>('/sys/user/ai/llm/providers');
         setProviders(providerList);
 
-        const map: Record<string, string> = {};
-        await Promise.all(providerList.map(async p => {
-          try {
-            const providerModels = await apiCall<ModelInfo[]>(`/sys/user/ai/llm/models?provider=${p.key}`);
-            providerModels.forEach(m => { map[m.name] = p.key; });
-          } catch {
-            // 单个厂商模型拉取失败时不影响推荐模型和已保存偏好的展示。
-          }
-        }));
-        setModelProviderMap(map);
-
-        await loadModels('');
         const preferences = await apiCall<Preference[]>('/sys/user/model-preference');
         const llmPreference = preferences.find(p => p.modelType === 'LLM');
         if (llmPreference) {
-          setProvider(llmPreference.provider);
           await loadModels(llmPreference.provider);
           setModel(llmPreference.modelName);
         }
@@ -68,23 +53,24 @@ export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string })
   }, []);
 
   const loadModels = async (nextProvider: string) => {
-    setProvider(nextProvider);
-    const url = nextProvider ? `/sys/user/ai/llm/models?provider=${nextProvider}` : '/sys/user/ai/llm/models';
-    const data = await apiCall<ModelInfo[]>(url);
+    if (!nextProvider) {
+      setModels([]);
+      return [];
+    }
+    const data = await apiCall<ModelInfo[]>(`/sys/user/ai/llm/models?provider=${nextProvider}`);
     setModels(data);
     return data;
   };
 
   const savePreference = async (nextProvider: string, nextModel: string) => {
-    const realProvider = modelProviderMap[nextModel] || nextProvider;
-    if (!realProvider) {
+    if (!nextProvider) {
       showToast(`无法识别模型 ${nextModel} 对应的厂商`);
       return;
     }
     try {
       await apiCall<void>('/sys/user/model-preference', {
         method: 'PUT',
-        body: JSON.stringify({ modelType: 'LLM', provider: realProvider, modelName: nextModel }),
+        body: JSON.stringify({ modelType: 'LLM', provider: nextProvider, modelName: nextModel }),
       });
       showToast('已切换 LLM 模型');
     } catch (e: any) {
@@ -119,7 +105,6 @@ export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string })
       showToast('请先选择厂商和模型');
       return;
     }
-    setProvider(pickerProvider);
     setModels(pickerModels);
     setModel(pickerModel);
     await savePreference(pickerProvider, pickerModel);
@@ -132,23 +117,15 @@ export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string })
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 14px', background: '#fafaf9', border: '1px solid #f0efec', borderRadius: 12, marginBottom: 14 }}>
         <span style={{ fontSize: 12, color: '#999' }}>{label}</span>
-        <Select
-          options={models.map(m => m.name)}
-          labels={Object.fromEntries(models.map(m => [m.name, m.display]))}
-          value={model}
-          onChange={(nextModel: string) => {
-            setModel(nextModel);
-            savePreference(provider, nextModel);
-          }}
-        />
+        <ModelBadge value={currentLabel} empty={!model} />
         <button
           onClick={openPicker}
           style={{ padding: '5px 10px', borderRadius: 6, fontSize: 11, background: '#f5f3f0', border: 'none', color: '#888', cursor: 'pointer' }}
           title="按厂商选择其他 LLM 模型"
         >
-          + 配置其他模型
+          + 配置模型
         </button>
-        <span style={{ fontSize: 11, color: '#bbb' }}>当前：{currentLabel}</span>
+        <span style={{ fontSize: 11, color: '#bbb' }}>当前：{model ? currentLabel : '请先配置模型'}</span>
       </div>
 
       {pickerOpen && (
@@ -168,6 +145,18 @@ export function LlmModelPreference({ label = 'LLM 模型' }: { label?: string })
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{toast}</div>
       )}
     </>
+  );
+}
+
+function ModelBadge({ value, empty }: { value: string; empty?: boolean }) {
+  return (
+    <span style={{
+      padding: '6px 12px', border: '1px solid #e8e6e1', borderRadius: 8, fontSize: 12,
+      color: empty ? '#aaa' : '#555', background: empty ? '#fff' : '#fff',
+      minWidth: 120, display: 'inline-flex', justifyContent: 'center',
+    }}>
+      {empty ? '请先配置' : value}
+    </span>
   );
 }
 
