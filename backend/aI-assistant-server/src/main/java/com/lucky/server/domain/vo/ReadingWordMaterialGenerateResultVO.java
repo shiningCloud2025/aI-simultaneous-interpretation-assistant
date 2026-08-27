@@ -15,6 +15,9 @@ public record ReadingWordMaterialGenerateResultVO(
         @Schema(description = "例句译文")
         String translation,
 
+        @Schema(description = "图片生成提示词")
+        String imagePrompt,
+
         @Schema(description = "单词配图URL")
         String imageUrl
 ) {

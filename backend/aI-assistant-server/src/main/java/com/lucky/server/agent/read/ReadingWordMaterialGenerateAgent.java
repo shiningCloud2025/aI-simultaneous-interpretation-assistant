@@ -7,6 +7,7 @@ import com.lucky.server.common.enums.ReadingWordMaterialFailureStageEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
+import com.lucky.server.config.ReadingWordImageProperties;
 import com.lucky.server.domain.dto.ReadingWordMaterialGenerateDTO;
 import com.lucky.server.domain.entity.ReadingWordMaterial;
 import com.lucky.server.domain.entity.ReadingWordMaterialFailure;
@@ -60,6 +61,9 @@ public class ReadingWordMaterialGenerateAgent {
     private final DataSource dataSource;
     private final ReadingWordMaterialService readingWordMaterialService;
     private final ReadingWordMaterialFailureService readingWordMaterialFailureService;
+    private final ReadingWordImageGenerateService readingWordImageGenerateService;
+    private final ReadingWordImageProperties readingWordImageProperties;
+
 
     /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -107,15 +111,53 @@ public class ReadingWordMaterialGenerateAgent {
                         throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材生成结果为空");
                     }
 
+                    if (result.imagePrompt() == null || result.imagePrompt().isBlank()) {
+                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片生成提示词为空");
+                    }
+
+
                     return result;
                 })
+                // 2. 根据 imagePrompt 生成图片，并把 COS URL 回填到 result
+                .map(result -> {
+                    try {
+                        String imageUrl = readingWordImageGenerateService.generateAndUpload(result.imagePrompt());
+
+                        return new ReadingWordMaterialGenerateResultVO(
+                                result.sentence(),
+                                result.translation(),
+                                result.imagePrompt(),
+                                imageUrl
+                        );
+                    } catch (Exception e) {
+                        failureSaved.set(true);
+                        saveFailureSafely(
+                                dto,
+                                userId,
+                                llmPreference,
+                                ReadingWordMaterialFailureStageEnum.IMAGE_GENERATE,
+                                e,
+                                safeRawResponse(result)
+                        );
+                        throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "单词配图生成失败");
+                    }
+                })
+
+                // 3. 保存最终完整结果：sentence + translation + imagePrompt + imageUrl
                 .map(result -> {
                     try {
                         saveMaterial(dto, userId, llmPreference, result);
                         return result;
                     } catch (Exception e) {
                         failureSaved.set(true);
-                        saveFailureSafely(dto, userId, llmPreference, ReadingWordMaterialFailureStageEnum.PERSIST, e, safeRawResponse(result));
+                        saveFailureSafely(
+                                dto,
+                                userId,
+                                llmPreference,
+                                ReadingWordMaterialFailureStageEnum.PERSIST,
+                                e,
+                                safeRawResponse(result)
+                        );
                         throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材保存失败");
                     }
                 })
@@ -181,14 +223,16 @@ public class ReadingWordMaterialGenerateAgent {
                 3. 例句应突出目标单词/词语的常见含义和常见用法
                 4. 例句不要过长，不要使用明显超出学习阶段的复杂表达
                 5. translation 返回例句的中文译文
-                6. imageUrl 返回适合该单词和例句语境的图片URL；如果模型无法生成图片URL，则返回 null
-                7. 不要输出 Markdown，不要输出解释文本
-                8. 输出必须符合 ReadingWordMaterialGenerateResultVO 结构
-
+                6. imagePrompt 返回适合生成单词配图的中文图片提示词，必须具体、清晰、适合学生理解
+                7. imageUrl 固定返回 null，由系统后续生成图片并回填
+                8. 不要输出 Markdown，不要输出解释文本
+                9. 输出必须符合 ReadingWordMaterialGenerateResultVO 结构
+                
                 字段要求：
                 - sentence：例句
                 - translation：例句译文
-                - imageUrl：单词配图URL，可以为 null
+                - imagePrompt：图片生成提示词
+                - imageUrl：固定返回 null
                 """;
 
         Toolkit toolkit = new Toolkit();
@@ -270,11 +314,12 @@ public class ReadingWordMaterialGenerateAgent {
         entity.setStageCode(dto.stageCode());
         entity.setSentence(result.sentence());
         entity.setTranslation(result.translation());
+        entity.setImagePrompt(blankToNull(result.imagePrompt()));
         entity.setImageUrl(blankToNull(result.imageUrl()));
         entity.setProvider(llmPreference.provider());
         entity.setModelName(llmPreference.modelName());
-        entity.setImageProvider(llmPreference.provider());
-        entity.setImageModelName(llmPreference.modelName());
+        entity.setImageProvider(readingWordImageProperties.getProvider());
+        entity.setImageModelName(readingWordImageProperties.getModel());
         entity.setCreatedById(userId);
 
         readingWordMaterialService.saveMaterial(entity);
@@ -293,8 +338,8 @@ public class ReadingWordMaterialGenerateAgent {
             entity.setStageCode(dto == null ? null : dto.stageCode());
             entity.setProvider(llmPreference == null ? null : llmPreference.provider());
             entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
-            entity.setImageProvider(llmPreference == null ? null : llmPreference.provider());
-            entity.setImageModelName(llmPreference == null ? null : llmPreference.modelName());
+            entity.setImageProvider(readingWordImageProperties.getProvider());
+            entity.setImageModelName(readingWordImageProperties.getModel());
             entity.setFailureStage(failureStage);
             entity.setErrorCode(error.getClass().getSimpleName());
             entity.setErrorMessage(error.getMessage());
@@ -313,6 +358,7 @@ public class ReadingWordMaterialGenerateAgent {
                     ? null
                     : "sentence=" + result.sentence()
                     + ", translation=" + result.translation()
+                    + ", imagePrompt=" + result.imagePrompt()
                     + ", imageUrl=" + result.imageUrl();
         } catch (Exception e) {
             return null;
