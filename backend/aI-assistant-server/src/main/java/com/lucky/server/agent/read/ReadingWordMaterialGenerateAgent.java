@@ -1,5 +1,6 @@
 package com.lucky.server.agent.read;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
@@ -16,6 +17,7 @@ import com.lucky.server.domain.vo.ReadingWordMaterialGenerateResultVO;
 import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
+import io.agentscope.core.message.Msg;
 import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
@@ -63,6 +65,7 @@ public class ReadingWordMaterialGenerateAgent {
     private final ReadingWordMaterialFailureService readingWordMaterialFailureService;
     private final ReadingWordImageGenerateService readingWordImageGenerateService;
     private final ReadingWordImageProperties readingWordImageProperties;
+    private final ObjectMapper objectMapper;
 
 
     /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
@@ -104,8 +107,7 @@ public class ReadingWordMaterialGenerateAgent {
         AtomicBoolean failureSaved = new AtomicBoolean(false);
         return agent.call(List.of(new UserMessage(input)), ReadingWordMaterialGenerateResultVO.class, ctx)
                 .map(msg -> {
-                    ReadingWordMaterialGenerateResultVO result =
-                            msg.getStructuredData(ReadingWordMaterialGenerateResultVO.class);
+                    ReadingWordMaterialGenerateResultVO result = parseResult(msg);
 
                     if (result == null) {
                         throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材生成结果为空");
@@ -114,7 +116,6 @@ public class ReadingWordMaterialGenerateAgent {
                     if (result.imagePrompt() == null || result.imagePrompt().isBlank()) {
                         throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片生成提示词为空");
                     }
-
 
                     return result;
                 })
@@ -205,6 +206,9 @@ public class ReadingWordMaterialGenerateAgent {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .baseUrl(baseUrl)
+                // 降低时间消耗，把结构化输出能力从厂商移到框架
+                .nativeStructuredOutput(false)
+                .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
                         GenerateOptions.builder()
@@ -367,6 +371,46 @@ public class ReadingWordMaterialGenerateAgent {
 
     private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
         return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
+    }
+
+    private ReadingWordMaterialGenerateResultVO parseResult(Msg msg) {
+        if (msg.hasStructuredData()) {
+            return msg.getStructuredData(ReadingWordMaterialGenerateResultVO.class);
+        }
+
+        String text = msg.getTextContent();
+        if (text == null || text.isBlank()) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材生成结果为空");
+        }
+
+        try {
+            return objectMapper.readValue(extractJson(text), ReadingWordMaterialGenerateResultVO.class);
+        } catch (Exception e) {
+            log.error("解析阅读单词素材文本结果失败，text={}", text, e);
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "阅读单词素材生成结果解析失败");
+        }
+    }
+
+    private String extractJson(String text) {
+        String value = text.trim();
+
+        if (value.startsWith("```json")) {
+            value = value.substring("```json".length()).trim();
+        } else if (value.startsWith("```")) {
+            value = value.substring("```".length()).trim();
+        }
+
+        if (value.endsWith("```")) {
+            value = value.substring(0, value.length() - 3).trim();
+        }
+
+        int start = value.indexOf('{');
+        int end = value.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return value.substring(start, end + 1);
+        }
+
+        return value;
     }
 
     private String blankToNull(String value) {
