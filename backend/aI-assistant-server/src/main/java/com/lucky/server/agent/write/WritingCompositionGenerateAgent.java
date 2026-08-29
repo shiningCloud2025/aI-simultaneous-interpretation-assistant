@@ -17,6 +17,7 @@ import com.lucky.server.domain.vo.SysUserModelPreferenceVO;
 import com.lucky.server.domain.vo.WritingCompositionGenerateResultVO;
 import com.lucky.server.service.*;
 import io.agentscope.core.agent.RuntimeContext;
+import io.agentscope.core.message.Msg;
 import io.agentscope.core.message.UserMessage;
 import io.agentscope.core.model.GenerateOptions;
 import io.agentscope.core.permission.PermissionContextState;
@@ -110,17 +111,8 @@ public class WritingCompositionGenerateAgent {
         AtomicBoolean failureSaved = new AtomicBoolean(false);
 
         return agent.call(List.of(new UserMessage(input)), WritingCompositionGenerateResultVO.class, ctx)
-                .map(msg -> {
-                    WritingCompositionGenerateResultVO result =
-                            msg.getStructuredData(WritingCompositionGenerateResultVO.class);
-
-                    if (result == null) {
-                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成结果为空");
-                    }
-
-                    return result;
-                })
-                .map(result ->{
+                .map(this::parseResult)
+                .map(result -> {
                     try {
                         saveGeneration(dto, userId, llmPreference, result);
                         return result;
@@ -129,9 +121,7 @@ public class WritingCompositionGenerateAgent {
                         saveFailureSafely(dto, userId, llmPreference, "persist", e, safeRawResponse(result));
                         throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成记录保存失败");
                     }
-                        }
-
-                )
+                })
                 .doOnError(e -> {
                     if (!failureSaved.get()) {
                         saveFailureSafely(dto, userId, llmPreference, "model_generate", e, null);
@@ -353,9 +343,51 @@ public class WritingCompositionGenerateAgent {
         }
     }
 
+    private WritingCompositionGenerateResultVO parseResult(Msg msg) {
+        if (msg.hasStructuredData()) {
+            WritingCompositionGenerateResultVO result = msg.getStructuredData(WritingCompositionGenerateResultVO.class);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        String text = msg.getTextContent();
+        if (text == null || text.isBlank()) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成结果为空");
+        }
+
+        try {
+            return objectMapper.readValue(extractJson(text), WritingCompositionGenerateResultVO.class);
+        } catch (Exception e) {
+            log.error("解析作文题目生成文本结果失败，text={}", text, e);
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文题目生成结果解析失败");
+        }
+    }
+
+    private String extractJson(String text) {
+        String value = text.trim();
+
+        if (value.startsWith("```json")) {
+            value = value.substring("```json".length()).trim();
+        } else if (value.startsWith("```")) {
+            value = value.substring("```".length()).trim();
+        }
+
+        if (value.endsWith("```")) {
+            value = value.substring(0, value.length() - 3).trim();
+        }
+
+        int start = value.indexOf('{');
+        int end = value.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return value.substring(start, end + 1);
+        }
+
+        return value;
+    }
+
     private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
         return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
-
 
 }
