@@ -144,6 +144,35 @@ body {
 .select-value { color: #333; }
 .tb-select:hover .select-value { color: #1a1a1a; }
 
+.business-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.business-btn {
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: #f5f3f0;
+  color: #333;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.business-btn:hover {
+  background: #173f3b;
+  color: #f7f0dd;
+}
+
 /* ============ 下拉菜单 ============ */
 .dropdown {
   position: absolute;
@@ -202,7 +231,61 @@ body {
   background: #4caf50;
 }
 
-/* ============ 翻译内容框（demo） ============ */
+/* ============ 悬浮条紧凑控件（各模式专属） ============ */
+.tb-input {
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 12px;
+  color: #2c2c2c;
+  outline: none;
+  transition: border-color 0.14s ease;
+}
+
+.tb-input:focus {
+  border-color: #173f3b;
+}
+
+.tb-input::placeholder {
+  color: #b0a99d;
+}
+
+.tb-action {
+  height: 30px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  background: #173f3b;
+  color: #f7f0dd;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.14s ease;
+}
+
+.tb-action:hover:not(:disabled) {
+  opacity: 0.86;
+}
+
+.tb-action:disabled {
+  background: #a8a29a;
+  cursor: not-allowed;
+}
+
+.tb-status.error {
+  color: #c0392b;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============ 翻译内容框（实时转译结果） ============ */
 .transcript-box {
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);

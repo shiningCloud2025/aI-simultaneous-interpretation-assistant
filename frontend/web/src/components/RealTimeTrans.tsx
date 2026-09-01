@@ -68,6 +68,18 @@ export function RealTimeTrans() {
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
+  const ensureAudioCaptureAvailable = () => {
+    if (!navigator.mediaDevices) {
+      throw new Error('当前浏览器环境不支持音频采集。公网部署请使用 HTTPS 访问，HTTP 下浏览器会禁用麦克风和屏幕共享能力。');
+    }
+    if (audioSource === 'mic' && !navigator.mediaDevices.getUserMedia) {
+      throw new Error('当前浏览器不支持麦克风采集，请使用最新版 Chrome/Edge，并确认通过 HTTPS 访问。');
+    }
+    if (audioSource === 'speaker' && !navigator.mediaDevices.getDisplayMedia) {
+      throw new Error('当前浏览器环境不支持扬声器采集。扬声器模式依赖屏幕共享能力，公网部署必须使用 HTTPS 访问。');
+    }
+  };
+
   // —— 流式输出（只展示当前最新一句） ——
   const [segs, setSegs] = useState<SegItem[]>([]);
   const segIdRef = useRef(0);
@@ -287,6 +299,7 @@ export function RealTimeTrans() {
     finishedSourceIdRef.current = null;
 
     try {
+      ensureAudioCaptureAvailable();
       // 1. 拿音频流（根据 audioSource 选择）
       let stream: MediaStream;
       if (audioSource === 'mic') {

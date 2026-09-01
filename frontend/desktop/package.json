@@ -1,15 +1,15 @@
 {
-  "name": "transflow-desktop",
+  "name": "smart-language-classroom-desktop",
   "private": true,
   "version": "1.0.0",
-  "description": "TransFlow AI同声转译助手桌面端",
+  "description": "智语同航桌面端",
   "main": "dist-electron/main.js",
   "type": "module",
   "author": "shiningCloud2025",
   "scripts": {
     "dev": "vite",
     "build:electron": "node scripts/build-electron.mjs",
-    "dev:electron": "npm run build:electron && concurrently \"cross-env BROWSER=none vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev:electron": "npm run build:electron && concurrently \"cross-env BROWSER=none vite\" \"wait-on http://localhost:5174 && electron .\"",
     "build": "npm run build:electron && vite build",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
@@ -18,9 +18,14 @@
     "lint": "oxlint",
     "preview": "vite preview"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shiningCloud2025/aI-simultaneous-interpretation-assistant.git"
+  },
   "build": {
-    "appId": "com.transflow.desktop",
-    "productName": "TransFlow",
+    "appId": "com.smartlanguageclassroom.desktop",
+    "productName": "智语同航",
+    "copyright": "Copyright © 2026",
     "directories": {
       "output": "release"
     },
@@ -28,15 +33,37 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "shiningCloud2025",
+      "repo": "aI-simultaneous-interpretation-assistant"
+    },
     "mac": {
       "category": "public.app-category.utilities",
+      "identity": null,
       "target": [
         {
           "target": "dmg",
           "arch": ["arm64", "x64"]
         }
       ],
-      "icon": "public/icon.png"
+      "icon": "public/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "writeUpdateInfo": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     },
     "win": {
       "target": [
@@ -45,7 +72,8 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "public/icon.png"
+      "icon": "public/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

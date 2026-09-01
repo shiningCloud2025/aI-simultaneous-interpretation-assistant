@@ -11,7 +11,13 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
 	},
 	hideToolbar: () => electron.ipcRenderer.send("hide-toolbar"),
 	showToolbar: () => electron.ipcRenderer.send("show-toolbar"),
+	setWindowMode: (mode) => electron.ipcRenderer.send("set-window-mode", mode),
+	onAppModeChanged: (callback) => {
+		electron.ipcRenderer.on("app-mode-changed", (_event, mode) => callback(mode));
+	},
+	openPlatformExternal: (url) => electron.ipcRenderer.send("open-platform-external", url),
 	toggleFullscreen: () => electron.ipcRenderer.send("toggle-fullscreen"),
+	updateTrayModels: (payload) => electron.ipcRenderer.send("update-tray-models", payload),
 	startResize: (edge) => {
 		electron.ipcRenderer.send("start-resize", edge);
 		const onUp = () => {

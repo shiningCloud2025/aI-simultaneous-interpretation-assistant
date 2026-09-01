@@ -80,6 +80,12 @@ export function OfficialSitePage() {
         </section>
       </main>
 
+      <footer className="official-footer">
+        <a href="https://beian.miit.gov.cn" target="_blank" rel="noreferrer">
+          辽ICP备2026007778号-1
+        </a>
+      </footer>
+
       <style>{`
         .official-page {
           min-height: 100vh;
@@ -307,7 +313,7 @@ export function OfficialSitePage() {
           line-height: 1.8;
         }
         .official-workflow {
-          padding-bottom: 80px;
+          padding-bottom: 54px;
         }
         .official-flow {
           display: grid;
@@ -334,6 +340,20 @@ export function OfficialSitePage() {
         .official-flow-item strong {
           color: #283634;
           font-size: 15px;
+        }
+        .official-footer {
+          padding: 18px 28px 30px;
+          text-align: center;
+          font-size: 13px;
+          color: #777;
+        }
+        .official-footer a {
+          color: #666;
+          text-decoration: none;
+        }
+        .official-footer a:hover {
+          color: #234b49;
+          text-decoration: underline;
         }
         @media (max-width: 920px) {
           .official-hero,

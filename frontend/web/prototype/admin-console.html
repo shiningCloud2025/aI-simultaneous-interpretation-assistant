@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智语同航 · 超管控制台（原型）</title>
+<style>
+/* ═══════════ 配色：与平台端 App.css 一致（含暗色主题） ═══════════ */
+:root{
+  --bg:#f5f3f0; --card:#fff; --border:#e8e6e1; --border-2:#f0efec;
+  --text:#333; --text-2:#666; --text-3:#888; --text-4:#bbb;
+  --sel:#f0efec; --sel-text:#1a1a1a; --hover:#f5f3f0;
+  --btn:#f5f3f0; --btn-text:#666;
+  --c1:#4a5d4e; --c2:#c99a3a; --c3:#6b7f8a;
+  --ok:#4a7c59; --err:#b4544a; --warn:#c2873a; --info:#5a6b7a;
+  --ok-bg:#eef3ef; --err-bg:#faf0ef; --warn-bg:#fbf5ea; --info-bg:#f0f2f4;
+  --track:#f0efec;
+  --shadow:0 2px 10px rgba(0,0,0,.06);
+}
+[data-theme="dark"]{
+  --bg:#20231f; --card:#2a2f2b; --border:#394139; --border-2:#394139;
+  --text:#e7e4dc; --text-2:#d4d0c6; --text-3:#8e948c; --text-4:#6b7069;
+  --sel:#394139; --sel-text:#fff; --hover:#343a35;
+  --btn:#343a35; --btn-text:#d4d0c6;
+  --c1:#7fa588; --c2:#d9ae54; --c3:#8ba3b0;
+  --ok:#7ba888; --err:#d4877d; --warn:#d9a95e; --info:#8ba0b0;
+  --ok-bg:#2c3a30; --err-bg:#3d2e2c; --warn-bg:#3a3225; --info-bg:#2c353b;
+  --track:#343a35;
+  --shadow:0 2px 10px rgba(0,0,0,.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:13px;
+  transition:background .3s, color .3s;
+}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── 侧边栏（与平台端一致：白底 210px + 分组） ── */
+.sidebar{
+  width:210px;background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;
+  transition:background .3s,border-color .3s;
+}
+.sidebar-header{padding:18px 20px;border-bottom:1px solid var(--border-2);display:flex;align-items:center;gap:10px}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--c1);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0}
+.sidebar-header b{font-size:14px;color:var(--text);display:block}
+.sidebar-header small{font-size:10px;color:var(--text-3);letter-spacing:.3px}
+.nav{flex:1;overflow-y:auto;padding:12px 12px}
+.group-title{font-size:10px;color:var(--text-4);padding:0 8px;margin:14px 0 6px;
+  text-transform:uppercase;letter-spacing:1px}
+.group-title:first-child{margin-top:0}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;font-size:13px;
+  cursor:pointer;color:var(--text-3);margin-bottom:1px;width:100%;border:none;background:none;
+  font-family:inherit;text-align:left;transition:all .1s;
+}
+.nav-item:hover{background:var(--hover)}
+.nav-item.active{background:var(--sel);color:var(--sel-text);font-weight:500}
+.nav-item .ic{width:16px;text-align:center;font-size:13px}
+.nav-item .badge{margin-left:auto;background:var(--err);color:#fff;font-size:10px;
+  padding:1px 6px;border-radius:8px;font-weight:600}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--border-2)}
+.who{display:flex;align-items:center;gap:9px;padding:4px 6px}
+.who .av{width:28px;height:28px;border-radius:50%;background:var(--c1);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.who .nm{font-size:12px;color:var(--text-2)}
+.who .rl{font-size:10px;color:var(--text-4)}
+
+/* ── 顶栏 ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{
+  height:50px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;padding:0 24px;background:var(--card);flex-shrink:0;
+  transition:background .3s,border-color .3s;
+}
+.topbar h1{font-size:15px;font-weight:600;color:var(--text)}
+.topbar .sub{font-size:11px;color:var(--text-3);margin-top:1px}
+.top-right{display:flex;align-items:center;gap:8px}
+.btn{
+  padding:6px 14px;border-radius:8px;font-size:12px;background:var(--btn);
+  border:none;color:var(--btn-text);cursor:pointer;font-family:inherit;transition:.15s;
+}
+.btn:hover{opacity:.82}
+.btn.primary{background:var(--c1);color:#fff;font-weight:500}
+.theme-btn{width:32px;height:32px;padding:0;font-size:14px}
+.content{flex:1;padding:24px;overflow-y:auto}
+
+/* ── 卡片 ── */
+.card{background:var(--card);border:1px solid var(--border-2);border-radius:14px;padding:20px;margin-bottom:16px;
+  transition:background .3s,border-color .3s}
+.card h2{font-size:13px;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;font-weight:600}
+.card h2 .hint{font-size:11px;color:var(--text-3);font-weight:400}
+
+/* 待开发标记 */
+.pending{border:1px dashed var(--warn)!important}
+.tag-new{display:inline-block;padding:1px 7px;border-radius:5px;font-size:10px;font-weight:600;
+  background:var(--warn-bg);color:var(--warn);border:1px dashed var(--warn)}
+
+/* ── 指标 ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.stats6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+.stats6 .stat{padding:16px 16px}
+.stats6 .val{font-size:22px}
+
+/* 用户分层 */
+.tier{display:flex;flex-direction:column;gap:2px}
+.tier-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border-2);font-size:12px}
+.tier-row:last-child{border:none}
+.tier-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tier-nm{font-weight:500;color:var(--text);width:60px;flex-shrink:0}
+.tier-desc{color:var(--text-3);font-size:11px;flex:1}
+.tier-val{font-weight:600;color:var(--text);width:44px;text-align:right}
+.tier-pc{color:var(--text-3);font-size:11px;width:36px;text-align:right}
+
+/* 趋势面板切换 */
+.tr-panel{display:none}
+.tr-panel.on{display:block}
+.tr-panel .chart svg g rect{transition:fill .3s}
+.tr-panel .chart svg g line{transition:stroke .3s}
+.tr-panel .chart polyline{transition:stroke .3s}
+.stat{background:var(--card);border:1px solid var(--border-2);border-radius:14px;padding:18px 20px;
+  transition:background .3s,border-color .3s}
+.stat .label{font-size:11px;color:var(--text-3);margin-bottom:8px}
+.stat .val{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat .delta{margin-top:8px;font-size:11px;color:var(--ok)}
+.stat .delta.down{color:var(--err)}
+
+.row2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+.row2>div{margin-bottom:0}
+.mb{margin-bottom:16px}
+
+/* ── 图表 ── */
+.chart{height:180px;padding:8px 0}
+.chart svg{width:100%;height:100%;overflow:visible}
+.legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text-2);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.bars{display:flex;align-items:flex-end;gap:6px;height:180px;padding-top:10px}
+.bars .b{flex:1;background:var(--c1);border-radius:4px 4px 0 0;min-height:3px;opacity:.85}
+.bars .b.gold{background:var(--c2)}
+.bars .b:hover{opacity:1}
+.axis{display:flex;gap:6px;margin-top:6px;font-size:9px;color:var(--text-4)}
+.axis span{flex:1;text-align:center}
+.dist{display:flex;flex-direction:column;gap:12px}
+.dist .item{display:flex;align-items:center;gap:10px;font-size:12px}
+.dist .nm{width:64px;color:var(--text-2);flex-shrink:0}
+.dist .track{flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden}
+.dist .fill{height:100%;border-radius:4px}
+.dist .pc{width:38px;text-align:right;color:var(--text-2);font-size:11px}
+
+/* ── 表格 ── */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{
+  height:34px;padding:0 11px;border:1px solid var(--border);border-radius:8px;
+  font:inherit;font-size:12px;outline:none;background:var(--card);color:var(--text);
+  transition:border-color .15s,background .3s;
+}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--c1)}
+.toolbar input.sch{width:230px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:10px 12px;background:var(--hover);color:var(--text-2);font-weight:500;
+  font-size:11px;border-bottom:1px solid var(--border-2);white-space:nowrap;transition:background .3s}
+td{padding:11px 12px;border-bottom:1px solid var(--border-2);color:var(--text);vertical-align:middle}
+tr:hover td{background:var(--hover)}
+.td-main{font-weight:500}
+.td-sub{font-size:11px;color:var(--text-3);margin-top:2px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.dot.ok{background:var(--ok)}.dot.off{background:var(--text-4)}.dot.err{background:var(--err)}
+.pill{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.err{background:var(--err-bg);color:var(--err)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.link{color:var(--c1);cursor:pointer;font-weight:500}
+.link:hover{text-decoration:underline}
+.link.danger{color:var(--err)}
+.empty{padding:40px;text-align:center;color:var(--text-3);font-size:12px;line-height:1.8}
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:14px;font-size:11px;color:var(--text-3)}
+.pager button{min-width:28px;height:28px;padding:0 7px;border:1px solid var(--border);border-radius:8px;
+  background:var(--card);font:inherit;font-size:11px;cursor:pointer;color:var(--text-2);transition:.15s}
+.pager button:hover:not(:disabled){border-color:var(--c1);color:var(--c1)}
+.pager button.on{background:var(--sel);color:var(--sel-text);border-color:var(--sel);font-weight:500}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border-2);margin-bottom:16px}
+.tab{padding:9px 16px;border:none;background:none;font:inherit;font-size:13px;color:var(--text-3);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--sel-text);font-weight:500;border-bottom-color:var(--c1)}
+.tab .n{font-size:10px;color:var(--text-4);margin-left:4px}
+
+/* ── 日志 ── */
+.log{display:flex;flex-direction:column;gap:8px}
+.log .ln{display:flex;gap:10px;font-size:12px;padding:9px 11px;border-radius:8px;
+  background:var(--hover);align-items:center;transition:background .3s}
+.log .tm{color:var(--text-3);font-size:11px;flex-shrink:0;width:40px}
+.log .tx{color:var(--text-2);flex:1}
+
+/* ── 抽屉 ── */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:50}
+.mask.on{display:block}
+.drawer{position:fixed;top:0;right:0;width:400px;height:100vh;background:var(--card);z-index:51;
+  box-shadow:-8px 0 28px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .22s;
+  display:flex;flex-direction:column}
+.drawer.on{transform:translateX(0)}
+.drawer header{padding:18px 20px;border-bottom:1px solid var(--border-2);
+  display:flex;justify-content:space-between;align-items:center}
+.drawer header b{font-size:14px;color:var(--text)}
+.drawer .body{flex:1;overflow-y:auto;padding:18px 20px}
+.drawer .close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);line-height:1}
+.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-2);font-size:12px}
+.kv:last-child{border:none}
+.kv .k{color:var(--text-3)}
+.kv .v{color:var(--text);font-weight:500}
+.sec-t{font-size:10px;color:var(--text-4);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.8px}
+
+/* ── 开关 ── */
+.sw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:12px}
+.sw input{display:none}
+.sw .sl{width:36px;height:20px;background:var(--track);border-radius:10px;position:relative;
+  transition:.18s;flex-shrink:0}
+.sw .sl:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;
+  border-radius:50%;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw input:checked+.sl{background:var(--c1)}
+.sw input:checked+.sl:after{transform:translateX(16px)}
+.sw-off{color:var(--text-3)}
+.sw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+
+.form-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.form-row label{width:110px;font-size:12px;color:var(--text-2);flex-shrink:0}
+.form-row select{flex:1;height:34px;padding:0 11px;border:1px solid var(--border);border-radius:8px;
+  font:inherit;font-size:12px;outline:none;background:var(--card);color:var(--text)}
+.form-row select:focus{border-color:var(--c1)}
+.form-row .locked{flex:1;font-size:12px;color:var(--text-3);font-style:italic}
+
+.notice{padding:14px 16px;border-radius:10px;background:var(--hover);border:1px solid var(--border-2);
+  margin-top:16px;font-size:11px;color:var(--text-2);line-height:1.8;transition:background .3s}
+.notice b{color:var(--text)}
+.notice code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:10px;color:var(--warn)}
+
+.page{display:none}
+.page.on{display:block}
+
+/* ═══════════════ 星空导航模式 ═══════════════ */
+body[data-mode="star"] .sidebar,
+body[data-mode="star"] .topbar{display:none}
+
+.starfield{
+  position:fixed;inset:0;z-index:200;display:none;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 42%,#1c2647 0%,#0f1526 45%,#05080f 100%);
+}
+body[data-mode="star"] .starfield{display:block}
+
+/* 星点：三层景深 + 视差 */
+.stars{position:absolute;inset:-60px;pointer-events:none}
+.star-layer{position:absolute;inset:0;will-change:transform;transition:transform .5s ease-out}
+.star-layer i{position:absolute;background:#fff;border-radius:50%;
+  animation:twinkle 3.4s ease-in-out infinite}
+.star-layer.l1 i{animation-duration:4.6s}
+.star-layer.l2 i{animation-duration:3.2s}
+.star-layer.l3 i{animation-duration:2.3s;box-shadow:0 0 7px rgba(255,255,255,.95)}
+@keyframes twinkle{0%,100%{opacity:.14}50%{opacity:.92}}
+
+/* 星云：营造纵深与色彩 */
+.nebula{position:absolute;border-radius:50%;filter:blur(72px);opacity:.32;
+  pointer-events:none;animation:nebula-drift 26s ease-in-out infinite alternate}
+.nb-1{width:560px;height:560px;top:-12%;left:-10%;
+  background:radial-gradient(circle,#3d6bb5 0%,transparent 70%)}
+.nb-2{width:500px;height:500px;bottom:-14%;right:-8%;
+  background:radial-gradient(circle,#8a5ab5 0%,transparent 70%)}
+.nb-3{width:420px;height:420px;top:32%;left:40%;
+  background:radial-gradient(circle,#2f8a80 0%,transparent 70%)}
+@keyframes nebula-drift{from{transform:translate(0,0) scale(1)}
+  to{transform:translate(28px,-22px) scale(1.09)}}
+
+/* 银河带 */
+.milkyway{position:absolute;top:50%;left:50%;width:160vw;height:32vh;
+  margin:-16vh 0 0 -80vw;pointer-events:none;transform:rotate(-18deg);
+  filter:blur(16px);opacity:.85;
+  background:linear-gradient(180deg,
+    transparent 0%,rgba(170,195,255,.06) 38%,rgba(255,255,255,.05) 50%,
+    rgba(170,195,255,.06) 62%,transparent 100%)}
+
+/* 流星 */
+.meteor{position:absolute;width:2px;height:96px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(255,255,255,.98),rgba(255,255,255,0));
+  filter:drop-shadow(0 0 6px rgba(200,225,255,.9));
+  animation:meteor-fly 1.4s ease-in forwards}
+@keyframes meteor-fly{
+  0%{opacity:0;transform:rotate(38deg) translateY(-110px)}
+  14%{opacity:1}
+  100%{opacity:0;transform:rotate(38deg) translateY(78vh)}
+}
+
+/* 轨道 */
+.orbit{position:absolute;top:50%;left:50%;border-radius:50%;
+  border:1px solid rgba(255,255,255,.06);
+  transform:translate(-50%,-50%)}
+.orbit-1{width:400px;height:400px;animation:spin 80s linear infinite}
+/* 动态轨道的容器：自身不旋转，尺寸由 JS 计算 */
+.orbit-wrap{position:absolute;top:50%;left:50%;width:0;height:0}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* 星球：反向自转保持文字水平，周期需与所在轨道一致 */
+.planet{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;
+  animation:spin-rev 80s linear infinite}
+.orbit-2 .planet{animation-duration:140s}
+@keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+
+.planet-body{
+  width:100%;height:100%;border-radius:50%;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:radial-gradient(circle at 32% 26%,#4f6285 0%,#2c3757 55%,#171f33 100%);
+  border:1px solid rgba(255,255,255,.13);color:#dde3f0;
+  transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .28s, border-color .28s;
+}
+.planet-body:hover{
+  transform:scale(1.16);
+  border-color:rgba(150,185,255,.65);
+  box-shadow:0 0 36px rgba(120,165,255,.55), 0 0 78px rgba(120,165,255,.22);
+}
+.planet .pi{font-size:19px;line-height:1}
+.planet .pl{font-size:11px;font-weight:500;letter-spacing:.4px}
+
+/* 中心主星：看板 */
+.sun{position:absolute;top:50%;left:50%;width:158px;height:158px;margin:-79px 0 0 -79px;
+  border-radius:50%;cursor:pointer;color:#3b2a09;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:radial-gradient(circle at 34% 27%,#f9e7b4 0%,#c99a3a 52%,#7a5719 100%);
+  animation:sun-breathe 5.5s ease-in-out infinite;
+  transition:transform .28s cubic-bezier(.34,1.4,.64,1);
+}
+.sun:hover{transform:scale(1.08)}
+@keyframes sun-breathe{
+  0%,100%{box-shadow:0 0 74px rgba(201,154,58,.42),0 0 160px rgba(201,154,58,.18)}
+  50%{box-shadow:0 0 96px rgba(201,154,58,.62),0 0 210px rgba(201,154,58,.3)}
+}
+.sun .si{font-size:26px;line-height:1}
+.sun .sl{font-size:13px;font-weight:700;letter-spacing:1.5px}
+
+/* 星空顶栏 */
+.sf-top{position:absolute;top:0;left:0;right:0;z-index:10;
+  padding:26px 32px;display:flex;justify-content:space-between;align-items:flex-start}
+.sf-title b{display:block;font-size:18px;color:#e9edf7;letter-spacing:1.2px;font-weight:600}
+.sf-title span{font-size:11px;color:#868fa6;letter-spacing:.6px}
+.sf-switch{
+  padding:8px 16px;border-radius:9px;cursor:pointer;font:inherit;font-size:12px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  color:#c5cbdd;transition:.2s;
+}
+.sf-switch:hover{background:rgba(255,255,255,.13);color:#fff;border-color:rgba(255,255,255,.28)}
+.sf-hint{position:absolute;bottom:26px;left:0;right:0;text-align:center;
+  font-size:11px;color:#5d6579;letter-spacing:.5px}
+
+/* 第二层：子导航（模块自己的导航项） */
+.sf-layer{position:absolute;inset:0}
+.sf-core{position:absolute;top:50%;left:50%;width:132px;height:132px;margin:-66px 0 0 -66px;
+  border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:radial-gradient(circle at 33% 27%,#f9e7b4 0%,#c99a3a 52%,#7a5719 100%);
+  color:#3b2a09;box-shadow:0 0 66px rgba(201,154,58,.4),0 0 140px rgba(201,154,58,.16);
+  animation:sun-breathe 5.5s ease-in-out infinite}
+.sf-core .ci{font-size:24px;line-height:1}
+.sf-core .cn{font-size:13px;font-weight:700;letter-spacing:1.2px}
+
+.sat-ring{position:absolute;top:50%;left:50%;width:520px;height:520px;margin:-260px 0 0 -260px;
+  border:1px solid rgba(255,255,255,.07);border-radius:50%;animation:spin 90s linear infinite}
+.sat{position:absolute;width:112px;margin:-33px 0 0 -56px;animation:spin-rev 90s linear infinite}
+.sat-body{
+  width:112px;height:66px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:linear-gradient(160deg,rgba(79,98,133,.92),rgba(28,36,58,.95));
+  border:1px solid rgba(255,255,255,.14);color:#dde3f0;
+  transition:transform .26s cubic-bezier(.34,1.4,.64,1),box-shadow .26s,border-color .26s;
+}
+.sat-body:hover{
+  transform:scale(1.1);border-color:rgba(150,185,255,.65);
+  box-shadow:0 0 30px rgba(120,165,255,.5)}
+.sat .si{font-size:15px;line-height:1}
+.sat .sn{font-size:11px;font-weight:500;letter-spacing:.3px}
+
+/* 星空·内容态：只有该模块本身，不出现经典侧边栏，否则星球就退化成入口 */
+body[data-sf="content"] .starfield{display:none}
+body[data-sf="content"] .topbar{display:none}
+body[data-sf="content"] .content{padding:22px 30px;max-width:1440px;margin:0 auto;width:100%}
+
+/* 内容区顶部的星空面包屑 */
+.sf-crumb{
+  display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:9px 14px;
+  border-radius:10px;font-size:12px;
+  background:linear-gradient(100deg,rgba(201,154,58,.12),rgba(120,165,255,.08));
+  border:1px solid rgba(201,154,58,.22);
+}
+.sf-crumb .cb{background:none;border:none;font:inherit;font-size:12px;cursor:pointer;
+  color:var(--c1);padding:0;font-weight:500}
+.sf-crumb .cb:hover{text-decoration:underline}
+.sf-crumb .cs{color:var(--text-4)}
+.sf-crumb .cc{color:var(--text-2);font-weight:500}
+.sf-crumb .sp{margin-left:auto}
+.sf-crumb .sp .cb{color:var(--text-3);font-size:11px}
+
+/* 转场 */
+.starfield.leaving{animation:sf-out .42s ease forwards}
+@keyframes sf-out{to{opacity:0;transform:scale(1.18)}}
+.content-entering{animation:ct-in .42s ease}
+@keyframes ct-in{from{opacity:0;transform:scale(.97)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ═══ 侧边栏（平台端分组风格） ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">语</div>
+      <div><b>智语同航</b><small>超管控制台</small></div>
+    </div>
+    <nav class="nav">
+      <div class="group-title">管理控制台</div>
+      <button class="nav-item active" data-p="dashboard"><span class="ic">📊</span>数据总览</button>
+      <button class="nav-item" data-p="users"><span class="ic">👥</span>用户管理</button>
+      <button class="nav-item" data-p="teaching"><span class="ic">📚</span>教学数据</button>
+      <div class="group-title">运营</div>
+      <button class="nav-item" data-p="usage"><span class="ic">⚡</span>AI 用量</button>
+      <button class="nav-item" data-p="feedback"><span class="ic">💬</span>反馈管理<span class="badge">3</span></button>
+      <div class="group-title">系统</div>
+      <button class="nav-item" data-p="settings"><span class="ic">⚙️</span>系统配置</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="who">
+        <div class="av">超</div>
+        <div><div class="nm">超级管理员</div><div class="rl">tenant_id = 0</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pgTitle">数据总览</h1>
+        <div class="sub" id="pgSub">平台整体运营情况</div>
+      </div>
+      <div class="top-right">
+        <select class="btn" style="height:32px;padding:0 8px"><option>近 30 天</option><option>近 7 天</option><option>全部</option></select>
+        <button class="btn">导出报表</button>
+        <button class="btn primary">刷新</button>
+        <button class="btn" id="toStar" title="切换到星空导航">✨ 星空</button>
+        <button class="btn theme-btn" id="themeBtn" title="切换主题">🌙</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+<!-- ══════ 1. 数据总览 ══════ -->
+<section class="page on" id="p-dashboard">
+  <!-- 核心指标：回答「有多少人」「用得勤不勤」 -->
+  <div class="stats6">
+    <div class="stat"><div class="label">总用户数</div><div class="val">1,234</div><div class="delta">↑ 12% 较上月</div></div>
+    <div class="stat"><div class="label">今日活跃 DAU</div><div class="val">89</div><div class="delta">↑ 8 较昨日</div></div>
+    <div class="stat"><div class="label">月活跃 MAU</div><div class="val">612</div><div class="delta">↑ 15% 较上月</div></div>
+    <div class="stat"><div class="label">本月新增</div><div class="val">+186</div><div class="delta">↑ 23% 较上月</div></div>
+    <div class="stat"><div class="label">本月使用次数</div><div class="val">5,678</div><div class="delta">↑ 19% 较上月</div></div>
+    <div class="stat"><div class="label">失败率</div><div class="val">0.8<span style="font-size:15px">%</span></div><div class="delta">↓ 0.3% 较上周</div></div>
+  </div>
+
+  <!-- 趋势分析：三个视角切换 -->
+  <div class="card mb">
+    <h2>趋势分析 <span class="hint">近 30 天</span></h2>
+    <div class="tabs">
+      <button class="tab active" data-tr="growth">用户增长</button>
+      <button class="tab" data-tr="active">活跃度</button>
+      <button class="tab" data-tr="func">功能使用</button>
+    </div>
+
+    <!-- 用户增长：新增柱状 + 累计折线 -->
+    <div class="tr-panel on" id="tr-growth">
+      <div class="chart">
+        <svg viewBox="0 0 700 180" preserveAspectRatio="none">
+          <g stroke="var(--border-2)" stroke-width="1">
+            <line x1="0" y1="36" x2="700" y2="36"/><line x1="0" y1="72" x2="700" y2="72"/>
+            <line x1="0" y1="108" x2="700" y2="108"/><line x1="0" y1="144" x2="700" y2="144"/>
+          </g>
+          <g fill="var(--c1)" opacity=".28">
+            <rect x="8"   y="150" width="40" height="22" rx="3"/><rect x="72"  y="138" width="40" height="34" rx="3"/>
+            <rect x="136" y="144" width="40" height="28" rx="3"/><rect x="200" y="126" width="40" height="46" rx="3"/>
+            <rect x="264" y="132" width="40" height="40" rx="3"/><rect x="328" y="112" width="40" height="60" rx="3"/>
+            <rect x="392" y="120" width="40" height="52" rx="3"/><rect x="456" y="98"  width="40" height="74" rx="3"/>
+            <rect x="520" y="106" width="40" height="66" rx="3"/><rect x="584" y="82"  width="40" height="90" rx="3"/>
+            <rect x="648" y="92"  width="40" height="80" rx="3"/>
+          </g>
+          <polyline fill="none" stroke="var(--c2)" stroke-width="2.2" stroke-linejoin="round"
+            points="28,120 92,112 156,104 220,92 284,84 348,70 412,62 476,50 540,42 604,32 668,24"/>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c1)"></i>每日新增用户</span>
+        <span><i style="background:var(--c2)"></i>累计用户</span>
+      </div>
+    </div>
+
+    <!-- 活跃度：DAU + MAU 双线 -->
+    <div class="tr-panel" id="tr-active">
+      <div class="chart">
+        <svg viewBox="0 0 700 180" preserveAspectRatio="none">
+          <g stroke="var(--border-2)" stroke-width="1">
+            <line x1="0" y1="36" x2="700" y2="36"/><line x1="0" y1="72" x2="700" y2="72"/>
+            <line x1="0" y1="108" x2="700" y2="108"/><line x1="0" y1="144" x2="700" y2="144"/>
+          </g>
+          <polyline fill="none" stroke="var(--c1)" stroke-width="2.2" stroke-linejoin="round"
+            points="0,128 70,120 140,132 210,108 280,96 350,104 420,84 490,76 560,64 630,58 700,44"/>
+          <polyline fill="none" stroke="var(--c3)" stroke-width="2" stroke-dasharray="5 3" stroke-linejoin="round"
+            points="0,64 70,58 140,60 210,52 280,46 350,48 420,38 490,34 560,28 630,26 700,18"/>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c1)"></i>DAU 日活跃</span>
+        <span><i style="background:var(--c3)"></i>MAU 月活跃</span>
+        <span style="margin-left:auto;color:var(--text-3)">DAU/MAU = 14.5%（粘性偏低，健康值 &gt;20%）</span>
+      </div>
+    </div>
+
+    <!-- 功能使用：三功能折线 -->
+    <div class="tr-panel" id="tr-func">
+      <div class="chart">
+        <svg viewBox="0 0 700 180" preserveAspectRatio="none">
+          <g stroke="var(--border-2)" stroke-width="1">
+            <line x1="0" y1="36" x2="700" y2="36"/><line x1="0" y1="72" x2="700" y2="72"/>
+            <line x1="0" y1="108" x2="700" y2="108"/><line x1="0" y1="144" x2="700" y2="144"/>
+          </g>
+          <polyline fill="none" stroke="var(--c1)" stroke-width="2.2" stroke-linejoin="round"
+            points="0,120 70,105 140,88 210,96 280,72 350,80 420,58 490,66 560,44 630,52 700,30"/>
+          <polyline fill="none" stroke="var(--c2)" stroke-width="2.2" stroke-linejoin="round"
+            points="0,140 70,132 140,138 210,124 280,118 350,122 420,104 490,110 560,96 630,100 700,88"/>
+          <polyline fill="none" stroke="var(--c3)" stroke-width="2" stroke-dasharray="4 3" stroke-linejoin="round"
+            points="0,152 70,148 140,150 210,142 280,146 350,138 420,140 490,130 560,128 630,124 700,118"/>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c1)"></i>作文出题</span>
+        <span><i style="background:var(--c2)"></i>作文批阅</span>
+        <span><i style="background:var(--c3)"></i>单词素材</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 功能分布 + 用户分层 -->
+  <div class="row2 mb">
+    <div class="card">
+      <h2>功能使用分布</h2>
+      <div class="dist">
+        <div class="item"><span class="nm">作文出题</span><span class="track"><span class="fill" style="width:45%;background:var(--c1)"></span></span><span class="pc">45%</span></div>
+        <div class="item"><span class="nm">作文批阅</span><span class="track"><span class="fill" style="width:30%;background:var(--c2)"></span></span><span class="pc">30%</span></div>
+        <div class="item"><span class="nm">单词素材</span><span class="track"><span class="fill" style="width:18%;background:var(--c3)"></span></span><span class="pc">18%</span></div>
+        <div class="item"><span class="nm">实时转译</span><span class="track"><span class="fill" style="width:7%;background:var(--text-4)"></span></span><span class="pc">7%</span></div>
+      </div>
+      <div class="notice">
+        ⚠️ <b>实时转译占比偏低</b> —— 转译内容当前<code>不落库</code>，无法统计真实用量，实际占比应更高。
+        如需准确统计，要新建转译记录表并在 <code>AudioWebSocketHandler</code> 埋点。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>用户分层 <span class="hint">按近 30 天使用频次</span></h2>
+      <div class="tier">
+        <div class="tier-row"><span class="tier-dot" style="background:var(--c1)"></span>
+          <span class="tier-nm">重度用户</span><span class="tier-desc">≥ 20 次</span>
+          <span class="tier-val">234</span><span class="tier-pc">19%</span></div>
+        <div class="tier-row"><span class="tier-dot" style="background:var(--c2)"></span>
+          <span class="tier-nm">中度用户</span><span class="tier-desc">5-19 次</span>
+          <span class="tier-val">456</span><span class="tier-pc">37%</span></div>
+        <div class="tier-row"><span class="tier-dot" style="background:var(--c3)"></span>
+          <span class="tier-nm">轻度用户</span><span class="tier-desc">1-4 次</span>
+          <span class="tier-val">389</span><span class="tier-pc">32%</span></div>
+        <div class="tier-row"><span class="tier-dot" style="background:var(--text-4)"></span>
+          <span class="tier-nm">沉默用户</span><span class="tier-desc">注册未用</span>
+          <span class="tier-val">155</span><span class="tier-pc">12%</span></div>
+      </div>
+      <div class="notice">
+        <b>沉默用户 155 人（12%）</b> —— 注册后从未使用。这批人是激活的第一优先对象，
+        可考虑在「用户管理」按此条件筛选并触达。
+      </div>
+    </div>
+  </div>
+
+  <!-- 实时监控 -->
+  <div class="card">
+    <h2>最近失败 <span class="hint">实时</span></h2>
+    <div class="log">
+      <div class="ln"><span class="tm">10:23</span><span class="tx">作文生成超时 · 张三</span><span class="pill err">失败</span></div>
+      <div class="ln"><span class="tm">10:20</span><span class="tx">API Key 无效 · 李四</span><span class="pill err">失败</span></div>
+      <div class="ln"><span class="tm">10:15</span><span class="tx">模型响应异常 · 王五</span><span class="pill warn">重试</span></div>
+      <div class="ln"><span class="tm">10:08</span><span class="tx">图片识别失败 · 赵六</span><span class="pill err">失败</span></div>
+      <div class="ln"><span class="tm">09:54</span><span class="tx">批阅超时 · 张三</span><span class="pill warn">重试</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 2. 用户管理 ══════ -->
+<section class="page" id="p-users">
+  <div class="card">
+    <h2>用户列表 <span class="hint">共 1,234 人</span></h2>
+    <div class="toolbar">
+      <input class="sch" id="uSearch" type="text" placeholder="🔍 搜索账号 / 昵称 / 手机 / 邮箱">
+      <select id="uRole"><option value="">全部角色</option><option>超管</option><option>老师</option><option>学生</option></select>
+      <select id="uStatus"><option value="">全部状态</option><option value="启用">启用</option><option value="禁用">禁用</option></select>
+      <button class="btn">导出 CSV</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>用户</th><th>账号</th><th>角色</th><th>状态</th><th>注册时间</th><th>最近登录</th><th style="text-align:right">操作</th>
+      </tr></thead>
+      <tbody id="uBody"></tbody>
+    </table>
+    <div class="pager">
+      <button disabled>‹</button><button class="on">1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>›</button>
+      <span style="margin-left:10px">共 1,234 条</span>
+    </div>
+    <div class="notice">
+      ⚠️ <b>角色字段不存在</b> —— 当前 <code>sys_user</code> 表只有 <code>status</code>（启用/禁用），
+      无 <code>role</code>。需新增字段 + 枚举（超管 / 老师 / 学生）。
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 3. 教学数据 ══════ -->
+<section class="page" id="p-teaching">
+  <div class="card">
+    <h2 id="tcTitle">作文出题记录</h2>
+    <div class="tabs">
+      <button class="tab active" data-t="gen">作文出题<span class="n">2,845</span></button>
+      <button class="tab" data-t="eva">作文批阅<span class="n">1,702</span></button>
+      <button class="tab" data-t="word">单词素材<span class="n">1,131</span></button>
+      <button class="tab" data-t="rt">实时转译<span class="n">待埋点</span></button>
+    </div>
+    <div class="toolbar">
+      <input class="sch" id="tSearch" type="text" placeholder="🔍 搜索用户 / 内容关键词">
+      <select id="tStatus"><option value="">全部状态</option><option value="成功">成功</option><option value="失败">失败</option></select>
+      <select><option>近 7 天</option><option>近 30 天</option><option>全部</option></select>
+    </div>
+    <table>
+      <thead><tr>
+        <th>时间</th><th>用户</th><th>内容摘要</th><th>模型</th><th>耗时</th><th>状态</th><th style="text-align:right">操作</th>
+      </tr></thead>
+      <tbody id="tBody"></tbody>
+    </table>
+    <div class="pager">
+      <button disabled>‹</button><button class="on">1</button><button>2</button><button>3</button><button>›</button>
+      <span style="margin-left:10px">共 2,845 条</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 4. AI 用量 ══════ -->
+<section class="page" id="p-usage">
+  <div class="row2 mb">
+    <div class="card">
+      <h2>本月调用量 <span class="hint">按业务表 createTime 统计</span></h2>
+      <div class="bars">
+        <div class="b" style="height:38%"></div><div class="b" style="height:52%"></div>
+        <div class="b" style="height:44%"></div><div class="b" style="height:68%"></div>
+        <div class="b" style="height:58%"></div><div class="b" style="height:76%"></div>
+        <div class="b" style="height:62%"></div><div class="b" style="height:88%"></div>
+        <div class="b gold" style="height:72%"></div><div class="b gold" style="height:94%"></div>
+        <div class="b gold" style="height:81%"></div>
+      </div>
+      <div class="axis"><span>1日</span><span>4日</span><span>7日</span><span>10日</span><span>13日</span><span>16日</span><span>19日</span><span>22日</span><span>25日</span><span>28日</span><span>31日</span></div>
+    </div>
+    <div class="card">
+      <h2>按模型拆分 <span class="hint">业务表已有 model_name</span></h2>
+      <div class="dist" style="margin-top:18px">
+        <div class="item"><span class="nm">ASR</span><span class="track"><span class="fill" style="width:52%;background:var(--c1)"></span></span><span class="pc">52%</span></div>
+        <div class="item"><span class="nm">翻译</span><span class="track"><span class="fill" style="width:38%;background:var(--c2)"></span></span><span class="pc">38%</span></div>
+        <div class="item"><span class="nm">纠错</span><span class="track"><span class="fill" style="width:10%;background:var(--c3)"></span></span><span class="pc">10%</span></div>
+      </div>
+      <div class="notice">纠错与翻译共用同一模型偏好，此处按调用场景估算，非独立模型。</div>
+    </div>
+  </div>
+
+  <div class="row2 mb">
+    <div class="card">
+      <h2>Top 10 用户 <span class="hint">按调用量</span></h2>
+      <table>
+        <thead><tr><th>#</th><th>用户</th><th>调用次数</th><th>占比</th></tr></thead>
+        <tbody id="topBody"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>按厂商分布 <span class="hint">业务表已有 provider</span></h2>
+      <div class="dist" style="margin-top:8px">
+        <div class="item"><span class="nm">阿里云百炼</span><span class="track"><span class="fill" style="width:41%;background:var(--c1)"></span></span><span class="pc">41%</span></div>
+        <div class="item"><span class="nm">OpenAI</span><span class="track"><span class="fill" style="width:28%;background:var(--c2)"></span></span><span class="pc">28%</span></div>
+        <div class="item"><span class="nm">DeepSeek</span><span class="track"><span class="fill" style="width:19%;background:var(--c3)"></span></span><span class="pc">19%</span></div>
+        <div class="item"><span class="nm">其他</span><span class="track"><span class="fill" style="width:12%;background:var(--text-4)"></span></span><span class="pc">12%</span></div>
+      </div>
+      <div class="notice">
+        <b>不做成本统计</b> —— 采用 BYOK（用户自带 Key），调用费用由用户自担，平台无需计费。
+        此处统计厂商分布，用于判断该优先对接哪些模型。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>失败日志</h2>
+    <table>
+      <thead><tr><th>时间</th><th>场景</th><th>错误码</th><th>错误信息</th><th>用户</th></tr></thead>
+      <tbody>
+        <tr><td>08-31 10:23</td><td>作文生成</td><td><span class="pill err">TIMEOUT</span></td><td>模型响应超时（30s）</td><td>张三</td></tr>
+        <tr><td>08-31 10:20</td><td>作文批阅</td><td><span class="pill err">AUTH</span></td><td>API Key 无效或已过期</td><td>李四</td></tr>
+        <tr><td>08-31 10:15</td><td>单词素材</td><td><span class="pill warn">RATE</span></td><td>触发限流，已自动降级</td><td>王五</td></tr>
+        <tr><td>08-31 10:08</td><td>图片批阅</td><td><span class="pill err">OCR</span></td><td>图片识别失败</td><td>赵六</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 5. 反馈管理 ══════ -->
+<section class="page" id="p-feedback">
+  <div class="card">
+    <h2>用户反馈</h2>
+    <div class="tabs">
+      <button class="tab active" data-f="todo">待处理 <span class="n">3</span></button>
+      <button class="tab" data-f="done">已回复 <span class="n">12</span></button>
+      <button class="tab" data-f="closed">已关闭 <span class="n">5</span></button>
+    </div>
+    <table>
+      <thead><tr><th>类型</th><th>标题</th><th>用户</th><th>时间</th><th>状态</th><th style="text-align:right">操作</th></tr></thead>
+      <tbody id="fBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 6. 系统配置 ══════ -->
+<section class="page" id="p-settings">
+  <div class="card pending">
+    <h2>默认模型配置 <span class="tag-new">需新建配置表</span></h2>
+    <div class="form-row">
+      <label>ASR 默认模型</label>
+      <select><option>fun-asr-realtime（Fun-ASR 实时）</option><option>paraformer-realtime-v2</option></select>
+    </div>
+    <div class="form-row">
+      <label>翻译默认模型</label>
+      <select><option>gpt-4o</option><option>gpt-4o-mini</option><option>deepseek-v3</option><option>qwen-max</option></select>
+    </div>
+    <div class="form-row">
+      <label>纠错模型</label>
+      <span class="locked">随翻译模型，不可单独配置</span>
+    </div>
+  </div>
+
+  <div class="card pending">
+    <h2>功能开关 <span class="tag-new">需新建配置表</span></h2>
+    <div class="sw-grid">
+      <label class="sw"><input type="checkbox" checked><span class="sl"></span><span>开放注册</span></label>
+      <label class="sw"><input type="checkbox" checked><span class="sl"></span><span>实时转译</span></label>
+      <label class="sw"><input type="checkbox" checked><span class="sl"></span><span>作文批阅</span></label>
+      <label class="sw"><input type="checkbox"><span class="sl"></span><span class="sw-off">图片批阅（灰度）</span></label>
+      <label class="sw"><input type="checkbox" checked><span class="sl"></span><span>单词配图生成</span></label>
+      <label class="sw"><input type="checkbox"><span class="sl"></span><span class="sw-off">试用模式</span></label>
+    </div>
+    <div class="notice">
+      「开放注册」若改为<b>试用模式</b>，注册流程需同步调整（注册后发放试用额度，而非直接开放全部能力）。
+    </div>
+  </div>
+
+  <div class="card pending">
+    <h2>公告管理 <span class="tag-new">需新建公告表</span></h2>
+    <div class="toolbar"><button class="btn primary">+ 新建公告</button></div>
+    <table>
+      <thead><tr><th>标题</th><th>发布时间</th><th>状态</th><th style="text-align:right">操作</th></tr></thead>
+      <tbody>
+        <tr><td class="td-main">系统维护通知</td><td>08-31 09:00</td><td><span class="pill ok">已发布</span></td><td style="text-align:right"><span class="link">编辑</span> · <span class="link danger">下线</span></td></tr>
+        <tr><td class="td-main">新功能上线预告</td><td>08-28 15:20</td><td><span class="pill info">草稿</span></td><td style="text-align:right"><span class="link">编辑</span> · <span class="link">发布</span></td></tr>
+        <tr><td class="td-main">暑期活动说明</td><td>07-01 10:00</td><td><span class="pill ok">已发布</span></td><td style="text-align:right"><span class="link">编辑</span> · <span class="link danger">下线</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════ 星空导航 ══════════ -->
+<div class="starfield" id="starfield">
+  <!-- 背景层：星云 → 银河 → 三层星点 → 流星 -->
+  <div class="nebula nb-1"></div>
+  <div class="nebula nb-2"></div>
+  <div class="nebula nb-3"></div>
+  <div class="milkyway"></div>
+  <div class="stars" id="stars">
+    <div class="star-layer l1"></div>
+    <div class="star-layer l2"></div>
+    <div class="star-layer l3"></div>
+  </div>
+  <div class="sf-top">
+    <div class="sf-title">
+      <b>智语同航 · 控制台</b>
+      <span>选择一颗星球进入</span>
+    </div>
+    <button class="sf-switch" id="toClassic">☰ 经典模式</button>
+  </div>
+
+  <!-- 第一层：一级星球 = 分组 -->
+  <div class="sf-layer" id="sf-galaxy">
+    <!-- 一级星球由 JS 按轨道容量规则生成 -->
+    <div class="orbit-wrap" id="galaxyOrbitWrap"></div>
+
+    <!-- 中心主星：看板，一键直达 -->
+    <div class="sun" data-direct="dashboard">
+      <span class="si">📊</span>
+      <span class="sl">看板</span>
+    </div>
+
+    <div class="sf-hint">中心为看板 · 点击星球进入该分组</div>
+  </div>
+
+  <!-- 第二层：二级星球 = 分组下的模块 -->
+  <div class="sf-layer" id="sf-satellites" style="display:none">
+    <div class="sf-core" id="sfCore"></div>
+    <div class="orbit-wrap" id="satOrbit"></div>
+    <div class="sf-hint">点击模块进入 · 此时页面只展示该模块本身</div>
+  </div>
+</div>
+
+<div class="mask" id="mask"></div>
+<aside class="drawer" id="drawer">
+  <header><b>用户详情</b><button class="close" id="dClose">×</button></header>
+  <div class="body" id="dBody"></div>
+</aside>
+
+<script>
+/* ───────── 主题切换 ───────── */
+const themeBtn=document.getElementById('themeBtn');
+// 图表颜色全部用 CSS 变量（stroke="var(--c1)"），切换主题时自动跟随，无需 JS 改色
+themeBtn.onclick=()=>{
+  const next = document.documentElement.dataset.theme==='dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  themeBtn.textContent = next==='dark' ? '☀️' : '🌙';
+};
+
+/* ───────── 趋势分析：三个视角切换 ───────── */
+document.querySelectorAll('.tab[data-tr]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tab[data-tr]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.tr-panel').forEach(p=>p.classList.remove('on'));
+    document.getElementById('tr-'+b.dataset.tr).classList.add('on');
+  };
+});
+
+/* ───────── 模拟数据 ───────── */
+const USERS = [
+  {n:'张明',  a:'10001', r:'老师', s:'启用', reg:'2026-08-01', lg:'2026-08-31 10:20', ph:'138****2341', em:'zhang**@qq.com',    gen:428, eva:196, key:2, mod:'gpt-4o'},
+  {n:'李雪',  a:'10002', r:'学生', s:'启用', reg:'2026-08-02', lg:'2026-08-31 09:41', ph:'159****7788', em:'lix**@163.com',     gen:312, eva:148, key:1, mod:'deepseek-v3'},
+  {n:'王建国',a:'10003', r:'超管', s:'启用', reg:'2026-07-15', lg:'2026-08-31 08:05', ph:'186****0011', em:'wang**@gmail.com',  gen:87,  eva:42,  key:3, mod:'gpt-4o'},
+  {n:'赵小雨',a:'10004', r:'学生', s:'禁用', reg:'2026-08-05', lg:'2026-08-20 16:33', ph:'—',           em:'zhao**@foxmail.com',gen:23,  eva:9,   key:0, mod:'—'},
+  {n:'陈思远',a:'10005', r:'老师', s:'启用', reg:'2026-08-07', lg:'2026-08-30 21:12', ph:'137****5522', em:'chen**@126.com',    gen:534, eva:287, key:2, mod:'qwen-max'},
+  {n:'刘芳',  a:'10006', r:'老师', s:'启用', reg:'2026-08-09', lg:'2026-08-31 07:58', ph:'188****3344', em:'liu**@qq.com',      gen:276, eva:131, key:1, mod:'gpt-4o-mini'},
+  {n:'孙浩',  a:'10007', r:'学生', s:'启用', reg:'2026-08-11', lg:'2026-08-29 19:24', ph:'135****9900', em:'sun**@163.com',     gen:158, eva:74,  key:0, mod:'deepseek-v3'},
+  {n:'周婷',  a:'10008', r:'学生', s:'启用', reg:'2026-08-14', lg:'2026-08-31 08:47', ph:'150****6621', em:'zhou**@gmail.com',  gen:203, eva:98,  key:1, mod:'gpt-4o'},
+  {n:'吴磊',  a:'10009', r:'老师', s:'禁用', reg:'2026-08-16', lg:'2026-08-18 11:09', ph:'133****4455', em:'wu**@outlook.com',  gen:41,  eva:12,  key:0, mod:'—'},
+  {n:'郑文静',a:'10010', r:'学生', s:'启用', reg:'2026-08-19', lg:'2026-08-30 22:03', ph:'187****2233', em:'zheng**@qq.com',    gen:119, eva:56,  key:1, mod:'qwen-max'},
+  {n:'冯强',  a:'10011', r:'老师', s:'启用', reg:'2026-08-22', lg:'2026-08-31 09:15', ph:'182****7788', em:'feng**@126.com',    gen:365, eva:174, key:2, mod:'gpt-4o'},
+  {n:'许晴',  a:'10012', r:'学生', s:'启用', reg:'2026-08-25', lg:'2026-08-31 10:02', ph:'156****3311', em:'xu**@foxmail.com',  gen:92,  eva:38,  key:0, mod:'deepseek-v3'}
+];
+
+const TEACH = {
+  gen:[
+    {t:'08-31 10:20',u:'张明',  c:'AI 与人类未来的关系',   m:'fun-asr-realtime', d:'3.2s', s:'成功'},
+    {t:'08-31 10:18',u:'李雪',  c:'环保演讲稿：绿色校园',  m:'gpt-4o',           d:'4.1s', s:'成功'},
+    {t:'08-31 10:12',u:'陈思远',c:'读后续写：意外的礼物',  m:'qwen-max',         d:'2.8s', s:'成功'},
+    {t:'08-31 10:05',u:'刘芳',  c:'图表作文：网购趋势分析',m:'gpt-4o-mini',      d:'5.6s', s:'成功'},
+    {t:'08-31 09:58',u:'孙浩',  c:'应用文：邀请信',        m:'deepseek-v3',      d:'3.9s', s:'成功'},
+    {t:'08-31 09:47',u:'冯强',  c:'（生成失败，无内容）',  m:'gpt-4o',           d:'30s',  s:'失败'},
+    {t:'08-31 09:33',u:'周婷',  c:'议论文：责任与担当',    m:'qwen-max',         d:'3.4s', s:'成功'},
+    {t:'08-31 09:21',u:'郑文静',c:'短文写作：我的一天',    m:'deepseek-v3',      d:'2.6s', s:'成功'}
+  ],
+  eva:[
+    {t:'08-31 10:22',u:'张明',  c:'AI 与未来 · 学生作文（14分）',m:'gpt-4o',     d:'6.8s', s:'成功'},
+    {t:'08-31 10:15',u:'李雪',  c:'绿色校园 · 演讲稿（11分）',   m:'deepseek-v3',d:'5.2s', s:'成功'},
+    {t:'08-31 10:08',u:'陈思远',c:'读后续写 · 批改（13分）',     m:'qwen-max',   d:'7.1s', s:'成功'},
+    {t:'08-31 09:56',u:'刘芳',  c:'（批阅失败，无内容）',        m:'gpt-4o',     d:'30s',  s:'失败'},
+    {t:'08-31 09:44',u:'孙浩',  c:'邀请信 · 批改（12分）',       m:'deepseek-v3',d:'4.9s', s:'成功'}
+  ],
+  word:[
+    {t:'08-31 10:19',u:'张明',  c:'serendipity · 意外发现的好运',m:'gpt-4o',     d:'2.1s', s:'成功'},
+    {t:'08-31 10:14',u:'李雪',  c:'resilient · 有韧性的',        m:'deepseek-v3',d:'1.8s', s:'成功'},
+    {t:'08-31 10:07',u:'周婷',  c:'meticulous · 一丝不苟的',     m:'qwen-max',   d:'2.4s', s:'成功'},
+    {t:'08-31 09:52',u:'郑文静',c:'（生成失败，无内容）',        m:'gpt-4o',     d:'30s',  s:'失败'},
+    {t:'08-31 09:38',u:'许晴',  c:'nostalgia · 怀旧之情',        m:'deepseek-v3',d:'2.0s', s:'成功'}
+  ],
+  rt:[]
+};
+
+const FEEDBACK = [
+  {ty:'🐛 Bug',  ti:'作文生成一直失败',     u:'张明',  t:'08-30 14:22', s:'待处理'},
+  {ty:'💡 建议', ti:'希望增加语法检查功能', u:'李雪',  t:'08-29 09:15', s:'待处理'},
+  {ty:'❓ 咨询', ti:'如何批量导入学生作文', u:'陈思远',t:'08-28 16:40', s:'待处理'},
+  {ty:'🐛 Bug',  ti:'单词配图偶尔不显示',   u:'刘芳',  t:'08-27 11:08', s:'已回复'},
+  {ty:'💡 建议', ti:'支持导出 PDF 报告',    u:'孙浩',  t:'08-26 20:33', s:'已回复'},
+  {ty:'🐛 Bug',  ti:'登录验证码收不到',     u:'周婷',  t:'08-25 08:19', s:'已关闭'},
+  {ty:'❓ 咨询', ti:'API Key 在哪里配置',   u:'冯强',  t:'08-24 15:52', s:'已关闭'}
+];
+
+const TOP=[['张明',428],['陈思远',534],['冯强',365],['李雪',312],['刘芳',276],
+  ['周婷',203],['孙浩',158],['郑文静',119],['许晴',92],['王建国',87]]
+  .sort((a,b)=>b[1]-a[1]);
+const MAXV=TOP[0][1];
+
+/* ───────── 页面切换 ───────── */
+const TITLES={
+  dashboard:['数据总览','平台整体运营情况'],
+  users:['用户管理','查看、搜索与管控平台用户'],
+  teaching:['教学数据','作文、批阅、单词、转译全量记录'],
+  usage:['AI 用量','调用量、成本与失败日志'],
+  feedback:['反馈管理','处理用户提交的反馈工单'],
+  settings:['系统配置','默认模型、功能开关、公告']
+};
+document.querySelectorAll('.nav-item').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const p=b.dataset.p;
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+    document.getElementById('p-'+p).classList.add('on');
+    document.getElementById('pgTitle').textContent=TITLES[p][0];
+    document.getElementById('pgSub').textContent=TITLES[p][1];
+  };
+});
+
+/* ───────── 用户表格 ───────── */
+function renderUsers(){
+  const kw=(document.getElementById('uSearch').value||'').trim().toLowerCase();
+  const rf=document.getElementById('uRole').value;
+  const sf=document.getElementById('uStatus').value;
+  const list=USERS.filter(u=>{
+    if(kw && !(u.n+u.a+u.r).toLowerCase().includes(kw)) return false;
+    if(rf && u.r!==rf) return false;
+    if(sf && u.s!==sf) return false;
+    return true;
+  });
+  document.getElementById('uBody').innerHTML = list.length ? list.map(u=>`
+    <tr>
+      <td><div class="td-main">${u.n}</div><div class="td-sub">${u.em}</div></td>
+      <td>${u.a}</td>
+      <td><span class="pill ${u.r==='超管'?'warn':u.r==='老师'?'info':'ok'}">${u.r}</span></td>
+      <td><span class="dot ${u.s==='启用'?'ok':'off'}"></span>${u.s}</td>
+      <td>${u.reg}</td>
+      <td>${u.lg}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <span class="link" onclick="openUser(${USERS.indexOf(u)})">详情</span> ·
+        <span class="link ${u.s==='启用'?'danger':''}">${u.s==='启用'?'禁用':'启用'}</span>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">没有匹配的用户</td></tr>';
+}
+['uSearch','uRole','uStatus'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',renderUsers); el.addEventListener('change',renderUsers);
+});
+renderUsers();
+
+/* ───────── 抽屉 ───────── */
+function openUser(i){
+  const u=USERS[i];
+  document.getElementById('dBody').innerHTML=`
+    <div class="sec-t">基本信息</div>
+    <div class="kv"><span class="k">昵称</span><span class="v">${u.n}</span></div>
+    <div class="kv"><span class="k">账号</span><span class="v">${u.a}</span></div>
+    <div class="kv"><span class="k">角色</span><span class="v">${u.r}</span></div>
+    <div class="kv"><span class="k">状态</span><span class="v">${u.s}</span></div>
+    <div class="kv"><span class="k">手机号</span><span class="v">${u.ph}</span></div>
+    <div class="kv"><span class="k">邮箱</span><span class="v">${u.em}</span></div>
+    <div class="kv"><span class="k">注册时间</span><span class="v">${u.reg}</span></div>
+    <div class="kv"><span class="k">最近登录</span><span class="v">${u.lg}</span></div>
+    <div class="sec-t">使用统计</div>
+    <div class="kv"><span class="k">作文出题</span><span class="v">${u.gen} 次</span></div>
+    <div class="kv"><span class="k">作文批阅</span><span class="v">${u.eva} 次</span></div>
+    <div class="kv"><span class="k">当前翻译模型</span><span class="v">${u.mod}</span></div>
+    <div class="kv"><span class="k">已配置 API Key</span><span class="v">${u.key} 个</span></div>
+    <div class="sec-t">操作</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn">改角色</button>
+      <button class="btn">重置密码</button>
+      <button class="btn">查看记录</button>
+      <button class="btn" style="color:var(--err)">${u.s==='启用'?'禁用账号':'启用账号'}</button>
+    </div>`;
+  document.getElementById('mask').classList.add('on');
+  document.getElementById('drawer').classList.add('on');
+}
+const closeD=()=>{
+  document.getElementById('mask').classList.remove('on');
+  document.getElementById('drawer').classList.remove('on');
+};
+document.getElementById('dClose').onclick=closeD;
+document.getElementById('mask').onclick=closeD;
+
+/* ───────── 教学数据 ───────── */
+let curTab='gen';
+const TAB_TITLE={gen:'作文出题记录',eva:'作文批阅记录',word:'单词素材记录',rt:'实时转译记录'};
+document.querySelectorAll('.tab[data-t]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tab[data-t]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    curTab=b.dataset.t;
+    document.getElementById('tcTitle').textContent=TAB_TITLE[curTab];
+    renderTeach();
+  };
+});
+function renderTeach(){
+  const kw=(document.getElementById('tSearch').value||'').trim().toLowerCase();
+  const sf=document.getElementById('tStatus').value;
+  const list=(TEACH[curTab]||[]).filter(r=>{
+    if(kw && !(r.u+r.c).toLowerCase().includes(kw)) return false;
+    if(sf && r.s!==sf) return false;
+    return true;
+  });
+  const body=document.getElementById('tBody');
+  if(curTab==='rt'){
+    body.innerHTML=`<tr><td colspan="7" class="empty">
+      实时转译当前<code style="background:var(--hover);padding:2px 6px;border-radius:4px;color:var(--warn)">不落库</code>，无历史记录
+      <div style="margin-top:10px;font-size:11px">需新建转译记录表并在 AudioWebSocketHandler 埋点</div>
+    </td></tr>`;
+    return;
+  }
+  body.innerHTML = list.length ? list.map(r=>`
+    <tr>
+      <td>${r.t}</td>
+      <td class="td-main">${r.u}</td>
+      <td>${r.c}</td>
+      <td><span class="pill info">${r.m}</span></td>
+      <td>${r.d}</td>
+      <td><span class="pill ${r.s==='成功'?'ok':'err'}">${r.s}</span></td>
+      <td style="text-align:right"><span class="link">详情</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">没有匹配的记录</td></tr>';
+}
+['tSearch','tStatus'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',renderTeach); el.addEventListener('change',renderTeach);
+});
+renderTeach();
+
+/* ───────── Top10 ───────── */
+document.getElementById('topBody').innerHTML=TOP.map((r,i)=>`
+  <tr>
+    <td style="color:${i<3?'var(--c2)':'var(--text-4)'};font-weight:${i<3?'600':'400'}">${i+1}</td>
+    <td class="td-main">${r[0]}</td>
+    <td>${r[1]} 次</td>
+    <td>
+      <span style="display:inline-block;width:70px;height:6px;background:var(--track);border-radius:3px;overflow:hidden;vertical-align:middle">
+        <span style="display:block;height:100%;width:${Math.round(r[1]/MAXV*100)}%;background:var(--c1);border-radius:3px"></span>
+      </span>
+      <span style="margin-left:6px;color:var(--text-3);font-size:11px">${(r[1]/MAXV*100).toFixed(1)}%</span>
+    </td>
+  </tr>`).join('');
+
+/* ───────── 反馈 ───────── */
+let curFb='todo';
+const FB_MAP={todo:'待处理',done:'已回复',closed:'已关闭'};
+document.querySelectorAll('.tab[data-f]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tab[data-f]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    curFb=b.dataset.f; renderFb();
+  };
+});
+function renderFb(){
+  const list=FEEDBACK.filter(f=>f.s===FB_MAP[curFb]);
+  document.getElementById('fBody').innerHTML = list.length ? list.map(f=>`
+    <tr>
+      <td>${f.ty}</td><td class="td-main">${f.ti}</td><td>${f.u}</td><td>${f.t}</td>
+      <td><span class="pill ${f.s==='待处理'?'warn':f.s==='已回复'?'ok':'info'}">${f.s}</span></td>
+      <td style="text-align:right"><span class="link">查看</span>${f.s==='待处理'?' · <span class="link">回复</span>':''}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty">暂无记录</td></tr>';
+}
+renderFb();
+
+/* ═══════════ 星空导航模式 ═══════════ */
+// 三层景深星点：远(多而小暗) / 中 / 近(少而大亮)
+(function makeStars(){
+  const LAYERS=[
+    {sel:'.star-layer.l1', count:140, min:0.5, max:1.2, op:0.34},
+    {sel:'.star-layer.l2', count:72,  min:1.0, max:2.0, op:0.58},
+    {sel:'.star-layer.l3', count:30,  min:1.8, max:3.4, op:0.95},
+  ];
+  LAYERS.forEach(L=>{
+    const box=document.querySelector(L.sel);
+    if(!box) return;
+    for(let i=0;i<L.count;i++){
+      const s=document.createElement('i');
+      const sz=(Math.random()*(L.max-L.min)+L.min).toFixed(2);
+      s.style.cssText=`left:${(Math.random()*100).toFixed(2)}%;top:${(Math.random()*100).toFixed(2)}%;
+        width:${sz}px;height:${sz}px;opacity:${L.op};
+        animation-delay:${(Math.random()*4.6).toFixed(2)}s`;
+      box.appendChild(s);
+    }
+  });
+})();
+
+// 随机流星
+(function meteors(){
+  const box=document.getElementById('starfield');
+  function spawn(){
+    if(document.body.dataset.mode!=='star') return; // 仅星空模式
+    const m=document.createElement('div');
+    m.className='meteor';
+    m.style.left=(Math.random()*88)+'%';
+    m.style.top=(-8+Math.random()*26)+'%';
+    m.style.animationDuration=(1.1+Math.random()*0.8).toFixed(2)+'s';
+    box.appendChild(m);
+    setTimeout(()=>m.remove(),2300);
+  }
+  (function loop(){
+    setTimeout(()=>{ spawn(); loop(); }, 2600+Math.random()*4600);
+  })();
+})();
+
+// 鼠标视差：近景位移大，远景位移小
+(function parallax(){
+  const layers=[...document.querySelectorAll('.star-layer')];
+  document.addEventListener('mousemove',e=>{
+    if(document.body.dataset.mode!=='star') return;
+    const x=(e.clientX/window.innerWidth-0.5);
+    const y=(e.clientY/window.innerHeight-0.5);
+    layers.forEach((el,i)=>{
+      const d=(i+1)*11;
+      el.style.transform=`translate(${(x*d).toFixed(1)}px,${(y*d).toFixed(1)}px)`;
+    });
+  });
+})();
+
+// 模式切换（记住个人偏好）
+function setMode(m){
+  document.body.dataset.mode=m;
+  try{ localStorage.setItem('admin-mode',m); }catch(e){}
+}
+try{
+  const saved=localStorage.getItem('admin-mode');
+  if(saved) document.body.dataset.mode=saved;
+}catch(e){}
+
+document.getElementById('toClassic').onclick=()=>setMode('classic');
+document.getElementById('toStar').onclick=()=>{ setMode('star'); showGalaxy(); };
+
+/* ═══════════ 星空导航：一级星球(分组) → 二级星球(模块) → 内容 ═══════════
+   关键：进入内容后仍是星空模式（data-sf="content"），不显示经典侧边栏，
+   页面里只有该模块本身。否则星球就退化成经典模式的入口。 */
+/* 三级导航数据：与经典模式侧边栏一一映射
+     一级 = 侧边栏分组标题（管理控制台/运营/系统）
+     二级 = 侧边栏导航项（用户管理/AI用量...），即星空二级星球
+     三级 = 页面内的 Tab（从这级开始不再是星球） */
+const GALAXY = {
+  console:{icon:'🏛',name:'管理控制台',items:[
+    {key:'users',icon:'👥',name:'用户管理',children:[
+      {n:'用户列表'},{n:'用户分层'},{n:'新增趋势'}]},
+    {key:'teaching',icon:'📚',name:'教学数据',children:[
+      {n:'作文出题',tab:'gen'},{n:'作文批阅',tab:'eva'},
+      {n:'单词素材',tab:'word'},{n:'实时转译',tab:'rt'}]}]},
+  ops:{icon:'🚀',name:'运营',items:[
+    {key:'usage',icon:'⚡',name:'AI 用量',children:[
+      {n:'调用量'},{n:'模型分布'},{n:'厂商分布'},{n:'失败日志'}]},
+    {key:'feedback',icon:'💬',name:'反馈管理',children:[
+      {n:'待处理',tab:'todo'},{n:'已回复',tab:'done'},{n:'已关闭',tab:'closed'}]}]},
+  sys:{icon:'🛠',name:'系统',items:[
+    {key:'settings',icon:'⚙️',name:'系统配置',children:[
+      {n:'模型配置'},{n:'功能开关'},{n:'公告管理'}]}]},
+};
+
+/* 中心主星：看板（不属于任何分组，一键直达） */
+const DASHBOARD = {key:'dashboard',icon:'📊',name:'看板',children:[
+  {n:'总览'},{n:'用户增长',tab:'growth'},{n:'活跃度',tab:'active'},{n:'功能使用',tab:'func'}]};
+
+function findModule(key){
+  if(key==='dashboard') return DASHBOARD;
+  for(const g of Object.values(GALAXY)){
+    const m=g.items.find(x=>x.key===key);
+    if(m) return m;
+  }
+  return null;
+}
+
+/* 轨道容量规则：每轨道最多 6 颗，超出自动开新轨道（半径递增、转速递减）。
+   若某分组模块超过上限，建议拆分组，而不是无限加轨道。 */
+const ORBIT_RULES={maxPerOrbit:6, baseRadius:200, ringGap:130, baseDuration:70, ringDurationStep:45};
+
+/** 把若干项按容量分配到多条轨道上，自动计算半径与转速 */
+function buildOrbits(container,items,makeNode){
+  container.innerHTML='';
+  const rings=[];
+  for(let i=0;i<items.length;i+=ORBIT_RULES.maxPerOrbit){
+    rings.push(items.slice(i,i+ORBIT_RULES.maxPerOrbit));
+  }
+  rings.forEach((ring,ri)=>{
+    const R=ORBIT_RULES.baseRadius + ri*ORBIT_RULES.ringGap;
+    const dur=ORBIT_RULES.baseDuration + ri*ORBIT_RULES.ringDurationStep;
+    const orbit=document.createElement('div');
+    orbit.className='orbit';
+    orbit.style.cssText=`width:${R*2}px;height:${R*2}px;animation-duration:${dur}s`;
+    ring.forEach((item,i)=>{
+      const ang=(-90 + i*360/ring.length)*Math.PI/180;
+      const node=makeNode(item);
+      node.style.left=(50+50*Math.cos(ang))+'%';
+      node.style.top =(50+50*Math.sin(ang))+'%';
+      // 星球反向自转周期必须与该轨道一致，才能保持文字水平
+      node.style.animationDuration=dur+'s';
+      orbit.appendChild(node);
+    });
+    container.appendChild(orbit);
+  });
+  return rings.length;
+}
+
+const galaxyEl=document.getElementById('sf-galaxy');
+const satEl=document.getElementById('sf-satellites');
+
+function setSfState(s){ document.body.dataset.sf=s; }
+
+function showGalaxy(){
+  setMode('star'); // 显示星空即进入星空模式（流星与视差依赖该状态）
+  setSfState('galaxy');
+  galaxyEl.style.display='block';
+  satEl.style.display='none';
+}
+
+/** 一级星球 → 显示该分组下的二级星球 */
+function showGroup(grpKey){
+  const g=GALAXY[grpKey];
+  if(!g) return;
+  setSfState('satellites');
+  galaxyEl.style.display='none';
+  satEl.style.display='block';
+
+  document.getElementById('sfCore').innerHTML=
+    `<span class="ci">${g.icon}</span><span class="cn">${g.name}</span>`;
+
+  const wrap=document.getElementById('satOrbit');
+  wrap.innerHTML='';
+  buildOrbits(wrap,g.items,m=>{
+    const d=document.createElement('div');
+    d.className='planet';
+    d.innerHTML=`<div class="planet-body" data-mod="${m.key}">
+        <span class="pi">${m.icon}</span><span class="pl">${m.name}</span></div>`;
+    d.querySelector('.planet-body').onclick=()=>enterModule(m.key,grpKey);
+    return d;
+  });
+}
+
+/** 二级星球 / 中心主星 → 进入内容（只有该模块，无经典侧边栏） */
+function enterModule(modKey,grpKey){
+  // 保持 mode=star，仅切到内容态：侧边栏由 [data-mode=star] 隐藏
+  document.body.dataset.mode='star';
+  try{ localStorage.setItem('admin-mode','star'); }catch(e){}
+  setSfState('content');
+
+  // 展示该模块的内容（复用经典模式的页面组件）
+  const nav=document.querySelector(`.nav-item[data-p="${modKey}"]`);
+  if(nav) nav.click();
+  // nav.click() 会触发「点侧边栏则清空星空痕迹」的监听，故在其后重设内容态
+  setSfState('content');
+
+  renderCrumb(modKey,grpKey);
+  renderThirdLevel(modKey,0);
+  const c=document.querySelector('.content');
+  c.classList.add('content-entering');
+  setTimeout(()=>c.classList.remove('content-entering'),460);
+}
+
+/** 三级导航：渲染成页面内的 Tab（从这一级起不再是星球） */
+function renderThirdLevel(modKey,activeIdx){
+  const old=document.getElementById('sfTabs');
+  if(old) old.remove();
+  const mod=findModule(modKey);
+  if(!mod || !mod.children) return;
+
+  const bar=document.createElement('div');
+  bar.className='tabs';
+  bar.id='sfTabs';
+  mod.children.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='tab'+(i===activeIdx?' active':'');
+    b.dataset.third=String(i);
+    b.textContent=c.n;
+    b.onclick=()=>activateThird(modKey,i);
+    bar.appendChild(b);
+  });
+  // 插到面包屑之后、页面内容之前
+  const crumb=document.getElementById('sfCrumb');
+  if(crumb && crumb.nextSibling) crumb.parentNode.insertBefore(bar,crumb.nextSibling);
+  else document.querySelector('.content').insertBefore(bar,document.querySelector('.content').firstChild);
+
+  activateThird(modKey,activeIdx,true);
+}
+
+/** 选中三级项：同步激活页面内对应的 Tab，并更新面包屑末级 */
+function activateThird(modKey,idx,skipSync){
+  const mod=findModule(modKey);
+  if(!mod || !mod.children) return;
+  const c=mod.children[idx];
+  if(!c) return;
+
+  document.querySelectorAll('#sfTabs .tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+
+  // 同步页面内的 Tab（有映射关系的才切）
+  if(c.tab && !skipSync){
+    const t=document.querySelector(
+      `.tab[data-t="${c.tab}"],.tab[data-tr="${c.tab}"],.tab[data-f="${c.tab}"]`);
+    if(t){
+      t.click();
+      // 页面内 Tab 的 click 会重建状态，需保持星空内容态
+      setSfState('content');
+    }
+  }
+  setCrumbLeaf(c.n);
+}
+
+/** 页面内 Tab 点击时，反向同步三级高亮 */
+document.addEventListener('click',e=>{
+  const t=e.target.closest?.('.tab[data-t],.tab[data-tr],.tab[data-f]');
+  if(!t || t.closest('#sfTabs')) return;
+  const val=t.dataset.t||t.dataset.tr||t.dataset.f;
+  const tabs=document.querySelectorAll('#sfTabs .tab');
+  if(!tabs.length) return;
+  const mod=findModule(document.querySelector('.nav-item.active')?.dataset.p);
+  if(!mod?.children) return;
+  const idx=mod.children.findIndex(c=>c.tab===val);
+  if(idx>=0){
+    tabs.forEach((x,i)=>x.classList.toggle('active',i===idx));
+    setCrumbLeaf(mod.children[idx].n);
+  }
+});
+
+/** 面包屑：星空 › 分组 › 模块 */
+function renderCrumb(modKey,grpKey){
+  const g=grpKey?GALAXY[grpKey]:null;
+  let bar=document.getElementById('sfCrumb');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='sfCrumb';
+    bar.className='sf-crumb';
+    document.querySelector('.content').insertBefore(bar,document.querySelector('.content').firstChild);
+  }
+  const mod=findModule(modKey);
+  const hasThird=!!(mod&&mod.children&&mod.children.length);
+  bar.innerHTML=`
+    <button class="cb" id="crumbStar">✨ 星空</button>
+    ${g?`<span class="cs">›</span><button class="cb" id="crumbGrp">${g.icon} ${g.name}</button>`:''}
+    <span class="cs">›</span>
+    <button class="cb" id="crumbMod">${mod?mod.icon:''} ${mod?mod.name:modKey}</button>
+    ${hasThird?`<span class="cs">›</span><span class="cc" id="crumbLeaf">${mod.children[0].n}</span>`:''}
+    <span class="sp"><button class="cb" id="crumbClassic">☰ 切到经典模式</button></span>`;
+  bar.style.display='flex';
+  document.getElementById('crumbStar').onclick=()=>showGalaxy();
+  const cg=document.getElementById('crumbGrp');
+  if(cg) cg.onclick=()=>showGroup(grpKey);
+  const cm=document.getElementById('crumbMod');
+  if(cm) cm.onclick=()=>{ grpKey?showGroup(grpKey):showGalaxy(); };
+  document.getElementById('crumbClassic').onclick=()=>{
+    setMode('classic');
+    setSfState('');
+    bar.style.display='none';
+    const tabs=document.getElementById('sfTabs');
+    if(tabs) tabs.style.display='none';
+  };
+}
+
+/** 更新面包屑的末级（第三级） */
+function setCrumbLeaf(name){
+  const leaf=document.getElementById('crumbLeaf');
+  if(leaf) leaf.textContent=name;
+}
+
+// 经典模式下点侧边栏 → 清掉星空痕迹（面包屑 + 三级导航）
+document.querySelectorAll('.nav-item').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const bar=document.getElementById('sfCrumb');
+    if(bar) bar.style.display='none';
+    const tabs=document.getElementById('sfTabs');
+    if(tabs) tabs.remove();
+    setSfState('');
+  });
+});
+
+// 一级星球（分组）：同样走轨道容量规则，超出自动分层
+(function buildGalaxy(){
+  const wrap=document.getElementById('galaxyOrbitWrap');
+  if(!wrap) return;
+  const groups=Object.entries(GALAXY).map(([k,v])=>({key:k,icon:v.icon,name:v.name}));
+  buildOrbits(wrap,groups,g=>{
+    const d=document.createElement('div');
+    d.className='planet';
+    d.innerHTML=`<div class="planet-body" data-grp="${g.key}">
+        <span class="pi">${g.icon}</span><span class="pl">${g.name}</span></div>`;
+    d.querySelector('.planet-body').onclick=()=>showGroup(g.key);
+    return d;
+  });
+})();
+
+// 一级星球
+document.querySelectorAll('[data-grp]').forEach(el=>{
+  el.onclick=()=>showGroup(el.dataset.grp);
+});
+// 中心主星（看板）一键直达
+document.querySelectorAll('[data-direct]').forEach(el=>{
+  el.onclick=()=>enterModule(el.dataset.direct,null);
+});
+</script>
+</body>
+</html>

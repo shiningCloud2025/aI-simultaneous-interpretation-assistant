@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
 import { Dashboard } from '../components/Dashboard';
 import { RealTimeTrans } from '../components/RealTimeTrans';
@@ -64,11 +64,17 @@ const panelTitles: Record<string, string> = {
 export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
   const nav = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(!user);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
+
+  const changePanel = (panel: string) => {
+    setActivePanel(panel);
+    setSearchParams(panel === 'dashboard' ? {} : { panel });
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -77,6 +83,13 @@ export function MainLayout() {
       api.getUserInfo().then(u => { setUser(u); setLoading(false); }).catch(() => { logout(); nav('/login'); });
     }
   }, []);
+
+  useEffect(() => {
+    const panel = searchParams.get('panel');
+    if (panel && panelComponents[panel] && panel !== activePanel) {
+      setActivePanel(panel);
+    }
+  }, [searchParams, activePanel, setActivePanel]);
 
   const handleLogout = () => { logout(); nav('/login'); };
 
@@ -97,7 +110,7 @@ export function MainLayout() {
             <div key={group.group} style={{ padding: '12px 12px 0' }}>
               <div className="sidebar-group-title">{group.group}</div>
               {group.items.map((item) => (
-                <div key={item.id} onClick={() => setActivePanel(item.id)} className={`sidebar-item ${activePanel === item.id ? 'active' : ''}`}>
+                <div key={item.id} onClick={() => changePanel(item.id)} className={`sidebar-item ${activePanel === item.id ? 'active' : ''}`}>
                   {item.icon} {item.label}
                 </div>
               ))}
@@ -122,7 +135,7 @@ export function MainLayout() {
                   { id: 'audio', icon: '🎧', label: '音频设备' },
                   { id: 'help', icon: '❓', label: '帮助反馈' },
                 ].map(item => (
-                  <div key={item.id} onClick={() => { setActivePanel(item.id); setShowUserMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#555' }}
+                  <div key={item.id} onClick={() => { changePanel(item.id); setShowUserMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#555' }}
                     onMouseEnter={e => (e.target as HTMLElement).style.background = '#f5f3f0'}
                     onMouseLeave={e => (e.target as HTMLElement).style.background = 'transparent'}
                   >{item.icon} {item.label}</div>

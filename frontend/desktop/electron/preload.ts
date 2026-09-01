@@ -9,7 +9,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   hideToolbar: () => ipcRenderer.send('hide-toolbar'),
   showToolbar: () => ipcRenderer.send('show-toolbar'),
+  setWindowMode: (mode: 'toolbar' | 'platform') => ipcRenderer.send('set-window-mode', mode),
+  onAppModeChanged: (callback: (mode: 'toolbar' | 'platform') => void) => {
+    ipcRenderer.on('app-mode-changed', (_event, mode) => callback(mode));
+  },
+  openPlatformExternal: (url: string) => ipcRenderer.send('open-platform-external', url),
   toggleFullscreen: () => ipcRenderer.send('toggle-fullscreen'),
+  updateTrayModels: (payload: {
+    asr: { current: string; options: string[] };
+    llm: { current: string; options: string[] };
+  }) => ipcRenderer.send('update-tray-models', payload),
   startResize: (edge: string) => {
     ipcRenderer.send('start-resize', edge);
     const onUp = () => {

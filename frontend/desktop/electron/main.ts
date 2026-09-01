@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, globalShortcut } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, globalShortcut, shell, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { deflateSync } from 'zlib';
@@ -10,11 +10,33 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
 const isDev = !app.isPackaged;
+// 桌面端 dev 端口（与平台端 5173 错开，避免加载到平台端页面）
+const devUrl = process.env.DEV_URL || 'http://localhost:5174';
+const platformUrl = process.env.PLATFORM_URL || 'http://www.easyapplyresume.com/';
+const secureOrigins = [
+  'http://www.easyapplyresume.com',
+  'http://easyapplyresume.com',
+  'http://120.48.177.183',
+].join(',');
 
+app.commandLine.appendSwitch('unsafely-treat-insecure-origin-as-secure', secureOrigins);
+
+/**
+ * 托盘里展示的模型来自后端（用户在平台端配置的 BYOK 模型偏好），
+ * 不再使用写死的示例模型。渲染进程登录后通过 update-tray-models 推送真实列表。
+ */
 let currentModels = {
-  asr: 'Whisper Large v3',
-  translation: 'GPT-4o',
-  correction: 'Claude 3.5 Sonnet',
+  asr: '',
+  llm: '',
+};
+
+/** 托盘菜单可用的模型选项（真实数据，未登录时为空） */
+let trayModelOptions: {
+  asr: { current: string; options: string[] };
+  llm: { current: string; options: string[] };
+} = {
+  asr: { current: '', options: [] },
+  llm: { current: '', options: [] },
 };
 
 // ========== 生成托盘图标 PNG ==========
@@ -102,7 +124,7 @@ function createToolbarWindow() {
   });
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL(devUrl);
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -116,7 +138,7 @@ function createTray() {
   const icon = nativeImage.createFromBuffer(png, { width: 18, height: 18 });
   tray = new Tray(icon);
   updateTrayMenu();
-  tray.setToolTip('AI同声转译助手');
+  tray.setToolTip('智语同航');
   tray.on('double-click', () => {
     if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
   });
@@ -124,47 +146,87 @@ function createTray() {
 
 function updateTrayMenu() {
   const ctx = Menu.buildFromTemplate([
-    { label: 'AI同声转译助手', enabled: false },
+    { label: '智语同航', enabled: false },
     { type: 'separator' },
     {
       label: '显示/隐藏工具栏',
       click: () => { if (mainWindow) mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show(); },
     },
-    { type: 'separator' },
     {
-      label: 'ASR 模型',
-      submenu: [
-        { label: 'Whisper Large v3', type: 'radio', checked: currentModels.asr === 'Whisper Large v3', click: () => switchModel('asr', 'Whisper Large v3') },
-        { label: 'Whisper Medium', type: 'radio', checked: currentModels.asr === 'Whisper Medium', click: () => switchModel('asr', 'Whisper Medium') },
-        { label: 'FunASR Paraformer', type: 'radio', checked: currentModels.asr === 'FunASR Paraformer', click: () => switchModel('asr', 'FunASR Paraformer') },
-        { label: 'SenseVoice', type: 'radio', checked: currentModels.asr === 'SenseVoice', click: () => switchModel('asr', 'SenseVoice') },
-      ],
+      label: '进入平台模式',
+      click: () => switchWindowMode('platform'),
     },
     {
-      label: '翻译模型',
-      submenu: [
-        { label: 'GPT-4o', type: 'radio', checked: currentModels.translation === 'GPT-4o', click: () => switchModel('translation', 'GPT-4o') },
-        { label: 'GPT-4o-mini', type: 'radio', checked: currentModels.translation === 'GPT-4o-mini', click: () => switchModel('translation', 'GPT-4o-mini') },
-        { label: 'Claude 3.5 Sonnet', type: 'radio', checked: currentModels.translation === 'Claude 3.5 Sonnet', click: () => switchModel('translation', 'Claude 3.5 Sonnet') },
-        { label: 'DeepSeek V3', type: 'radio', checked: currentModels.translation === 'DeepSeek V3', click: () => switchModel('translation', 'DeepSeek V3') },
-      ],
-    },
-    {
-      label: '纠错模型',
-      submenu: [
-        { label: 'Claude 3.5 Sonnet', type: 'radio', checked: currentModels.correction === 'Claude 3.5 Sonnet', click: () => switchModel('correction', 'Claude 3.5 Sonnet') },
-        { label: 'GPT-4o', type: 'radio', checked: currentModels.correction === 'GPT-4o', click: () => switchModel('correction', 'GPT-4o') },
-        { label: '关闭纠错', type: 'radio', checked: currentModels.correction === '关闭纠错', click: () => switchModel('correction', '关闭纠错') },
-      ],
+      label: '浏览器打开平台',
+      click: () => shell.openExternal(platformUrl),
     },
     { type: 'separator' },
-    { label: '退出 TransFlow', click: () => app.quit() },
+    buildModelSubmenu('ASR 模型', 'asr'),
+    buildModelSubmenu('翻译模型', 'llm'),
+    // 纠错与翻译一体：后端 CorrectionAgent 复用同一份 LLM 偏好，不提供独立选择
+    { label: `纠错模型：${currentModels.llm || '随翻译'}`, enabled: false },
+    { type: 'separator' },
+    { label: '退出智语同航', click: () => app.quit() },
   ]);
   tray?.setContextMenu(ctx);
 }
 
+function switchWindowMode(mode: 'toolbar' | 'platform') {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.show();
+  mainWindow.focus();
+
+  if (mode === 'platform') {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    const winWidth = Math.min(1280, Math.max(960, Math.round(width * 0.78)));
+    const winHeight = Math.min(860, Math.max(640, Math.round(height * 0.78)));
+    mainWindow.setAlwaysOnTop(false);
+    mainWindow.setMinimumSize(960, 640);
+    mainWindow.setBounds({
+      x: Math.max(0, Math.round((width - winWidth) / 2)),
+      y: Math.max(0, Math.round((height - winHeight) / 2)),
+      width: winWidth,
+      height: winHeight,
+    });
+  } else {
+    const { width } = screen.getPrimaryDisplay().workAreaSize;
+    const winWidth = 900;
+    mainWindow.setAlwaysOnTop(true);
+    mainWindow.setMinimumSize(400, 54);
+    mainWindow.setBounds({
+      x: Math.max(0, Math.round((width - winWidth) / 2)),
+      y: 60,
+      width: winWidth,
+      height: 160,
+    });
+  }
+
+  mainWindow.webContents.send('app-mode-changed', mode);
+}
+
+/**
+ * 构建模型单选子菜单。未登录/未配置时给出引导项，点击后进入平台模式配置。
+ */
+function buildModelSubmenu(label: string, type: 'asr' | 'llm'): Electron.MenuItemConstructorOptions {
+  const { current, options } = trayModelOptions[type];
+  if (!options.length) {
+    return { label: `${label}（未登录，请先登录）`, enabled: false };
+  }
+  return {
+    label,
+    submenu: options.map((model) => ({
+      label: model,
+      type: 'radio' as const,
+      checked: current === model,
+      click: () => switchModel(type, model),
+    })),
+  };
+}
+
 function switchModel(type: string, model: string) {
   (currentModels as Record<string, string>)[type] = model;
+  if (type === 'asr') trayModelOptions.asr.current = model;
+  if (type === 'llm') trayModelOptions.llm.current = model;
   updateTrayMenu();
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('model-changed', { type, model, all: currentModels });
@@ -174,12 +236,32 @@ function switchModel(type: string, model: string) {
 // ========== IPC ==========
 ipcMain.handle('get-models', () => currentModels);
 ipcMain.handle('set-model', (_e, { type, model }: { type: string; model: string }) => {
-  (currentModels as Record<string, string>)[type] = model;
-  updateTrayMenu();
+  switchModel(type, model);
   return currentModels;
 });
+// 渲染进程登录后推送真实模型列表，用于重建托盘菜单
+ipcMain.on(
+  'update-tray-models',
+  (
+    _e,
+    payload: {
+      asr: { current: string; options: string[] };
+      llm: { current: string; options: string[] };
+    }
+  ) => {
+    trayModelOptions = payload;
+    currentModels.asr = payload.asr.current;
+    currentModels.llm = payload.llm.current;
+    updateTrayMenu();
+  }
+);
+
 ipcMain.on('hide-toolbar', () => mainWindow?.hide());
 ipcMain.on('show-toolbar', () => { mainWindow?.show(); mainWindow?.focus(); });
+ipcMain.on('set-window-mode', (_e, mode: 'toolbar' | 'platform') => switchWindowMode(mode));
+ipcMain.on('open-platform-external', (_e, url: string) => {
+  shell.openExternal(url || platformUrl);
+});
 ipcMain.on('toggle-fullscreen', () => {
   if (!mainWindow) return;
   const isFullScreen = mainWindow.isFullScreen();
@@ -221,6 +303,9 @@ ipcMain.on('start-resize', (_e, edge: string) => {
 
 // ========== 生命周期 ==========
 app.whenReady().then(() => {
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    callback(['media', 'display-capture', 'fullscreen'].includes(permission));
+  });
   createToolbarWindow();
   createTray();
   globalShortcut.register('CommandOrControl+Shift+T', () => {
