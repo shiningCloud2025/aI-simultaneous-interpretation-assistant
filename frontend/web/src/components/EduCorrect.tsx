@@ -5,7 +5,7 @@ export function EduCorrect() {
   const [a, setA] = useState(true); const [b, setB] = useState(true); const [c, setC] = useState(true); const [d, setD] = useState(false);
   return (
     <>
-      <PageBanner icon="✏️" title="课堂纠错" desc="ASR 识别 + AI 检测知识性错误、口误，实时提醒老师修正" />
+      <PageBanner icon="✏️" title="课堂纠错" desc="结合语音识别与内容校验，实时提醒知识性错误和口误" />
       <Card title="">
         <SettingRow label="语法错误检测" desc="识别老师英语授课中的语法错误"><Toggle on={a} onClick={() => setA(!a)} /></SettingRow>
         <SettingRow label="知识点准确性校验" desc="对照教材/大纲，检测讲述内容是否有事实性错误"><Toggle on={b} onClick={() => setB(!b)} /></SettingRow>

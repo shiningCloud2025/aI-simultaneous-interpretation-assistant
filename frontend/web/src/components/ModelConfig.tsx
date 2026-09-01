@@ -72,7 +72,7 @@ export function ModelConfig() {
     <Card title="">
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>语音识别 (ASR)</div>
-        <SettingRow label="厂商" desc="选择AI服务商">
+        <SettingRow label="厂商" desc="选择模型服务商">
           <Select
             value={asrProvider}
             options={asrProviders.map(p => p.key)}
@@ -91,7 +91,7 @@ export function ModelConfig() {
       </div>
       <div>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>大语言模型 (LLM)</div>
-        <SettingRow label="厂商" desc="选择AI服务商">
+        <SettingRow label="厂商" desc="选择模型服务商">
           <Select
             value={llmProvider}
             options={llmProviders.map(p => p.key)}

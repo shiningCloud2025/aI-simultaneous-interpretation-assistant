@@ -246,15 +246,15 @@ function KeyTable({ keys, providers, testing, onTest, onDelete }: {
 
       <style>{`
         .apikey-ghost {
-          font-size: 12px; color: #667eea; cursor: pointer; padding: 3px 8px; border-radius: 4px; transition: all .15s; user-select: none;
+          font-size: 12px; color: #234b49; cursor: pointer; padding: 3px 8px; border-radius: 4px; transition: all .15s; user-select: none;
         }
-        .apikey-ghost:hover { background: rgba(102,126,234,.08); }
+        .apikey-ghost:hover { background: rgba(35,75,73,.08); }
         .apikey-danger {
           font-size: 12px; color: #888; cursor: pointer; padding: 3px 8px; border-radius: 4px; transition: all .15s; user-select: none;
         }
         .apikey-danger:hover { color: #e55c5c; background: #fdf2f2; }
-        [data-theme="dark"] .apikey-ghost { color: #8b9aff; }
-        [data-theme="dark"] .apikey-ghost:hover { background: rgba(139,154,255,.12); }
+        [data-theme="dark"] .apikey-ghost { color: #8ab9b4; }
+        [data-theme="dark"] .apikey-ghost:hover { background: rgba(138,185,180,.12); }
         [data-theme="dark"] .apikey-danger:hover { color: #ff7a7a; background: rgba(229,92,92,.1); }
       `}</style>
     </div>

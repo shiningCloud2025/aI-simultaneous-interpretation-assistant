@@ -108,7 +108,7 @@ export function LoginPage() {
   };
 
   return (
-    <AuthBox title="智慧英语课堂" subtitle="随时随地，AI 听力学习助手">
+    <AuthBox title="智语同航" subtitle="基于多 Harness 智能体协作与编排的智慧外语课堂">
       <div style={{ display: 'flex', marginBottom: 24, background: '#f5f3f0', borderRadius: 10, padding: 4 }}>
         <button onClick={() => setTab('password')} style={tb(tab === 'password')}>密码登录</button>
         <button onClick={() => setTab('sms')} style={tb(tab === 'sms')}>短信登录</button>
@@ -150,6 +150,8 @@ export function LoginPage() {
       )}
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#999' }}>
         还没有账号？<Link to="/register" style={{ color: '#2c2c2c', fontWeight: 500, textDecoration: 'none' }}>立即注册</Link>
+        <span style={{ margin: '0 8px', color: '#d2cec6' }}>/</span>
+        <Link to="/" style={{ color: '#234b49', fontWeight: 500, textDecoration: 'none' }}>返回官网</Link>
       </div>
       {toast && <Toast msg={toast} />}
     </AuthBox>

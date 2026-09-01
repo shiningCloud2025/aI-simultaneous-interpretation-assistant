@@ -60,7 +60,7 @@ public class CorrectionAgent {
     private final DataSource dataSource;
     private final AgentScopeMysqlProperties agentScopeMysqlProperties;
 
-    /** 会话级 Agent 缓存：key = userId:sessionId */
+    /** 会话模型级 Agent 缓存：key = userId:sessionId:direction:provider:modelName */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
 
@@ -80,10 +80,13 @@ public class CorrectionAgent {
                         String direction, Consumer<CorrectionResult> onResult,
                         Consumer<String> onError, Runnable onComplete) {
 
-        String cacheKey = userId + ":" + sessionId;
+        SysUserModelPreferenceVO llmPreference;
+        String cacheKey;
         // 从缓存取 Agent，没有就原子地 build 并缓存
         HarnessAgent agent;
         try {
+            llmPreference = getLlmPreference(userId);
+            cacheKey = buildCacheKey(userId, sessionId, direction, llmPreference);
             agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId, direction));
         } catch (BusinessException e) {
             log.error("构建纠错 Agent 失败: {}", e.getMessage());
@@ -298,10 +301,26 @@ public class CorrectionAgent {
      * @param sessionId 会话ID
      */
     public void destroy(Long userId, String sessionId) {
-        HarnessAgent agent = agentCache.remove(userId + ":" + sessionId);
-        if (agent != null) {
-            agent.close();
-        }
+        String prefix = userId + ":" + sessionId + ":";
+        agentCache.entrySet().removeIf(entry -> {
+            if (entry.getKey().startsWith(prefix)) {
+                entry.getValue().close();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private SysUserModelPreferenceVO getLlmPreference(Long userId) {
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
+        return preferences.stream()
+                .filter(p -> ApiKeyTypeEnum.LLM.equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+    }
+
+    private String buildCacheKey(Long userId, String sessionId, String direction, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + sessionId + ":" + direction + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
 
 

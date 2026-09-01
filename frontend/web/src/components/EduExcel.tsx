@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect, Component } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Component } from 'react';
 import { Card, PageBanner } from './ui';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';

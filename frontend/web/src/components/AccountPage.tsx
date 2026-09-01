@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore, api } from '../stores/appStore';
+import { uploadFile } from '../lib/api';
 
 type ModalType = 'profile' | 'password' | 'phone' | 'email' | null;
 
@@ -20,6 +21,7 @@ export function AccountPage() {
   const [emailCount, setEmailCount] = useState(0);
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
   // 进入页面时主动拉取用户信息
@@ -66,6 +68,22 @@ export function AccountPage() {
     } catch (e: any) { showToast(e.message || '保存失败'); }
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setUploadingAvatar(true);
+      const uploaded = await uploadFile<{ url: string }>(file);
+      if (!uploaded.url) {
+        return showToast('头像上传失败');
+      }
+      setAvatar(uploaded.url);
+      showToast('头像上传成功');
+    } catch (e: any) {
+      showToast(e.message || '头像上传失败');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const sendSms = async () => {
     if (smsCount > 0 || !phone) return;
     try { await api.sendSmsCode(phone); showToast('验证码已发送'); setSmsCount(60); const t = setInterval(() => setSmsCount(p => { if (p <= 1) { clearInterval(t); return 0; } return p - 1; }), 1000); } catch (e: any) { showToast(e.message || '发送失败'); }
@@ -88,7 +106,7 @@ export function AccountPage() {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       {/* 头像区 */}
       <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
-        <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', fontWeight: 600, overflow: 'hidden', boxShadow: '0 4px 24px rgba(102,126,234,.3)' }}>
+        <div style={{ width: 100, height: 100, borderRadius: '50%', background: '#234b49', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', fontWeight: 700, overflow: 'hidden', boxShadow: '0 4px 24px rgba(35,75,73,.18)' }}>
           {user.avatar ? <img src={user.avatar} style={{ width: 100, height: 100, objectFit: 'cover' }} /> : user.username?.[0]?.toUpperCase()}
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginTop: 16 }}>{user.username}</div>
@@ -122,7 +140,30 @@ export function AccountPage() {
             {modal === 'profile' && (
               <>
                 <Field label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} style={inp} placeholder="用户名" /></Field>
-                <Field label="头像URL"><input value={avatar} onChange={e => setAvatar(e.target.value)} style={inp} placeholder="https://..." /></Field>
+                <Field label="头像">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#234b49', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 24, fontWeight: 700, overflow: 'hidden', boxShadow: '0 4px 18px rgba(35,75,73,.16)', flex: '0 0 auto' }}>
+                      {avatar ? <img src={avatar} alt="头像预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : username?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ width: 96, textAlign: 'center', padding: '9px 0', border: '1px solid #dedbd3', borderRadius: 10, background: uploadingAvatar ? '#f3f1ed' : '#fff', color: uploadingAvatar ? '#aaa' : '#444', fontSize: 13, fontWeight: 600, cursor: uploadingAvatar ? 'default' : 'pointer' }}>
+                        {uploadingAvatar ? '上传中...' : '上传头像'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingAvatar}
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) handleAvatarUpload(file);
+                            e.currentTarget.value = '';
+                          }}
+                        />
+                      </label>
+                      <div style={{ fontSize: 12, color: '#999' }}>保存资料后生效</div>
+                    </div>
+                  </div>
+                </Field>
               </>
             )}
 

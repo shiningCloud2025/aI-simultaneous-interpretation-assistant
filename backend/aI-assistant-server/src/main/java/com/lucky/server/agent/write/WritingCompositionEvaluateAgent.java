@@ -65,8 +65,8 @@ public class WritingCompositionEvaluateAgent {
     private final WritingCompositionEvaluationFailureService writingCompositionEvaluationFailureService;
     private final ObjectMapper objectMapper;
 
-    /** 用户级 Agent 缓存：key = userId */
-    private final Map<Long, HarnessAgent> agentCache = new ConcurrentHashMap<>();
+    /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
+    private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
     /**
      * 评估作文
@@ -75,9 +75,12 @@ public class WritingCompositionEvaluateAgent {
      * @return 作文评估结果
      */
     public Mono<WritingCompositionEvaluateResultVO> evaluate(WritingCompositionEvaluateDTO dto) {
+        validateSubmitContent(dto);
+
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserModelPreferenceVO llmPreference = getLlmPreference(userId);
-        HarnessAgent agent = agentCache.computeIfAbsent(userId, this::buildAgent);
+        String cacheKey = buildCacheKey(userId, llmPreference);
+        HarnessAgent agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId));
 
         RuntimeContext ctx = RuntimeContext.builder()
                 .userId(String.valueOf(userId))
@@ -140,16 +143,7 @@ public class WritingCompositionEvaluateAgent {
         AtomicBoolean failureSaved = new AtomicBoolean(false);
         UserMessage userMessage = buildUserMessage(dto, input);
         return agent.call(List.of(userMessage), WritingCompositionEvaluateResultVO.class, ctx)
-                .map(msg -> {
-                    WritingCompositionEvaluateResultVO result =
-                            msg.getStructuredData(WritingCompositionEvaluateResultVO.class);
-
-                    if (result == null) {
-                        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果为空");
-                    }
-
-                    return result;
-                })
+                .map(this::parseResult)
                 .map(result -> {
                     try {
                         saveEvaluation(dto, userId, llmPreference, result);
@@ -204,6 +198,9 @@ public class WritingCompositionEvaluateAgent {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .baseUrl(baseUrl)
+                // 降低时间消耗，把结构化输出能力从厂商移到框架
+                .nativeStructuredOutput(false)
+                .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
                         GenerateOptions.builder()
@@ -305,6 +302,32 @@ public class WritingCompositionEvaluateAgent {
                 .build();
     }
 
+
+    /**
+     * 校验作文提交内容
+     *
+     * @param dto 评估参数
+     */
+    private void validateSubmitContent(WritingCompositionEvaluateDTO dto) {
+        if (CompositionSubmitTypeEnum.TEXT.equals(dto.submitType())) {
+            if (dto.content() == null || dto.content().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "文本作文内容不能为空");
+            }
+            return;
+        }
+
+        if (CompositionSubmitTypeEnum.IMAGE.equals(dto.submitType())) {
+            if (dto.imageUrls() == null || dto.imageUrls().isEmpty()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片作文不能为空");
+            }
+
+            boolean hasBlankUrl = dto.imageUrls().stream()
+                    .anyMatch(url -> url == null || url.isBlank());
+            if (hasBlankUrl) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "图片作文URL不能为空");
+            }
+        }
+    }
 
     private String blankToPlaceholder(String value) {
         return value == null || value.isBlank() ? "无" : value;
@@ -431,5 +454,49 @@ public class WritingCompositionEvaluateAgent {
         return UserMessage.builder()
                 .content(blocks)
                 .build();
+    }
+
+    private String buildCacheKey(Long userId, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
+    }
+
+    private WritingCompositionEvaluateResultVO parseResult(Msg msg) {
+        if (msg.hasStructuredData()) {
+            WritingCompositionEvaluateResultVO result = msg.getStructuredData(WritingCompositionEvaluateResultVO.class);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        String text = msg.getTextContent();
+        if (text == null || text.isBlank()) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果为空");
+        }
+
+        try {
+            return objectMapper.readValue(extractJson(text), WritingCompositionEvaluateResultVO.class);
+        } catch (Exception e) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "作文评估结果解析失败");
+        }
+    }
+
+    private String extractJson(String text) {
+        String value = text.trim();
+
+        if (value.startsWith("```")) {
+            int firstLineEnd = value.indexOf('\n');
+            int lastFence = value.lastIndexOf("```");
+            if (firstLineEnd >= 0 && lastFence > firstLineEnd) {
+                return value.substring(firstLineEnd + 1, lastFence).trim();
+            }
+        }
+
+        int start = value.indexOf('{');
+        int end = value.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return value.substring(start, end + 1);
+        }
+
+        return value;
     }
 }

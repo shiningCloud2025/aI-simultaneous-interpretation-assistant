@@ -3,9 +3,9 @@ export function AboutPage() {
     <div style={{ width: '100%' }}>
       {/* Logo + 品牌 */}
       <div style={{ textAlign: 'center', padding: '40px 0 32px' }}>
-        <div style={{ width: 80, height: 80, margin: '0 auto 20px', background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', fontWeight: 700, boxShadow: '0 6px 24px rgba(102,126,234,.3)' }}>E</div>
-        <div style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>智慧英语课堂</div>
-        <div style={{ fontSize: 14, color: '#999' }}>AI 驱动的英语听力学习平台</div>
+        <div style={{ width: 80, height: 80, margin: '0 auto 20px', background: '#234b49', borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', fontWeight: 800, boxShadow: '0 6px 24px rgba(35,75,73,.18)' }}>语</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#1f2d2b', marginBottom: 6 }}>智语同航</div>
+        <div style={{ fontSize: 14, color: '#8b918e' }}>基于多 Harness 智能体协作与编排的智慧外语课堂</div>
       </div>
 
       {/* 帮你解决 - 3 列特性卡片 */}
@@ -14,15 +14,15 @@ export function AboutPage() {
         {[
           {
             icon: '🎧', title: '真实场景',
-            desc: '实时语音转译，模拟真实英语对话',
+            desc: '课堂音频实时转译，帮助学生跟上听力材料',
           },
           {
             icon: '📝', title: '高效复习',
-            desc: '音频自动生成文字稿，支持翻译与纠错',
+            desc: '作文出题、批阅与逐句反馈形成训练闭环',
           },
           {
-            icon: '🤖', title: 'AI 辅导',
-            desc: '自选模型 + 自由配置 API Key，定制专属助手',
+            icon: '📖', title: '阅读积累',
+            desc: '围绕单词生成例句与图像素材，沉淀学习资源',
           },
         ].map((item, i) => (
           <div key={i} className="about-card">
@@ -35,7 +35,7 @@ export function AboutPage() {
 
       {/* 版本信息 */}
       <div style={{ marginTop: 32, padding: '20px', textAlign: 'center', fontSize: 12, color: '#ccc' }}>
-        版本 1.0.0 · © 2026 智慧英语课堂 · 保留所有权利
+        版本 1.0.0 · © 2026 智语同航 · 保留所有权利
       </div>
 
       <style>{`
@@ -62,7 +62,7 @@ export function AboutPage() {
           width: 56px;
           height: 56px;
           flex-shrink: 0;
-          background: linear-gradient(135deg, rgba(102,126,234,.12), rgba(118,75,162,.12));
+          background: #f4efe4;
           border-radius: 16px;
           display: flex;
           align-items: center;
@@ -71,14 +71,14 @@ export function AboutPage() {
         }
         /* 暗色主题 */
         [data-theme="dark"] .about-card {
-          background: #2a2a3e !important;
-          border-color: #3a3a4e !important;
+          background: #2a2f2b !important;
+          border-color: #394139 !important;
         }
         [data-theme="dark"] .about-card:hover {
           box-shadow: 0 4px 16px rgba(0,0,0,.4);
         }
         [data-theme="dark"] .about-icon {
-          background: linear-gradient(135deg, rgba(139,154,255,.18), rgba(118,75,162,.18));
+          background: rgba(180,145,84,.16);
         }
       `}</style>
     </div>

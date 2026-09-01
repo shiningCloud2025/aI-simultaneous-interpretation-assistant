@@ -16,6 +16,30 @@ const typeMap = {
   512: 'A',
 };
 
+type SvgPoint = {
+  x?: number;
+  y?: number;
+  curve?: {
+    type: 'cubic' | 'quadratic';
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+  };
+  close?: boolean;
+  relative?: boolean;
+  type: string;
+};
+
+type CubicBezierPoint = {
+  x: number;
+  y: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
 /**
  * 简单解析SVG路径
  * @param d SVG path d属性
@@ -49,7 +73,7 @@ export const toPoints = (d: string) => {
     return [];
   }
 
-  const points = [];
+  const points: SvgPoint[] = [];
   for (const item of pathData.commands) {
     const type = typeMap[item.type];
 
@@ -105,7 +129,7 @@ export const toPoints = (d: string) => {
         xAxisRotation: item.xRot,
         largeArcFlag: item.lArcFlag,
         sweepFlag: item.sweepFlag,
-      });
+      }) as CubicBezierPoint[];
       for (const cbPoint of cubicBezierPoints) {
         points.push({
           x: cbPoint.x,

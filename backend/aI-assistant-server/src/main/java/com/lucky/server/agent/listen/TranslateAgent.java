@@ -57,7 +57,7 @@ public class TranslateAgent {
     private final LlmModelConfig llmModelConfig;
     private final AgentScopeMysqlProperties agentScopeMysqlProperties;
 
-    /** 会话级 Agent 缓存：key = userId:sessionId */
+    /** 会话模型级 Agent 缓存：key = userId:sessionId:direction:provider:modelName */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
 
 
@@ -74,11 +74,14 @@ public class TranslateAgent {
     public void translate(Long userId,String sessionId, String sourceText,
                           String direction, Consumer<String> onToken,Runnable onComplete){
 
-        String cacheKey = userId + ":" + sessionId;
+        SysUserModelPreferenceVO llmPreference;
+        String cacheKey;
         HarnessAgent agent;
-            try {
-                // 并发安全保障
-                agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId, direction));
+        try {
+            llmPreference = getLlmPreference(userId);
+            cacheKey = buildCacheKey(userId, sessionId, direction, llmPreference);
+            // 并发安全保障
+            agent = agentCache.computeIfAbsent(cacheKey, key -> buildAgent(userId, direction));
             } catch (BusinessException e) {
                 log.error("构建翻译 Agent 失败: {}", e.getMessage());
                 onToken.accept("[翻译失败: " + e.getMessage() + "]");
@@ -270,9 +273,26 @@ public class TranslateAgent {
      * @param sessionId 会话ID
      */
     public void destroy(Long userId, String sessionId) {
-        HarnessAgent agent = agentCache.remove(userId + ":" + sessionId);
-        if (agent != null) {
-            agent.close();
-        }
+        String prefix = userId + ":" + sessionId + ":";
+        agentCache.entrySet().removeIf(entry -> {
+            if (entry.getKey().startsWith(prefix)) {
+                entry.getValue().close();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private SysUserModelPreferenceVO getLlmPreference(Long userId) {
+        List<SysUserModelPreferenceVO> preferences = sysUserModelPreferenceService.listPreferences(userId);
+        return preferences.stream()
+                .filter(p -> ApiKeyTypeEnum.LLM.equals(p.modelType()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ResultCodeEnum.PARAM_ERROR, "请先在模型配置中选择 LLM 模型"));
+    }
+
+
+    private String buildCacheKey(Long userId, String sessionId, String direction, SysUserModelPreferenceVO llmPreference) {
+        return userId + ":" + sessionId + ":" + direction + ":" + llmPreference.provider() + ":" + llmPreference.modelName();
     }
 }

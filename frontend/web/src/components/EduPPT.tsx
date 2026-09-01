@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { Card, PageBanner } from './ui';
 import SlideCanvas from './SlideCanvas';
 import { EditableSlideCanvas, EMPTY_SELECTION } from './editing-src';

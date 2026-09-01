@@ -266,15 +266,15 @@ export function TermLibraryPage() {
           border-color: #4a4a5e !important;
         }
 
-        /* 术语库名称 - 紫色链接风格，表明可点击 */
+        /* 术语库名称 - 链接风格，表明可点击 */
         .term-name {
-          color: #667eea;
+          color: #234b49;
           cursor: pointer;
           transition: color .15s;
         }
-        .term-lib-card:hover .term-name { color: #5568d3; }
-        [data-theme="dark"] .term-name { color: #8b9aff; }
-        [data-theme="dark"] .term-lib-card:hover .term-name { color: #a8b4ff; }
+        .term-lib-card:hover .term-name { color: #8f4b2e; }
+        [data-theme="dark"] .term-name { color: #8ab9b4; }
+        [data-theme="dark"] .term-lib-card:hover .term-name { color: #d0ad70; }
 
         /* 默认术语库标签 */
         .term-default-tag {
@@ -282,13 +282,13 @@ export function TermLibraryPage() {
           font-weight: 500;
           padding: 2px 8px;
           border-radius: 10px;
-          background: rgba(102, 126, 234, 0.1);
-          color: #667eea;
+          background: rgba(35, 75, 73, 0.1);
+          color: #234b49;
           line-height: 1.6;
         }
         [data-theme="dark"] .term-default-tag {
-          background: rgba(139, 154, 255, 0.15);
-          color: #8b9aff;
+          background: rgba(138, 185, 180, 0.15);
+          color: #8ab9b4;
         }
 
         /* ghost 操作文字 */
@@ -306,7 +306,7 @@ export function TermLibraryPage() {
           color: #333;
         }
         [data-theme="dark"] .term-ghost { color: #999; }
-        [data-theme="dark"] .term-ghost:hover { background: #3a3a4e; color: #fff; }
+        [data-theme="dark"] .term-ghost:hover { background: #394139; color: #fff; }
 
         /* 删除 - 危险操作红色 */
         .term-danger {
@@ -358,15 +358,6 @@ const btnPrimary: React.CSSProperties = {
 const btnCancel: React.CSSProperties = {
   padding: '10px 20px', border: '1px solid #e0ded8', borderRadius: 10,
   background: '#fff', color: '#666', fontSize: 13, cursor: 'pointer',
-};
-const btnSmall: React.CSSProperties = {
-  padding: '5px 12px', borderRadius: 6, border: '1px solid #e0ded8',
-  background: '#fff', fontSize: 12, color: '#666', cursor: 'pointer',
-};
-const btnManage: React.CSSProperties = {
-  padding: '6px 14px', borderRadius: 6, border: '1px solid #2c2c2c',
-  background: '#fff', fontSize: 12, color: '#2c2c2c', cursor: 'pointer',
-  fontWeight: 500, transition: 'all .15s',
 };
 const btnBack: React.CSSProperties = {
   padding: '5px 12px', borderRadius: 6, border: '1px solid #e0ded8',

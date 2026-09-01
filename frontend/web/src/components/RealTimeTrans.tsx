@@ -43,8 +43,6 @@ export function RealTimeTrans() {
   const [llmProviders, setLlmProviders] = useState<Provider[]>([]);
   const [asrModels, setAsrModels] = useState<ModelInfo[]>([]);
   const [llmModels, setLlmModels] = useState<ModelInfo[]>([]);
-  const [asrProvider, setAsrProvider] = useState('');
-  const [llmProvider, setLlmProvider] = useState('');
   const [asrModel, setAsrModel] = useState('');
   const [llmModel, setLlmModel] = useState('');
   const [srcLang, setSrcLang] = useState('zh');
@@ -70,6 +68,18 @@ export function RealTimeTrans() {
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
+  const ensureAudioCaptureAvailable = () => {
+    if (!navigator.mediaDevices) {
+      throw new Error('当前浏览器环境不支持音频采集。公网部署请使用 HTTPS 访问，HTTP 下浏览器会禁用麦克风和屏幕共享能力。');
+    }
+    if (audioSource === 'mic' && !navigator.mediaDevices.getUserMedia) {
+      throw new Error('当前浏览器不支持麦克风采集，请使用最新版 Chrome/Edge，并确认通过 HTTPS 访问。');
+    }
+    if (audioSource === 'speaker' && !navigator.mediaDevices.getDisplayMedia) {
+      throw new Error('当前浏览器环境不支持扬声器采集。扬声器模式依赖屏幕共享能力，公网部署必须使用 HTTPS 访问。');
+    }
+  };
+
   // —— 流式输出（只展示当前最新一句） ——
   const [segs, setSegs] = useState<SegItem[]>([]);
   const segIdRef = useRef(0);
@@ -88,10 +98,6 @@ export function RealTimeTrans() {
   const finishedSourceIdRef = useRef<number | null>(null); // 上一句结束时的 segId（收到 correction 时定位）
 
   // ============== 模型加载 ==============
-  // modelName → provider 的映射，用于保存偏好时反查 provider
-  const [asrModelProviderMap, setAsrModelProviderMap] = useState<Record<string, string>>({});
-  const [llmModelProviderMap, setLlmModelProviderMap] = useState<Record<string, string>>({});
-
   useEffect(() => {
     // 1. 拉厂商列表
     Promise.all([
@@ -102,65 +108,46 @@ export function RealTimeTrans() {
       const lps: Provider[] = llmRes.code === 200 ? llmRes.data : [];
       setAsrProviders(aps);
       setLlmProviders(lps);
-
-      // 2. 并行拉每个厂商下的模型，建映射
-      const asrMap: Record<string, string> = {};
-      const llmMap: Record<string, string> = {};
-      Promise.all([
-        ...aps.map(p =>
-          fetch(`/api/sys/user/ai/asr/models?provider=${p.key}`).then(r => r.json()).then(d => {
-            if (d.code === 200) (d.data as ModelInfo[]).forEach(m => { asrMap[m.name] = p.key; });
-          }).catch(() => {})
-        ),
-        ...lps.map(p =>
-          fetch(`/api/sys/user/ai/llm/models?provider=${p.key}`).then(r => r.json()).then(d => {
-            if (d.code === 200) (d.data as ModelInfo[]).forEach(m => { llmMap[m.name] = p.key; });
-          }).catch(() => {})
-        ),
-      ]).then(() => {
-        setAsrModelProviderMap(asrMap);
-        setLlmModelProviderMap(llmMap);
-        // 加载推荐模型（用于下拉默认显示）
-        loadAsrModels('');
-        loadLlmModels('');
-      });
     }).catch(() => {});
 
-    // 3. 加载已保存的偏好
+    // 2. 听力页只加载用户已经保存的模型偏好，不展示没有厂商上下文的推荐模型。
     api.listModelPreferences().then((prefs: Preference[]) => {
       const asrP = prefs.find(p => p.modelType === 'ASR');
       const llmP = prefs.find(p => p.modelType === 'LLM');
       if (asrP) {
-        setAsrProvider(asrP.provider);
         loadAsrModels(asrP.provider).then(() => setAsrModel(asrP.modelName));
       }
       if (llmP) {
-        setLlmProvider(llmP.provider);
         loadLlmModels(llmP.provider).then(() => setLlmModel(llmP.modelName));
       }
     }).catch(() => {});
   }, []);
 
-  // provider 为空 → 加载推荐；非空 → 加载该厂商下的模型
+  // 听力实时链路必须绑定到明确厂商，避免推荐模型缺少 provider 导致保存偏好失败。
   const loadAsrModels = async (provider: string) => {
-    setAsrProvider(provider);
-    const url = provider ? `/api/sys/user/ai/asr/models?provider=${provider}` : '/api/sys/user/ai/asr/models';
-    const res = await fetch(url);
+    if (!provider) {
+      setAsrModels([]);
+      return [];
+    }
+    const res = await fetch(`/api/sys/user/ai/asr/models?provider=${provider}`);
     const d = await res.json();
-    if (d.code === 200) setAsrModels(d.data);
+    const data = d.code === 200 ? d.data : [];
+    setAsrModels(data);
+    return data;
   };
   const loadLlmModels = async (provider: string) => {
-    setLlmProvider(provider);
-    const url = provider ? `/api/sys/user/ai/llm/models?provider=${provider}` : '/api/sys/user/ai/llm/models';
-    const res = await fetch(url);
+    if (!provider) {
+      setLlmModels([]);
+      return [];
+    }
+    const res = await fetch(`/api/sys/user/ai/llm/models?provider=${provider}`);
     const d = await res.json();
-    if (d.code === 200) setLlmModels(d.data);
+    const data = d.code === 200 ? d.data : [];
+    setLlmModels(data);
+    return data;
   };
 
-  const savePreference = async (modelType: string, _provider: string, modelName: string) => {
-    // 从映射表反查真实的 provider（避免选推荐模型时 provider 为空导致 @NotBlank 报错）
-    const provider =
-      (modelType === 'ASR' ? asrModelProviderMap[modelName] : llmModelProviderMap[modelName]) || _provider;
+  const savePreference = async (modelType: string, provider: string, modelName: string) => {
     if (!provider) { showToast(`无法识别模型 ${modelName} 对应的厂商`); return; }
     try {
       await api.saveModelPreference({ modelType, provider, modelName });
@@ -192,13 +179,11 @@ export function RealTimeTrans() {
   const onPickerConfirm = async () => {
     if (!pickerProvider || !pickerModel) { showToast('请选厂商和模型'); return; }
     if (pickerOpen === 'ASR') {
-      setAsrProvider(pickerProvider);
       setAsrModels(pickerModels);
       setAsrModel(pickerModel);
       await savePreference('ASR', pickerProvider, pickerModel);
       showToast('已配置 ASR 模型');
     } else {
-      setLlmProvider(pickerProvider);
       setLlmModels(pickerModels);
       setLlmModel(pickerModel);
       await savePreference('LLM', pickerProvider, pickerModel);
@@ -314,6 +299,7 @@ export function RealTimeTrans() {
     finishedSourceIdRef.current = null;
 
     try {
+      ensureAudioCaptureAvailable();
       // 1. 拿音频流（根据 audioSource 选择）
       let stream: MediaStream;
       if (audioSource === 'mic') {
@@ -535,33 +521,23 @@ export function RealTimeTrans() {
 
           {/* —— ASR —— */}
           <span style={{ fontSize: 11, color: '#bbb' }}>ASR</span>
-          <Select
-            options={asrModels.map(m => m.name)}
-            labels={Object.fromEntries(asrModels.map(m => [m.name, m.display]))}
-            value={asrModel}
-            onChange={(v: string) => { setAsrModel(v); savePreference('ASR', asrProvider, v); }}
-          />
+          <ModelBadge value={asrLabel} empty={!asrModel} />
           <button
             onClick={() => openPicker('ASR')}
             style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, background: '#f5f3f0', border: 'none', color: '#888', cursor: 'pointer' }}
             title="按厂商选择其他 ASR 模型"
-          >+ 配置其他模型</button>
+          >+ 配置模型</button>
 
           <div style={{ width: 1, height: 18, background: '#f0efec' }} />
 
           {/* —— 翻译 —— */}
           <span style={{ fontSize: 11, color: '#bbb' }}>翻译</span>
-          <Select
-            options={llmModels.map(m => m.name)}
-            labels={Object.fromEntries(llmModels.map(m => [m.name, m.display]))}
-            value={llmModel}
-            onChange={(v: string) => { setLlmModel(v); savePreference('LLM', llmProvider, v); }}
-          />
+          <ModelBadge value={llmLabel} empty={!llmModel} />
           <button
             onClick={() => openPicker('LLM')}
             style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, background: '#f5f3f0', border: 'none', color: '#888', cursor: 'pointer' }}
             title="按厂商选择其他翻译模型"
-          >+ 配置其他模型</button>
+          >+ 配置模型</button>
 
           <div style={{ width: 1, height: 18, background: '#f0efec' }} />
 
@@ -675,6 +651,18 @@ function CtrlInfo({ label, value, on }: { label: string; value: string; on?: boo
       <span style={{ fontSize: 10, color: '#bbb' }}>{label}</span>
       <span style={{ fontSize: 12, color: on ? '#4caf50' : '#555', fontWeight: 500 }}>{value}</span>
     </div>
+  );
+}
+
+function ModelBadge({ value, empty }: { value: string; empty?: boolean }) {
+  return (
+    <span style={{
+      padding: '6px 12px', border: '1px solid #e8e6e1', borderRadius: 8, fontSize: 12,
+      color: empty ? '#aaa' : '#555', background: empty ? '#fafaf9' : '#fff', minWidth: 96,
+      display: 'inline-flex', justifyContent: 'center',
+    }}>
+      {empty ? '请先配置' : value}
+    </span>
   );
 }
 

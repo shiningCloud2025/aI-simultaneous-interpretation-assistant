@@ -54,7 +54,7 @@ export function EduWord() {
       let html = result.value;
       if (!html.trim()) {
         const raw = await mammoth.extractRawText({ arrayBuffer });
-        html = raw.value.split(/\n+/).filter(p => p.trim()).map(p => `<p>${p}</p>`).join('\n');
+        html = raw.value.split(/\n+/).filter((p: string) => p.trim()).map((p: string) => `<p>${p}</p>`).join('\n');
       }
       setHtmlContent(html);
     } catch (e: any) {
@@ -88,17 +88,17 @@ export function EduWord() {
 
   const handleExportMd = () => {
     const text = getPlainText();
-    const md = text.split(/\n+/).filter(l => l.trim()).map(l => l.trim() + '\n').join('\n');
+    const md = text.split(/\n+/).filter((l: string) => l.trim()).map((l: string) => l.trim() + '\n').join('\n');
     downloadText(md, file?.name?.replace(/\.docx?$/i, '') + '.md' || 'document.md', 'text/markdown');
     alert('已导出 Markdown');
   };
 
   const handleExportDocx = async () => {
     try {
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+      const { Document, Packer, Paragraph, TextRun } = await import('docx');
       const text = getPlainText();
-      const lines = text.split(/\n+/).filter(l => l.trim());
-      const children = lines.map(line => new Paragraph({ children: [new TextRun(line.trim())], spacing: { after: 120 } }));
+      const lines = text.split(/\n+/).filter((l: string) => l.trim());
+      const children = lines.map((line: string) => new Paragraph({ children: [new TextRun(line.trim())], spacing: { after: 120 } }));
       const doc = new Document({ sections: [{ children }] });
       const blob = await Packer.toBlob(doc);
       downloadBlob(blob, file?.name?.replace(/\.docx?$/i, '') + '_export.docx' || 'document.docx');
@@ -147,7 +147,7 @@ export function EduWord() {
                     defaultConfig={editorConfig}
                     value={htmlContent}
                     onCreated={setEditor}
-                    onChange={ed => setHtmlContent(ed.getHtml())}
+                    onChange={(ed: any) => setHtmlContent(ed.getHtml())}
                     mode="default"
                     style={{ height: '100%', overflowY: 'hidden' }}
                   />

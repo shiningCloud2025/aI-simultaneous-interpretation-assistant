@@ -1,6 +1,5 @@
 import pptxgen from 'pptxgenjs';
 import tinycolor from 'tinycolor2';
-import { saveAs } from 'file-saver';
 import type { Slide, PPTElementOutline, PPTElementShadow, PPTElementLink } from '@openmaic/dsl';
 import { type AST, toAST } from './html-parser';
 import { type SvgPoints, toPoints, getSvgPathRange } from './svg-path-parser';

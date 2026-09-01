@@ -18,15 +18,15 @@ body {
 .topbar { height: 50px; border-bottom: 1px solid #e8e6e1; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #fff; transition: background .3s, border-color .3s; }
 .content { flex: 1; padding: 24px; overflow-y: auto; }
 
-[data-theme="dark"] body { background: #1a1a2e; color: #e0e0e0; }
-[data-theme="dark"] .card { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }
-[data-theme="dark"] .btn { background: #3a3a4e !important; color: #ccc !important; }
-[data-theme="dark"] .theme-select { background: #2a2a3e !important; color: #e0e0e0 !important; border-color: #3a3a4e !important; }
-[data-theme="dark"] .sidebar { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }
-[data-theme="dark"] .sidebar-header { border-color: #3a3a4e !important; }
+[data-theme="dark"] body { background: #20231f; color: #e7e4dc; }
+[data-theme="dark"] .card { background: #2a2f2b !important; border-color: #394139 !important; color: #e7e4dc; }
+[data-theme="dark"] .btn { background: #343a35 !important; color: #d4d0c6 !important; }
+[data-theme="dark"] .theme-select { background: #2a2f2b !important; color: #e7e4dc !important; border-color: #394139 !important; }
+[data-theme="dark"] .sidebar { background: #2a2f2b !important; border-color: #394139 !important; color: #e7e4dc; }
+[data-theme="dark"] .sidebar-header { border-color: #394139 !important; }
 [data-theme="dark"] .sidebar-group-title { color: #888; }
-[data-theme="dark"] .sidebar-item { color: #ccc; }
-[data-theme="dark"] .sidebar-item:hover { background: #3a3a4e !important; }
-[data-theme="dark"] .sidebar-item.active { background: #3a3a4e !important; color: #fff !important; }
-[data-theme="dark"] .sidebar-footer { border-color: #3a3a4e !important; }
-[data-theme="dark"] .topbar { background: #2a2a3e !important; border-color: #3a3a4e !important; color: #e0e0e0; }
+[data-theme="dark"] .sidebar-item { color: #d4d0c6; }
+[data-theme="dark"] .sidebar-item:hover { background: #343a35 !important; }
+[data-theme="dark"] .sidebar-item.active { background: #394139 !important; color: #fff !important; }
+[data-theme="dark"] .sidebar-footer { border-color: #394139 !important; }
+[data-theme="dark"] .topbar { background: #2a2f2b !important; border-color: #394139 !important; color: #e7e4dc; }
