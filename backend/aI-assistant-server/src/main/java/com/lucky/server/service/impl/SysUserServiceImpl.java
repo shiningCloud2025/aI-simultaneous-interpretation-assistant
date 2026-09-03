@@ -8,10 +8,7 @@ import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.common.jwt.JwtUserInfo;
 import com.lucky.server.common.jwt.JwtUtil;
 import com.lucky.server.common.util.WebUtil;
-import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
-import com.lucky.server.domain.dto.SysUserStudentLoginDTO;
-import com.lucky.server.domain.dto.SysUserStudentRegisterDTO;
-import com.lucky.server.domain.dto.SysUserUpdateDTO;
+import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import com.lucky.server.mapper.SysUserMapper;
@@ -126,6 +123,95 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         return new SysUserLoginTokenVO(token);
     }
+
+    @Override
+    public SysUserLoginTokenVO teacherLogin(SysUserTeacherLoginDTO dto, HttpServletRequest request) {
+        // 密码登录：keyword + password 同时存在
+        if (dto.keyword() != null && !dto.keyword().isBlank()
+                && dto.password() != null && !dto.password().isBlank()) {
+            return teacherLoginByPassword(dto, request);
+        }
+
+        // 验证码登录
+        if (dto.captcha() != null && !dto.captcha().isBlank()) {
+            if (dto.phone() != null && !dto.phone().isBlank()) {
+                return teacherLoginByPhone(dto, request);
+            }
+            if (dto.email() != null && !dto.email().isBlank()) {
+                return teacherLoginByEmail(dto, request);
+            }
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号或邮箱不能为空");
+        }
+
+        throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写完整的登录信息");
+    }
+
+    @Override
+    public SysUserLoginTokenVO teacherRegister(SysUserTeacherRegisterDTO dto, HttpServletRequest request) {
+        // 1. 校验 account 唯一性
+        if (lambdaQuery().eq(SysUser::getAccount, dto.account()).one() != null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已存在");
+        }
+
+        // 2. 填了手机号 → 校验短信验证码 + 唯一性
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            if (dto.smsCaptcha() == null || dto.smsCaptcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写短信验证码");
+            }
+            sysUserSmsService.checkCode(dto.phone(), dto.smsCaptcha());
+            if (lambdaQuery().eq(SysUser::getPhone, dto.phone()).one() != null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号已被注册");
+            }
+        }
+
+        // 3. 填了邮箱 → 校验邮箱验证码 + 唯一性
+        if (dto.email() != null && !dto.email().isBlank()) {
+            if (dto.emailCaptcha() == null || dto.emailCaptcha().isBlank()) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "请填写邮箱验证码");
+            }
+            sysUserEmailService.checkCode(dto.email(), dto.emailCaptcha());
+            if (lambdaQuery().eq(SysUser::getEmail, dto.email()).one() != null) {
+                throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "邮箱已被注册");
+            }
+        }
+
+        // 4. 构建用户实体
+        SysUser user = new SysUser();
+        user.setAccount(dto.account());
+        user.setUsername(dto.username());
+        user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setPhone(dto.phone());
+        user.setEmail(dto.email());
+        // 头像：前端传了用前端，没传用默认
+        if (dto.avatar() != null && !dto.avatar().isBlank()) {
+            user.setAvatar(dto.avatar());
+        } else {
+            user.setAvatar("https://gd-hbimg.huaban.com/248453c441723291d2fe2cd622181fcd3de7a56817ba-G1KfqQ_fw658");
+        }
+        user.setStatus(UserStatusEnum.ENABLED);
+        user.setUserType(UserTypeEnum.TEACHER);
+        user.setLastLoginTime(LocalDateTime.now());
+        user.setLastLoginIp(WebUtil.getClientIp(request));
+        user.setCreateTime(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
+
+        // 5. 入库
+        save(user);
+
+        // 6. 生成 Token
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+
+        // 7. Token 生成成功，删除验证码
+        if (dto.phone() != null && !dto.phone().isBlank()) {
+            sysUserSmsService.deleteCode(dto.phone());
+        }
+        if (dto.email() != null && !dto.email().isBlank()) {
+            sysUserEmailService.deleteCode(dto.email());
+        }
+
+        return new SysUserLoginTokenVO(token);
+    }
+
 
     @Override
     public void updateProfile(SysUserUpdateDTO dto) {
@@ -393,4 +479,115 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         return new SysUserLoginTokenVO(token);
     }
+
+    /**
+     * 老师：密码登录
+     */
+    private SysUserLoginTokenVO teacherLoginByPassword(SysUserTeacherLoginDTO dto, HttpServletRequest request){
+        String keyword = dto.keyword();
+
+        SysUser user = lambdaQuery()
+                .and(w -> w.eq(SysUser::getAccount, keyword)
+                        .or().eq(SysUser::getPhone, keyword)
+                        .or().eq(SysUser::getEmail, keyword))
+                .and(w->w.eq(SysUser::getUserType, UserTypeEnum.TEACHER))
+                .list().stream().findFirst().orElse(null);
+
+        if (user == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号未注册，请先注册");
+        }
+        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号或密码错误");
+        }
+        if (user.getStatus() == UserStatusEnum.DISABLED) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已被禁用");
+        }
+
+        // 更新登录信息
+        lambdaUpdate().eq(SysUser::getId, user.getId())
+                .set(SysUser::getLastLoginTime, LocalDateTime.now())
+                .set(SysUser::getLastLoginIp, WebUtil.getClientIp(request))
+                .update();
+
+        // 生成 Token
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        return new SysUserLoginTokenVO(token);
+    }
+
+    /**
+     * 老师：手机号+验证码登录
+     */
+    private SysUserLoginTokenVO teacherLoginByPhone(SysUserTeacherLoginDTO dto, HttpServletRequest request) {
+        String phone = dto.phone();
+
+        // 1. 校验验证码（只校验，不删除）
+        sysUserSmsService.checkCode(phone, dto.captcha());
+
+        // 2. 查用户
+        SysUser user = lambdaQuery()
+                .eq(SysUser::getPhone, phone)
+                .eq(SysUser::getUserType, UserTypeEnum.TEACHER)
+                .one();
+        if (user == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号未注册");
+        }
+
+        // 3. 检查状态
+        if (user.getStatus() == UserStatusEnum.DISABLED) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已被禁用");
+        }
+
+        // 4. 更新登录信息
+        lambdaUpdate().eq(SysUser::getId, user.getId())
+                .set(SysUser::getLastLoginTime, LocalDateTime.now())
+                .set(SysUser::getLastLoginIp, WebUtil.getClientIp(request))
+                .update();
+
+        // 5. 生成 Token
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+
+        // 6. Token 生成成功，登录成功，删除验证码
+        sysUserSmsService.deleteCode(phone);
+
+        return new SysUserLoginTokenVO(token);
+    }
+
+    /**
+     * 老师：邮箱+验证码登录
+     */
+    private SysUserLoginTokenVO teacherLoginByEmail(SysUserTeacherLoginDTO dto, HttpServletRequest request) {
+        String email = dto.email();
+
+        // 1. 校验验证码（只校验，不删除）
+        sysUserEmailService.checkCode(email, dto.captcha());
+
+        // 2. 查用户
+        SysUser user = lambdaQuery()
+                .eq(SysUser::getEmail, email)
+                .eq(SysUser::getUserType, UserTypeEnum.TEACHER)
+                .one();
+        if (user == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "邮箱未注册");
+        }
+
+        // 3. 检查状态
+        if (user.getStatus() == UserStatusEnum.DISABLED) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已被禁用");
+        }
+
+        // 4. 更新登录信息
+        lambdaUpdate().eq(SysUser::getId, user.getId())
+                .set(SysUser::getLastLoginTime, LocalDateTime.now())
+                .set(SysUser::getLastLoginIp, WebUtil.getClientIp(request))
+                .update();
+
+        // 5. 生成 Token
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+
+        // 6. Token 生成成功，登录成功，删除验证码
+        sysUserEmailService.deleteCode(email);
+
+        return new SysUserLoginTokenVO(token);
+    }
+
 }

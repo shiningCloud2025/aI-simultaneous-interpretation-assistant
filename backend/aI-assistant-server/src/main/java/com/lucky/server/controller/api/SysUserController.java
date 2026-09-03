@@ -1,10 +1,7 @@
 package com.lucky.server.controller.api;
 
 import com.lucky.server.common.basic.BaseResult;
-import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
-import com.lucky.server.domain.dto.SysUserStudentLoginDTO;
-import com.lucky.server.domain.dto.SysUserStudentRegisterDTO;
-import com.lucky.server.domain.dto.SysUserUpdateDTO;
+import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserInfoVO;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
@@ -40,6 +37,29 @@ public class SysUserController {
                                                            HttpServletRequest request) {
         return BaseResult.ok(sysUserService.studentRegister(dto, request));
     }
+
+    /**
+     * 老师登录
+     * <p>用户类型固定为 TEACHER，前端无法指定。
+     */
+    @PostMapping("/teacher/login")
+    @Operation(summary = "老师登录")
+    public BaseResult<SysUserLoginTokenVO> teacherLogin(@Valid @RequestBody SysUserTeacherLoginDTO dto,
+                                                        HttpServletRequest request){
+        return BaseResult.ok(sysUserService.teacherLogin(dto, request));
+    }
+
+    /**
+     * 老师注册
+     * <p>用户类型固定为 TEACHER，注册即登录。
+     */
+    @PostMapping("/teacher/register")
+    @Operation(summary = "老师注册")
+    public BaseResult<SysUserLoginTokenVO> teacherRegister(@Valid @RequestBody SysUserTeacherRegisterDTO dto,
+                                                           HttpServletRequest request) {
+        return BaseResult.ok(sysUserService.teacherRegister(dto, request));
+    }
+
 
     @PutMapping("/profile")
     @Operation(summary = "修改个人资料")
