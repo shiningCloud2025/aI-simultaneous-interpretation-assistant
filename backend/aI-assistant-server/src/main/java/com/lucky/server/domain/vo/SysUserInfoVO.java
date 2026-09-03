@@ -1,6 +1,7 @@
 package com.lucky.server.domain.vo;
 
 import com.lucky.server.common.enums.UserStatusEnum;
+import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.domain.entity.SysUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -21,7 +22,8 @@ public record SysUserInfoVO(
         @Schema(description = "状态") UserStatusEnum status,
         @Schema(description = "最后登录时间") LocalDateTime lastLoginTime,
         @Schema(description = "最后登录IP") String lastLoginIp,
-        @Schema(description = "创建时间") LocalDateTime createTime
+        @Schema(description = "创建时间") LocalDateTime createTime,
+        @Schema(description = "用户类型：student/teacher/superadmin") UserTypeEnum userType
 ) {
     public static SysUserInfoVO from(SysUser user) {
         return new SysUserInfoVO(
@@ -34,7 +36,8 @@ public record SysUserInfoVO(
                 user.getStatus(),
                 user.getLastLoginTime(),
                 user.getLastLoginIp(),
-                user.getCreateTime()
+                user.getCreateTime(),
+                user.getUserType()
         );
     }
 }

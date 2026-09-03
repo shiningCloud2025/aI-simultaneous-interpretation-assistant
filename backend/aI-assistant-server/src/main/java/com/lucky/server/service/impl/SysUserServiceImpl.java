@@ -4,12 +4,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.enums.UserStatusEnum;
+import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.common.jwt.JwtUserInfo;
 import com.lucky.server.common.jwt.JwtUtil;
 import com.lucky.server.common.util.WebUtil;
-import com.lucky.server.domain.dto.SysUserLoginDTO;
-import com.lucky.server.domain.dto.SysUserRegisterDTO;
 import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
+import com.lucky.server.domain.dto.SysUserStudentLoginDTO;
+import com.lucky.server.domain.dto.SysUserStudentRegisterDTO;
 import com.lucky.server.domain.dto.SysUserUpdateDTO;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
@@ -38,20 +39,20 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysUserSmsService sysUserSmsService;
     private final SysUserEmailServiceImpl sysUserEmailService;
     @Override
-    public SysUserLoginTokenVO login(SysUserLoginDTO dto, HttpServletRequest request) {
+    public SysUserLoginTokenVO studentLogin(SysUserStudentLoginDTO dto, HttpServletRequest request) {
         // 密码登录：keyword + password 同时存在
         if (dto.keyword() != null && !dto.keyword().isBlank()
                 && dto.password() != null && !dto.password().isBlank()) {
-            return loginByPassword(dto, request);
+            return studentLoginByPassword(dto, request);
         }
 
         // 验证码登录
         if (dto.captcha() != null && !dto.captcha().isBlank()) {
             if (dto.phone() != null && !dto.phone().isBlank()) {
-                return loginByPhone(dto, request);
+                return studentLoginByPhone(dto, request);
             }
             if (dto.email() != null && !dto.email().isBlank()) {
-                return loginByEmail(dto, request);
+                return studentLoginByEmail(dto, request);
             }
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号或邮箱不能为空");
         }
@@ -61,7 +62,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
-    public SysUserLoginTokenVO register(SysUserRegisterDTO dto, HttpServletRequest request) {
+    public SysUserLoginTokenVO studentRegister(SysUserStudentRegisterDTO dto, HttpServletRequest request) {
         // 1. 校验 account 唯一性
         if (lambdaQuery().eq(SysUser::getAccount, dto.account()).one() != null) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号已存在");
@@ -103,6 +104,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             user.setAvatar("https://gd-hbimg.huaban.com/248453c441723291d2fe2cd622181fcd3de7a56817ba-G1KfqQ_fw658");
         }
         user.setStatus(UserStatusEnum.ENABLED);
+        user.setUserType(UserTypeEnum.STUDENT);
         user.setLastLoginTime(LocalDateTime.now());
         user.setLastLoginIp(WebUtil.getClientIp(request));
         user.setCreateTime(LocalDateTime.now());
@@ -242,14 +244,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     /**
      * 密码登录
      */
-    private SysUserLoginTokenVO loginByPassword(SysUserLoginDTO dto, HttpServletRequest request){
+    private SysUserLoginTokenVO studentLoginByPassword(SysUserStudentLoginDTO dto, HttpServletRequest request){
         String keyword = dto.keyword();
 
         SysUser user = lambdaQuery()
                 .and(w -> w.eq(SysUser::getAccount, keyword)
                         .or().eq(SysUser::getPhone, keyword)
                         .or().eq(SysUser::getEmail, keyword))
-                .one();
+                .and(w->w.eq(SysUser::getUserType, UserTypeEnum.STUDENT))
+                .list().stream().findFirst().orElse(null);
+
 
         if (user == null) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "账号未注册，请先注册");
@@ -273,13 +277,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
         return new SysUserLoginTokenVO(token);
     }
-
-
-
-
-
-
-
 
 
 
@@ -324,14 +321,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     /**
      * 手机号+验证码登录
      */
-    private SysUserLoginTokenVO loginByPhone(SysUserLoginDTO dto, HttpServletRequest request) {
+    private SysUserLoginTokenVO studentLoginByPhone(SysUserStudentLoginDTO dto, HttpServletRequest request) {
         String phone = dto.phone();
 
         // 1. 校验验证码（只校验，不删除）
         sysUserSmsService.checkCode(phone, dto.captcha());
 
         // 2. 查用户
-        SysUser user = lambdaQuery().eq(SysUser::getPhone, phone).one();
+        SysUser user = lambdaQuery()
+                .eq(SysUser::getPhone, phone)
+                .eq(SysUser::getUserType, UserTypeEnum.STUDENT)
+                .one();
         if (user == null) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "手机号未注册");
         }
@@ -359,14 +359,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     /**
      * 邮箱+验证码登录
      */
-    private SysUserLoginTokenVO loginByEmail(SysUserLoginDTO dto, HttpServletRequest request) {
+    private SysUserLoginTokenVO studentLoginByEmail(SysUserStudentLoginDTO dto, HttpServletRequest request) {
         String email = dto.email();
 
         // 1. 校验验证码（只校验，不删除）
         sysUserEmailService.checkCode(email, dto.captcha());
 
         // 2. 查用户
-        SysUser user = lambdaQuery().eq(SysUser::getEmail, email).one();
+        SysUser user = lambdaQuery()
+                .eq(SysUser::getEmail, email)
+                .eq(SysUser::getUserType, UserTypeEnum.STUDENT)
+                .one();
         if (user == null) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "邮箱未注册");
         }
