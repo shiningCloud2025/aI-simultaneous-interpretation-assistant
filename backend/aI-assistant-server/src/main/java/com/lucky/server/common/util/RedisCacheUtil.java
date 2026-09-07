@@ -87,6 +87,25 @@ public class RedisCacheUtil {
     }
 
     /**
+     * 根据通配符模式获取缓存Key
+     *
+     * @param pattern 通配符模式（如: auth:user:token:*）
+     * @return 匹配到的Key集合
+     */
+    public Set<String> keys(String pattern) {
+        if (pattern == null || pattern.isEmpty()) {
+            return Set.of();
+        }
+        try {
+            Set<String> keys = redisTemplate.keys(pattern);
+            return keys == null ? Set.of() : keys;
+        } catch (Exception e) {
+            log.warn("Redis按模式获取Key失败，pattern={}", pattern, e);
+            return Set.of();
+        }
+    }
+
+    /**
      * 判断缓存是否存在
      * @param key 缓存Key
      * @return true-存在, false-不存在
