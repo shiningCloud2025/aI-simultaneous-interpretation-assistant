@@ -12,6 +12,7 @@ import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import com.lucky.server.mapper.SysUserMapper;
+import com.lucky.server.service.AuthTokenService;
 import com.lucky.server.service.SysUserService;
 import com.lucky.server.service.SysUserSmsService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final JwtUtil jwtUtil;
     private final SysUserSmsService sysUserSmsService;
     private final SysUserEmailServiceImpl sysUserEmailService;
+    private final AuthTokenService authTokenService;
+
     @Override
     public SysUserLoginTokenVO studentLogin(SysUserStudentLoginDTO dto, HttpServletRequest request) {
         // 密码登录：keyword + password 同时存在
@@ -111,7 +114,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         save(user);
 
         // 6. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
 
         // 7. Token 生成成功，删除验证码
         if (dto.phone() != null && !dto.phone().isBlank()) {
@@ -199,7 +203,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         save(user);
 
         // 6. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
 
         // 7. Token 生成成功，删除验证码
         if (dto.phone() != null && !dto.phone().isBlank()) {
@@ -360,7 +365,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
         return new SysUserLoginTokenVO(token);
     }
 
@@ -434,7 +440,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 5. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
 
         // 6. Token 生成成功，登录成功，删除验证码
         sysUserSmsService.deleteCode(phone);
@@ -472,7 +479,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 5. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
 
         // 6. Token 生成成功，登录成功，删除验证码
         sysUserEmailService.deleteCode(email);
@@ -510,7 +518,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
         return new SysUserLoginTokenVO(token);
     }
 
@@ -544,8 +553,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 5. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
-
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
         // 6. Token 生成成功，登录成功，删除验证码
         sysUserSmsService.deleteCode(phone);
 
@@ -582,7 +591,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .update();
 
         // 5. 生成 Token
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername());
+        String tokenId = authTokenService.saveLoginToken(user, request);
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), user.getUsername(), tokenId);
 
         // 6. Token 生成成功，登录成功，删除验证码
         sysUserEmailService.deleteCode(email);

@@ -2,6 +2,7 @@ package com.lucky.server.filter;
 
 import com.lucky.server.common.jwt.JwtUserInfo;
 import com.lucky.server.common.jwt.JwtUtil;
+import com.lucky.server.service.AuthTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,7 @@ import java.util.Collections;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final AuthTokenService authTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -36,6 +38,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Long userId = jwtUtil.getUserId(token);
             String account = jwtUtil.getAccount(token);
             String username = jwtUtil.getUsername(token);
+            String tokenId = jwtUtil.getTokenId(token);
+
+            if (!authTokenService.validateToken(userId, tokenId)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
+            authTokenService.refreshToken(userId);
 
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(

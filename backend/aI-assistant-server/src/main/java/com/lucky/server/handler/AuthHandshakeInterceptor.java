@@ -1,6 +1,7 @@
 package com.lucky.server.handler;
 
 import com.lucky.server.common.jwt.JwtUtil;
+import com.lucky.server.service.AuthTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpResponse;
@@ -28,6 +29,7 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
     public static final String ATTR_DIRECTION = "direction";
 
     private final JwtUtil jwtUtil;
+    private final AuthTokenService authTokenService;
 
     /**
      * 握手前：解析 token 并鉴权
@@ -56,6 +58,14 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
         if (!StringUtils.hasText(direction)) {
             direction = "zh-en"; // 默认中译英
         }
+
+        String tokenId = jwtUtil.getTokenId(token);
+        if (!authTokenService.validateToken(userId, tokenId)) {
+            log.warn("WebSocket 握手被拒绝：token 已失效, userId={}, uri={}", userId, request.getURI());
+            return false;
+        }
+        authTokenService.refreshToken(userId);
+
 
         // 4. 塞进 session attributes，之后消息处理时通过 session.getAttributes() 读取
         attributes.put(ATTR_USER_ID, userId);
