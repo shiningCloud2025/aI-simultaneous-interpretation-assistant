@@ -10,6 +10,7 @@ import com.lucky.server.common.enums.SpeakingMaterialGenerationFailureStageEnum;
 import com.lucky.server.common.enums.SpeakingSceneEnum;
 import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
+import com.lucky.server.config.SpeakingTtsProperties;
 import com.lucky.server.domain.dto.SpeakingMaterialGenerateDTO;
 import com.lucky.server.domain.entity.SpeakingMaterialGeneration;
 import com.lucky.server.domain.entity.SpeakingMaterialGenerationFailure;
@@ -69,6 +70,8 @@ public class SpeakingMaterialGenerateAgent {
     private final SpeakingMaterialGenerationFailureService speakingMaterialGenerationFailureService;
     private final ObjectMapper objectMapper;
     private final SysUserService sysUserService;
+    private final SpeakingTtsProperties speakingTtsProperties;
+    private final SpeakingTtsGenerateService speakingTtsGenerateService;
 
     /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
     private final Map<String, HarnessAgent> agentCache = new ConcurrentHashMap<>();
@@ -350,10 +353,10 @@ public class SpeakingMaterialGenerateAgent {
         generation.setSceneDescription(result.sceneDescription());
         generation.setProvider(llmPreference.provider());
         generation.setModelName(llmPreference.modelName());
-//        generation.setTtsProvider(speakingTtsProperties.getProvider());
-//        generation.setTtsModelName(speakingTtsProperties.getModelName());
-//        generation.setTtsVoice(speakingTtsProperties.getVoice());
-//        generation.setTtsSpeechRate(speakingTtsProperties.getSpeechRate());
+        generation.setTtsProvider(speakingTtsProperties.getProvider());
+        generation.setTtsModelName(speakingTtsProperties.getModelName());
+        generation.setTtsVoice(speakingTtsProperties.getDefaultVoice().getCode());
+        generation.setTtsSpeechRate(speakingTtsProperties.getSpeechRate());
 
         Long materialId = speakingMaterialGenerationService.saveGeneration(generation);
         List<SpeakingMaterialGenerateSentenceVO> sentenceVOList = new ArrayList<>();
@@ -414,7 +417,7 @@ public class SpeakingMaterialGenerateAgent {
             entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
             entity.setTtsProvider(speakingTtsProperties.getProvider());
             entity.setTtsModelName(speakingTtsProperties.getModelName());
-            entity.setTtsVoice(speakingTtsProperties.getVoice());
+            entity.setTtsVoice(speakingTtsProperties.getDefaultVoice().getCode());
             entity.setTtsSpeechRate(speakingTtsProperties.getSpeechRate());
             entity.setFailureStage(failureStage);
             entity.setErrorMessage(error.getMessage());

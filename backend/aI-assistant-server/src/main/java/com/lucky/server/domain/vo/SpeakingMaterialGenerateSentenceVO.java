@@ -11,6 +11,9 @@ import java.util.List;
 @Schema(name = "SpeakingMaterialGenerateSentenceVO", description = "口语素材生成句子视图")
 public record SpeakingMaterialGenerateSentenceVO(
 
+        @Schema(description = "口语素材句子明细ID")
+        Long sentenceId,
+
         @Schema(description = "句子排序")
         Integer sortOrder,
 
@@ -28,5 +31,4 @@ public record SpeakingMaterialGenerateSentenceVO(
 
         @Schema(description = "跟读建议")
         List<String> practiceTips
-) {
-}
+) { }

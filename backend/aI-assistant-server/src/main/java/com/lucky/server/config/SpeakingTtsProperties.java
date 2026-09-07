@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 /**
  * 口语标准音频 TTS 配置
  * @author shiningCloud2025
@@ -31,6 +33,9 @@ public class SpeakingTtsProperties {
 
     /** 音频文件后缀 */
     private String fileExtension = "mp3";
+
+    /** TTS语速 */
+    private BigDecimal speechRate = BigDecimal.ONE;
 
     /** 音频 MIME 类型 */
     private String contentType = "audio/mpeg";
