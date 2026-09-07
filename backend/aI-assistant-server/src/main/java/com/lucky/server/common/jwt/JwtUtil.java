@@ -29,12 +29,13 @@ public class JwtUtil {
     }
 
     // 生成Token
-    public String generateToken(Long userId, String account, String username) {
+    public String generateToken(Long userId, String account, String username,String tokenId) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("account", account)
                 .claim("username", username)
+                .claim("tokenId", tokenId)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration))
                 .signWith(getKey())
@@ -99,4 +100,11 @@ public class JwtUtil {
         return parseToken(token).get("username", String.class);
     }
 
+
+    /**
+     * 获取 tokenId
+     */
+    public String getTokenId(String token) {
+        return parseToken(token).get("tokenId", String.class);
+    }
 }
