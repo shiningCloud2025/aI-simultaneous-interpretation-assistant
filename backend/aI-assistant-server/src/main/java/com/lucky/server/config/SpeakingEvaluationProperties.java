@@ -38,7 +38,7 @@ public class SpeakingEvaluationProperties {
     private Double scoreCoeff = 3.0;
 
     /** 音频格式：1表示wav，2表示mp3 */
-    private Integer voiceFormat = 1;
+    private Integer voiceFormat = 2;
 
     /** 识别模式：1表示录音识别 */
     private Integer recMode = 1;

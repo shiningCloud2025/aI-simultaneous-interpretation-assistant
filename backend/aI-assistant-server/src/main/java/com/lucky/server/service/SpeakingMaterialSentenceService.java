@@ -15,4 +15,12 @@ public interface SpeakingMaterialSentenceService {
      * @return 口语素材句子明细ID
      */
     Long saveSentence(SpeakingMaterialSentence entity);
+
+    /**
+     * 根据ID查询口语素材句子明细
+     *
+     * @param id 口语素材句子明细ID
+     * @return 口语素材句子明细
+     */
+    SpeakingMaterialSentence getSentenceById(Long id);
 }

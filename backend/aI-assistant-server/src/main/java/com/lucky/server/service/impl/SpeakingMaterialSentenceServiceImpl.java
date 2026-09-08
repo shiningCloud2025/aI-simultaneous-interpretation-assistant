@@ -1,7 +1,9 @@
 package com.lucky.server.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.DeletedStatusEnum;
+import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.domain.entity.SpeakingMaterialSentence;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.mapper.SpeakingMaterialSentenceMapper;
@@ -34,5 +36,14 @@ public class SpeakingMaterialSentenceServiceImpl extends ServiceImpl<SpeakingMat
         entity.setDeleted(DeletedStatusEnum.NORMAL);
         save(entity);
         return entity.getId();
+    }
+
+    @Override
+    public SpeakingMaterialSentence getSentenceById(Long id) {
+        SpeakingMaterialSentence sentence = getById(id);
+        if (sentence == null) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "口语素材句子不存在");
+        }
+        return sentence;
     }
 }
