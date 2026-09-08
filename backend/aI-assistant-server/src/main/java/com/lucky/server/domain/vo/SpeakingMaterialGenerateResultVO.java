@@ -11,16 +11,9 @@ import java.util.List;
 @Schema(name = "SpeakingMaterialGenerateResultVO", description = "口语素材生成结果视图")
 public record SpeakingMaterialGenerateResultVO(
 
-        @Schema(description = "口语素材生成记录ID")
-        Long id,
-
-        @Schema(description = "口语素材标题")
-        String title,
-
-        @Schema(description = "口语练习场景说明")
-        String sceneDescription,
-
-        @Schema(description = "口语跟读句子")
-        List<SpeakingMaterialGenerateSentenceVO> sentences
+        @Schema(description = "口语素材生成记录ID") Long id,
+        @Schema(description = "口语素材标题") String title,
+        @Schema(description = "口语练习场景说明") String sceneDescription,
+        @Schema(description = "口语跟读句子") List<SpeakingMaterialGenerateSentenceVO> sentences
 ) {
 }

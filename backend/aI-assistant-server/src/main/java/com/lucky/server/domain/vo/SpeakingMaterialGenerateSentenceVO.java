@@ -11,24 +11,11 @@ import java.util.List;
 @Schema(name = "SpeakingMaterialGenerateSentenceVO", description = "口语素材生成句子视图")
 public record SpeakingMaterialGenerateSentenceVO(
 
-        @Schema(description = "口语素材句子明细ID")
-        Long sentenceId,
-
-        @Schema(description = "句子排序")
-        Integer sortOrder,
-
-        @Schema(description = "跟读句子")
-        String sentence,
-
-        @Schema(description = "句子译文")
-        String translation,
-
-        @Schema(description = "标准跟读音频URL")
-        String standardAudioUrl,
-
-        @Schema(description = "重点词/重点表达")
-        List<String> keyPoints,
-
-        @Schema(description = "跟读建议")
-        List<String> practiceTips
+        @Schema(description = "口语素材句子明细ID") Long sentenceId,
+        @Schema(description = "句子排序") Integer sortOrder,
+        @Schema(description = "跟读句子") String sentence,
+        @Schema(description = "句子译文") String translation,
+        @Schema(description = "标准跟读音频URL") String standardAudioUrl,
+        @Schema(description = "重点词/重点表达") List<String> keyPoints,
+        @Schema(description = "跟读建议") List<String> practiceTips
 ) { }

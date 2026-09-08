@@ -11,7 +11,9 @@ com/lucky/server/agent/middleware/ModelFallbackMiddleware.class
 com/lucky/server/config/SpeakingTtsProperties.class
 com/lucky/server/service/SysUserSmsService.class
 com/lucky/server/common/enums/CompositionSceneEnum.class
+com/lucky/server/common/constant/RedisKeyConstant.class
 com/lucky/server/domain/entity/WritingCompositionGenerationFailure.class
+com/lucky/server/service/impl/AuthTokenServiceImpl.class
 com/lucky/server/handler/AudioWebSocketHandler$SessionContext.class
 com/lucky/server/common/enums/DeletedStatusEnum.class
 com/lucky/server/domain/entity/SysFile.class
@@ -20,6 +22,7 @@ com/lucky/server/domain/dto/SysUserApiKeyDTO.class
 com/lucky/server/service/SysUserAiModelService.class
 com/lucky/server/common/GlobalExceptionHandler.class
 com/lucky/server/controller/api/SysUserEmailController.class
+com/lucky/server/controller/api/SpeakingMaterialController.class
 com/lucky/server/domain/entity/SysUserApiKey.class
 com/lucky/server/controller/api/SysUserAiModelController.class
 com/lucky/server/common/enums/UserTypeEnum.class
@@ -117,6 +120,7 @@ com/lucky/server/common/jwt/JwtUtil.class
 com/lucky/server/service/impl/SysAttachmentServiceImpl.class
 com/lucky/server/domain/dto/SysUserTermLibrarySaveDTO.class
 com/lucky/server/common/enums/ApiKeyTypeEnum.class
+com/lucky/server/service/AuthTokenService.class
 com/lucky/server/mapper/SpeakingMaterialSentenceMapper.class
 com/lucky/server/domain/dto/SysUserStudentLoginDTO.class
 com/lucky/server/domain/entity/SysAttachment.class
