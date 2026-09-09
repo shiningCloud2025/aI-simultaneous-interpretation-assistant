@@ -8,6 +8,7 @@ import com.lucky.server.domain.dto.SpeakingEvaluationDTO;
 import com.lucky.server.domain.entity.SpeakingMaterialSentence;
 import com.lucky.server.domain.vo.SpeakingEvaluationResultVO;
 import com.lucky.server.domain.vo.SpeakingEvaluationWordVO;
+import com.lucky.server.service.SpeakingEvaluationRecordService;
 import com.lucky.server.service.SpeakingEvaluationService;
 import com.lucky.server.service.SpeakingMaterialSentenceService;
 import com.tencent.core.ws.Credential;
@@ -46,6 +47,7 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
 
     private final SpeakingEvaluationProperties properties;
     private final SpeakingMaterialSentenceService speakingMaterialSentenceService;
+    private final SpeakingEvaluationRecordService speakingEvaluationRecordService;
     private final ObjectMapper objectMapper;
 
     private final SpeechClient speechClient = new SpeechClient(OralEvalConstant.DEFAULT_ORAL_EVAL_REQ_URL);
