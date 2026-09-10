@@ -6,8 +6,10 @@ import com.lucky.server.common.basic.BaseResult;
 import com.lucky.server.domain.dto.SpeakingMaterialGenerateDTO;
 import com.lucky.server.domain.dto.SpeakingMaterialPageQueryDTO;
 import com.lucky.server.domain.vo.SpeakingMaterialGenerateResultVO;
+import com.lucky.server.domain.vo.SpeakingMaterialPracticeDetailVO;
 import com.lucky.server.domain.vo.SpeakingMaterialRecordVO;
 import com.lucky.server.service.SpeakingMaterialGenerationService;
+import com.lucky.server.service.SpeakingMaterialSentenceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ public class SpeakingMaterialController {
 
     private final SpeakingMaterialGenerateAgent speakingMaterialGenerateAgent;
     private final SpeakingMaterialGenerationService speakingMaterialGenerationService;
+    private final SpeakingMaterialSentenceService speakingMaterialSentenceService;
 
     @PostMapping("/generate")
     @Operation(summary = "生成口语跟读素材")
@@ -41,5 +44,11 @@ public class SpeakingMaterialController {
     public BaseResult<Page<SpeakingMaterialRecordVO>> pageHistory(
             @Valid @RequestBody SpeakingMaterialPageQueryDTO dto) {
         return BaseResult.ok(speakingMaterialGenerationService.pageMyMaterialHistory(dto));
+    }
+
+    @GetMapping("/{materialId}/practice-detail")
+    @Operation(summary = "查询口语素材练习详情")
+    public BaseResult<SpeakingMaterialPracticeDetailVO> getPracticeDetail(@PathVariable Long materialId) {
+        return BaseResult.ok(speakingMaterialSentenceService.getPracticeDetail(materialId));
     }
 }
