@@ -227,6 +227,7 @@ com/lucky/server/common/enums/SpeakingSceneEnum.class
 com/lucky/server/domain/dto/SpeakingMaterialPageQueryDTO$Filter.class
 com/lucky/server/handler/AudioWebSocketHandler$1.class
 com/lucky/server/common/basic/BusinessException.class
+com/lucky/server/domain/dto/SuperAdminSkillUpdateDTO.class
 com/lucky/server/domain/entity/SpeakingEvaluationRecord.class
 com/lucky/server/mapper/SpeakingMaterialGenerationMapper.class
 com/lucky/server/domain/vo/SuperAdminUserManageUserVO.class
