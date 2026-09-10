@@ -11,6 +11,8 @@ com/lucky/server/mapper/SysFileMapper.class
 com/lucky/server/agent/middleware/ModelFallbackMiddleware.class
 com/lucky/server/domain/dto/SuperAdminAllUserPageQueryDTO.class
 com/lucky/server/config/SpeakingTtsProperties.class
+com/lucky/server/domain/dto/SuperAdminAllUserBatchUpdateStatusDTO.class
+com/lucky/server/domain/dto/SuperAdminAllUserBatchUpdateTypeDTO.class
 com/lucky/server/service/SysUserSmsService.class
 com/lucky/server/common/enums/CompositionSceneEnum.class
 com/lucky/server/common/constant/RedisKeyConstant.class
@@ -156,6 +158,7 @@ com/lucky/server/controller/api/SysUserFeedbackController.class
 com/lucky/server/service/impl/SysUserTermLibraryServiceImpl.class
 com/lucky/server/common/enums/SpeakingMaterialGenerationFailureStageEnum.class
 com/lucky/server/common/tester/LlmApiKeyTester.class
+com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
 com/lucky/server/service/impl/SpeakingMaterialGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermLibraryService.class
 com/lucky/server/mapper/SpeakingMaterialGenerationFailureMapper.class
