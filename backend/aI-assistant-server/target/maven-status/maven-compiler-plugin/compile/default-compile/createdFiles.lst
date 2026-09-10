@@ -13,6 +13,7 @@ com/lucky/server/common/enums/CompositionSceneEnum.class
 com/lucky/server/common/constant/RedisKeyConstant.class
 com/lucky/server/domain/entity/WritingCompositionGenerationFailure.class
 com/lucky/server/service/impl/AuthTokenServiceImpl.class
+com/lucky/server/domain/vo/SuperAdminFeedbackVO.class
 com/lucky/server/handler/AudioWebSocketHandler$SessionContext.class
 com/lucky/server/common/enums/DeletedStatusEnum.class
 com/lucky/server/domain/entity/SysFile.class
@@ -34,7 +35,6 @@ com/lucky/server/domain/dto/SysUserTeacherRegisterDTO.class
 com/lucky/server/asr/stream/AsrCallback.class
 com/lucky/server/service/SpeakingTtsGenerateService.class
 com/lucky/server/domain/entity/SysUserFeedback.class
-com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl.class
 com/lucky/server/domain/dto/SysUserTeacherLoginDTO.class
 com/lucky/server/domain/vo/SpeakingMaterialGenerateResultVO.class
 com/lucky/server/controller/api/ReadingWordMaterialController.class
@@ -125,6 +125,7 @@ com/lucky/server/asr/stream/AsrConfig.class
 com/lucky/server/mapper/SysUserTermEntryMapper.class
 com/lucky/server/domain/vo/ReadingWordMaterialRecordVO.class
 com/lucky/server/service/impl/SysUserEmailServiceImpl.class
+com/lucky/server/service/superadmin/impl/SuperAdminFeedbackServiceImpl.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardSummaryVO.class
 com/lucky/server/config/CorsConfig.class
 com/lucky/server/mapper/SysUserTermLibraryMapper.class
@@ -135,13 +136,13 @@ com/lucky/server/service/SpeakingEvaluationService.class
 com/lucky/server/domain/dto/SpeakingMaterialPageQueryDTO.class
 com/lucky/server/domain/entity/SysUserShortcutConfig.class
 com/lucky/server/common/enums/SpeakingTtsVoiceEnum.class
+com/lucky/server/domain/dto/SuperAdminFeedbackPageQueryDTO.class
 com/lucky/server/common/jwt/JwtUtil.class
 com/lucky/server/service/impl/SysAttachmentServiceImpl.class
 com/lucky/server/domain/dto/SysUserTermLibrarySaveDTO.class
 com/lucky/server/service/superadmin/impl/SuperAdminUserDashboardServiceImpl.class
 com/lucky/server/common/enums/ApiKeyTypeEnum.class
 com/lucky/server/service/AuthTokenService.class
-com/lucky/server/mapper/SpeakingMaterialSentenceMapper.class
 com/lucky/server/domain/dto/SysUserStudentLoginDTO.class
 com/lucky/server/service/superadmin/SuperAdminUserDashboardService.class
 com/lucky/server/domain/entity/SysAttachment.class
@@ -149,6 +150,7 @@ com/lucky/server/controller/api/SysUserFeedbackController.class
 com/lucky/server/service/impl/SysUserTermLibraryServiceImpl.class
 com/lucky/server/common/enums/SpeakingMaterialGenerationFailureStageEnum.class
 com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
+com/lucky/server/domain/dto/SuperAdminFeedbackProcessDTO.class
 com/lucky/server/service/impl/SpeakingMaterialGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermLibraryService.class
 com/lucky/server/mapper/SpeakingMaterialGenerationFailureMapper.class
@@ -156,7 +158,9 @@ com/lucky/server/domain/dto/SysUserResetPasswordDTO.class
 com/lucky/server/domain/dto/SuperAdminOnlineUserKickOutDTO.class
 com/lucky/server/service/SysUserApiKeyService.class
 com/lucky/server/domain/vo/SysUserTermEntryVO.class
+com/lucky/server/service/superadmin/SuperAdminFeedbackService.class
 com/lucky/server/controller/api/SysUserModelPreferenceController.class
+com/lucky/server/domain/vo/SpeakingMaterialPracticeDetailVO.class
 com/lucky/server/service/impl/SpeakingEvaluationServiceImpl.class
 com/lucky/server/domain/vo/SysFileVO.class
 com/lucky/server/agent/speak/SpeakingMaterialGenerateAgent.class
@@ -204,6 +208,7 @@ com/lucky/server/controller/api/SysUserController.class
 com/lucky/server/domain/vo/SysUserShortcutConfigVO.class
 com/lucky/server/controller/api/SpeakingEvaluationController.class
 com/lucky/server/domain/dto/WritingCompositionGenerationPageQueryDTO$Filter.class
+com/lucky/server/domain/vo/SpeakingEvaluationLatestRecordVO.class
 com/lucky/server/mapper/SysUserApiKeyMapper.class
 com/lucky/server/common/enums/FeedbackTypeEnum.class
 com/lucky/server/domain/vo/SysUserFeedbackDetailVO.class
@@ -211,6 +216,7 @@ com/lucky/server/agent/middleware/DynamicContextMiddleware.class
 com/lucky/server/common/enums/AsrModelProviderEnum.class
 com/lucky/server/common/storage/FileStorageService.class
 com/lucky/server/domain/dto/FeedbackPageQueryDTO.class
+com/lucky/server/domain/vo/SpeakingMaterialPracticeSentenceVO.class
 com/lucky/server/controller/api/SysFileController.class
 com/lucky/server/controller/superadmin/SuperAdminLogDashboardController.class
 com/lucky/server/service/SysUserEmailService.class
@@ -223,6 +229,7 @@ com/lucky/server/common/jwt/JwtUserInfo.class
 com/lucky/server/config/LlmModelConfig$ModelInfo.class
 com/lucky/server/mapper/SysUserModelPreferenceMapper.class
 com/lucky/server/config/AgentScopeMysqlProperties.class
+com/lucky/server/controller/superadmin/SuperAdminFeedbackController.class
 com/lucky/server/service/SysUserService.class
 com/lucky/server/common/util/WebUtil.class
 com/lucky/server/domain/dto/SuperAdminUserDashboardTrendQueryDTO.class

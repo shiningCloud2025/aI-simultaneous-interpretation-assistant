@@ -1,9 +1,13 @@
 package com.lucky.server.controller.api;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lucky.server.agent.speak.SpeakingMaterialGenerateAgent;
 import com.lucky.server.common.basic.BaseResult;
 import com.lucky.server.domain.dto.SpeakingMaterialGenerateDTO;
+import com.lucky.server.domain.dto.SpeakingMaterialPageQueryDTO;
 import com.lucky.server.domain.vo.SpeakingMaterialGenerateResultVO;
+import com.lucky.server.domain.vo.SpeakingMaterialRecordVO;
+import com.lucky.server.service.SpeakingMaterialGenerationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,6 +26,7 @@ import reactor.core.publisher.Mono;
 public class SpeakingMaterialController {
 
     private final SpeakingMaterialGenerateAgent speakingMaterialGenerateAgent;
+    private final SpeakingMaterialGenerationService speakingMaterialGenerationService;
 
     @PostMapping("/generate")
     @Operation(summary = "生成口语跟读素材")
@@ -29,5 +34,12 @@ public class SpeakingMaterialController {
             @Valid @RequestBody SpeakingMaterialGenerateDTO dto) {
         return speakingMaterialGenerateAgent.generate(dto)
                 .map(BaseResult::ok);
+    }
+
+    @PostMapping("/history/page")
+    @Operation(summary = "分页查询口语素材历史")
+    public BaseResult<Page<SpeakingMaterialRecordVO>> pageHistory(
+            @Valid @RequestBody SpeakingMaterialPageQueryDTO dto) {
+        return BaseResult.ok(speakingMaterialGenerationService.pageMyMaterialHistory(dto));
     }
 }

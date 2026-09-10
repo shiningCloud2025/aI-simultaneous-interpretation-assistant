@@ -1,6 +1,7 @@
 package com.lucky.server.service;
 
 import com.lucky.server.domain.entity.SpeakingMaterialSentence;
+import com.lucky.server.domain.vo.SpeakingMaterialPracticeDetailVO;
 
 /**
  * 口语素材句子明细服务接口
@@ -23,4 +24,12 @@ public interface SpeakingMaterialSentenceService {
      * @return 口语素材句子明细
      */
     SpeakingMaterialSentence getSentenceById(Long id);
+
+    /**
+     * 查询口语素材练习详情
+     *
+     * @param materialId 口语素材主表ID
+     * @return 口语素材练习详情
+     */
+    SpeakingMaterialPracticeDetailVO getPracticeDetail(Long materialId);
 }
