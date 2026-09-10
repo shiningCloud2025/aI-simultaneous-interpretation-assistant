@@ -40,6 +40,7 @@ com/lucky/server/asr/stream/impl/AlibabaAsrService$1.class
 com/lucky/server/domain/dto/SysUserTeacherRegisterDTO.class
 com/lucky/server/asr/stream/AsrCallback.class
 com/lucky/server/service/SpeakingTtsGenerateService.class
+com/lucky/server/mapper/AgentScopeSkillMapper.class
 com/lucky/server/domain/entity/SysUserFeedback.class
 com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl.class
 com/lucky/server/domain/dto/SysUserTeacherLoginDTO.class
@@ -108,6 +109,7 @@ com/lucky/server/domain/vo/WritingCompositionEvaluationRecordVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardOnlineVO$OnlineUser.class
 com/lucky/server/domain/vo/SysUserInfoVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardSummaryVO$Metric.class
+com/lucky/server/domain/vo/SuperAdminSkillDetailVO.class
 com/lucky/server/service/SysFileService.class
 com/lucky/server/service/WritingCompositionGenerationService.class
 com/lucky/server/asr/stream/AsrService.class
@@ -121,6 +123,7 @@ com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl$2.class
 com/lucky/server/domain/vo/SpeakingEvaluationWordVO.class
 com/lucky/server/controller/superadmin/SuperAdminUserManageController.class
 com/lucky/server/controller/api/SysUserTermLibraryController.class
+com/lucky/server/domain/dto/SuperAdminSkillPageQueryDTO.class
 com/lucky/server/common/enums/AttachmentBizTypeEnum.class
 com/lucky/server/service/impl/SysUserFeedbackServiceImpl.class
 com/lucky/server/controller/superadmin/SysUserSuperAdminController.class
@@ -142,6 +145,7 @@ com/lucky/server/mapper/SysUserFeedbackMapper.class
 com/lucky/server/asr/stream/AsrConfig.class
 com/lucky/server/mapper/SysUserTermEntryMapper.class
 com/lucky/server/domain/vo/ReadingWordMaterialRecordVO.class
+com/lucky/server/domain/entity/AgentScopeSkill.class
 com/lucky/server/service/impl/SysUserEmailServiceImpl.class
 com/lucky/server/service/superadmin/impl/SuperAdminFeedbackServiceImpl.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardSummaryVO.class
@@ -169,6 +173,7 @@ com/lucky/server/service/superadmin/SuperAdminUserDashboardService.class
 com/lucky/server/domain/entity/SysAttachment.class
 com/lucky/server/controller/api/SysUserFeedbackController.class
 com/lucky/server/service/impl/SysUserTermLibraryServiceImpl.class
+com/lucky/server/domain/vo/SuperAdminSkillVO.class
 com/lucky/server/common/enums/SpeakingMaterialGenerationFailureStageEnum.class
 com/lucky/server/common/tester/LlmApiKeyTester.class
 com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
