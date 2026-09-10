@@ -5,6 +5,7 @@ import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.config.SpeakingEvaluationProperties;
 import com.lucky.server.domain.dto.SpeakingEvaluationDTO;
+import com.lucky.server.domain.entity.SpeakingEvaluationRecord;
 import com.lucky.server.domain.entity.SpeakingMaterialSentence;
 import com.lucky.server.domain.vo.SpeakingEvaluationResultVO;
 import com.lucky.server.domain.vo.SpeakingEvaluationWordVO;
@@ -22,6 +23,9 @@ import com.tencent.soe.SentenceInfo;
 import com.tencent.soe.WordRsp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -82,7 +86,9 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
             throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "口语评测结果为空");
         }
 
-        return buildResultVO(dto.sentenceId(), voiceId, refText, dto.studentAudioUrl(), response, result);
+        SpeakingEvaluationResultVO vo = buildResultVO(dto.sentenceId(), voiceId, refText, dto.studentAudioUrl(), response, result);
+        saveSuccessRecord(sentence, vo);
+        return vo;
 
     }
 
@@ -263,6 +269,44 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
         } catch (Exception e) {
             log.error("下载学生跟读音频失败，studentAudioUrl={}", studentAudioUrl, e);
             throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "学生跟读音频下载失败");
+        }
+    }
+
+    private void saveSuccessRecord(SpeakingMaterialSentence sentence, SpeakingEvaluationResultVO vo) {
+        SpeakingEvaluationRecord record = new SpeakingEvaluationRecord();
+        record.setMaterialId(sentence.getMaterialId());
+        record.setSentenceId(vo.sentenceId());
+        record.setVoiceId(vo.voiceId());
+        record.setRefText(vo.refText());
+        record.setRecognizedText(vo.recognizedText());
+        record.setStudentAudioUrl(vo.studentAudioUrl());
+        record.setSuggestedScore(toBigDecimal(vo.suggestedScore()));
+        record.setPronAccuracy(toBigDecimal(vo.pronAccuracy()));
+        record.setPronFluency(toBigDecimal(vo.pronFluency()));
+        record.setPronCompletion(toBigDecimal(vo.pronCompletion()));
+        record.setWordResultJson(safeWordResultJson(vo.words()));
+        record.setRawResponse(vo.rawResponse());
+        record.setProvider(properties.getProvider());
+        record.setEngineType(properties.getServerEngineType());
+        record.setEvalMode(properties.getEvalMode());
+        record.setSuccess(true);
+
+        speakingEvaluationRecordService.saveRecord(record);
+    }
+
+
+    private BigDecimal toBigDecimal(Double value) {
+        if (value == null) {
+            return null;
+        }
+        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String safeWordResultJson(List<SpeakingEvaluationWordVO> words) {
+        try {
+            return objectMapper.writeValueAsString(words == null ? Collections.emptyList() : words);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

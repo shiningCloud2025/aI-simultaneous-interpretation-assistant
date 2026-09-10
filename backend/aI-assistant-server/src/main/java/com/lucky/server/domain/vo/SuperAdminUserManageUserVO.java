@@ -1,0 +1,30 @@
+package com.lucky.server.domain.vo;
+
+import com.lucky.server.common.enums.UserStatusEnum;
+import com.lucky.server.common.enums.UserTypeEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDateTime;
+
+/**
+ * 超管用户管理用户信息
+ * @author shiningCloud2025
+ */
+@Schema(description = "超管用户管理用户信息")
+public record SuperAdminUserManageUserVO(
+        @Schema(description = "用户ID") Long id,
+        @Schema(description = "账号") String account,
+        @Schema(description = "用户名/昵称") String username,
+        @Schema(description = "邮箱") String email,
+        @Schema(description = "手机号") String phone,
+        @Schema(description = "头像") String avatar,
+        @Schema(description = "用户类型") UserTypeEnum userType,
+        @Schema(description = "用户类型文案") String userTypeText,
+        @Schema(description = "账号状态") UserStatusEnum status,
+        @Schema(description = "账号状态文案") String statusText,
+        @Schema(description = "是否在线") Boolean online,
+        @Schema(description = "最后登录时间") LocalDateTime lastLoginTime,
+        @Schema(description = "最后登录IP") String lastLoginIp,
+        @Schema(description = "注册时间") LocalDateTime createTime,
+        @Schema(description = "更新时间") LocalDateTime updateTime
+) {}
