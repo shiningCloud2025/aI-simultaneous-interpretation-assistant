@@ -64,6 +64,7 @@ com/lucky/server/domain/dto/WritingCompositionGenerationPageQueryDTO.class
 com/lucky/server/mapper/SysUserMapper.class
 com/lucky/server/common/enums/CompositionStageEnum.class
 com/lucky/server/agent/listen/ListenTestClass.class
+com/lucky/server/agent/write/WritingCompositionTutorAgent.class
 com/lucky/server/service/SpeakingMaterialSentenceService.class
 com/lucky/server/agent/speak/SpeakingMaterialAgentSentenceResult.class
 com/lucky/server/common/enums/UserStatusEnum.class
@@ -96,6 +97,7 @@ com/lucky/server/domain/vo/SuperAdminLogFileVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardTrendVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardRecentRegisterVO.class
 com/lucky/server/mapper/SysUserShortcutConfigMapper.class
+com/lucky/server/agent/write/WritingCompositionTutorAgent$1.class
 com/lucky/server/domain/dto/SysUserTermEntrySaveDTO.class
 com/lucky/server/service/impl/SysUserTermEntryServiceImpl.class
 com/lucky/server/config/ReadingWordImageProperties.class
