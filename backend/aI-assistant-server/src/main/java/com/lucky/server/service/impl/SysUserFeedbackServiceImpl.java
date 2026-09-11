@@ -17,6 +17,7 @@ import com.lucky.server.domain.vo.SysUserFeedbackDetailVO;
 import com.lucky.server.domain.vo.SysUserFeedbackVO;
 import com.lucky.server.domain.vo.SysFileVO;
 import com.lucky.server.mapper.SysUserFeedbackMapper;
+import com.lucky.server.service.FeishuFeedbackNotifyService;
 import com.lucky.server.service.SysAttachmentService;
 import com.lucky.server.service.SysUserFeedbackService;
 import com.lucky.server.service.SysUserService;
@@ -40,6 +41,7 @@ public class SysUserFeedbackServiceImpl extends ServiceImpl<SysUserFeedbackMappe
 
     private final SysUserService sysUserService;
     private final SysAttachmentService sysAttachmentService;
+    private final FeishuFeedbackNotifyService feishuFeedbackNotifyService;
 
     @Override
     public void submit(SysUserFeedbackSubmitDTO dto) {
@@ -61,6 +63,8 @@ public class SysUserFeedbackServiceImpl extends ServiceImpl<SysUserFeedbackMappe
         if (!CollectionUtils.isEmpty(dto.fileIds())) {
             sysAttachmentService.bind(AttachmentBizTypeEnum.FEEDBACK, feedback.getId(), dto.fileIds());
         }
+
+        feishuFeedbackNotifyService.notifyNewFeedback(feedback, currentUser);
     }
 
     @Override
