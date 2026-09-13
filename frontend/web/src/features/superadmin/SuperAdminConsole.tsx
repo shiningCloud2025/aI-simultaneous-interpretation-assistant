@@ -87,11 +87,13 @@ function formatDate(value?: string) {
   return value ? value.replace('T', ' ').slice(0, 19) : '-';
 }
 
-function enumText(value?: string) {
+function enumText(value?: string | number) {
   const map: Record<string, string> = {
     student: '学生',
     teacher: '老师',
     superadmin: '超管',
+    '0': '禁用',
+    '1': '启用',
     NORMAL: '正常',
     DISABLED: '禁用',
     ENABLED: '启用',
@@ -103,7 +105,12 @@ function enumText(value?: string) {
     SUGGESTION: '功能建议',
     OTHER: '其他',
   };
-  return value ? map[value] || value : '-';
+  if (value === undefined || value === null || value === '') return '-';
+  return map[String(value)] || String(value);
+}
+
+function statusIsDisabled(value?: string | number) {
+  return String(value) === '0' || value === 'DISABLED';
 }
 
 function compareText(metric?: { comparePercent?: number; compareText?: string }) {
@@ -217,24 +224,14 @@ export function SuperAdminLoginPage() {
           智语同航
         </button>
         <div className="admin-login-nav">
-          <button onClick={() => nav('/')}>官网</button>
-          <button onClick={() => nav('/login')}>学生/老师登录</button>
+          <button onClick={() => nav('/')}>返回官网</button>
         </div>
       </header>
       <main className="admin-login-main">
         <section className="admin-login-copy">
           <div className="admin-login-kicker">Super Admin Center</div>
-          <h1>平台运营与安全控制台</h1>
-          <p>面向平台管理员的独立管理入口，用于查看用户看板、在线状态、日志、反馈工单和 Skill 配置。</p>
-          <div className="admin-login-actions">
-            <a href="#admin-login-form" className="admin-login-primary">进入登录</a>
-            <button onClick={() => nav('/')} className="admin-login-secondary">返回官网</button>
-          </div>
-          <div className="admin-login-metrics" aria-hidden="true">
-            <div><strong>Users</strong><span>在线与账号管理</span></div>
-            <div><strong>Logs</strong><span>日志检索与排障</span></div>
-            <div><strong>Ops</strong><span>反馈与 Skill 配置</span></div>
-          </div>
+          <h1>智语同航超管后台</h1>
+          <p>面向平台管理员的管理入口，只处理平台级数据、用户状态、日志排障、反馈工单和 Skill 配置。</p>
         </section>
 
         <section className="admin-login-card" id="admin-login-form">
@@ -295,7 +292,7 @@ export function SuperAdminLoginPage() {
 export function SuperAdminConsole() {
   const [panel, setPanel] = useState<AdminPanelKey>('user-dashboard');
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ boards: true, console: true, operation: true, system: false });
-  const [mode, setMode] = useState<'classic' | 'star'>('star');
+  const [mode, setMode] = useState<'classic' | 'star'>('classic');
   const logout = useAppStore((s) => s.logout);
   const nav = useNavigate();
   const meta = panelMeta[panel];
@@ -309,7 +306,7 @@ export function SuperAdminConsole() {
   return (
     <div className="admin-shell" data-mode={mode}>
       <div className="admin-bg" />
-      <aside className="admin-sidebar">
+      {mode === 'classic' && <aside className="admin-sidebar">
         <div className="admin-brand">
           <div className="admin-logo">语</div>
           <div>
@@ -348,33 +345,99 @@ export function SuperAdminConsole() {
           })}
         </div>
         <div className="admin-sidebar-foot">一级导航展开二级，具体页面内按业务需要继续用 Tab。</div>
-      </aside>
+      </aside>}
       <main className="admin-main">
         <header className="admin-topbar">
           <div>
-            <h1>{meta.icon} {meta.name}</h1>
-            <p>{meta.desc}</p>
+            <h1>{mode === 'star' ? '✦ 星空模式' : `${meta.icon} ${meta.name}`}</h1>
+            <p>{mode === 'star' ? '一级星球展开二级星球，点击二级进入对应业务页面。' : meta.desc}</p>
           </div>
           <div className="admin-top-actions">
             <button className={`admin-btn ${mode === 'star' ? 'primary' : ''}`} onClick={() => setMode(mode === 'star' ? 'classic' : 'star')}>
-              {mode === 'star' ? '星空模式' : '经典模式'}
+              {mode === 'star' ? '经典模式' : '星空模式'}
             </button>
             <button className="admin-btn" onClick={() => nav('/dashboard')}>返回工作台</button>
             <button className="admin-btn danger" onClick={() => { logout(); nav('/admin/login'); }}>退出</button>
           </div>
         </header>
         <section className="admin-content">
-          {panel === 'user-dashboard' && <UserDashboardPanel />}
-          {panel === 'ai-dashboard' && <PlaceholderPanel title="AI 看板" text="当前原型先展示静态结构；后续接 AI 调用统计接口后可替换为真实数据。" />}
-          {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
-          {panel === 'log-dashboard' && <LogDashboardPanel />}
-          {panel === 'all-users' && <AllUsersPanel />}
-          {panel === 'online-users' && <OnlineUsersPanel />}
-          {panel === 'feedback' && <FeedbackPanel />}
-          {panel === 'skills' && <SkillPanel />}
-          {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+          {mode === 'star' ? (
+            <StarModePanel
+              activePanel={panel}
+              onSelect={(key) => {
+                changePanel(key);
+                setMode('classic');
+              }}
+            />
+          ) : (
+            <>
+              {panel === 'user-dashboard' && <UserDashboardPanel />}
+              {panel === 'ai-dashboard' && <PlaceholderPanel title="AI 看板" text="当前原型先展示静态结构；后续接 AI 调用统计接口后可替换为真实数据。" />}
+              {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
+              {panel === 'log-dashboard' && <LogDashboardPanel />}
+              {panel === 'all-users' && <AllUsersPanel />}
+              {panel === 'online-users' && <OnlineUsersPanel />}
+              {panel === 'feedback' && <FeedbackPanel />}
+              {panel === 'skills' && <SkillPanel />}
+              {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+            </>
+          )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function StarModePanel({ activePanel, onSelect }: { activePanel: AdminPanelKey; onSelect: (key: AdminPanelKey) => void }) {
+  const [activeGroupKey, setActiveGroupKey] = useState(() => {
+    return navGroups.find((group) => group.children.some((child) => child.key === activePanel))?.key || navGroups[0].key;
+  });
+  const activeGroup = navGroups.find((group) => group.key === activeGroupKey) || navGroups[0];
+
+  return (
+    <div className="admin-star-panel">
+      <section className="admin-star-hero">
+        <div className="admin-login-kicker">Star Navigation</div>
+        <h2>选择一级星球</h2>
+        <p>星空模式只负责导航：一级是业务域，二级是可进入的具体页面；进入页面后回到经典布局完成管理操作。</p>
+        <div className="admin-star-primary">
+          {navGroups.map((group, index) => (
+            <button
+              key={group.key}
+              className={`admin-star-planet ${activeGroupKey === group.key ? 'active' : ''}`}
+              onClick={() => setActiveGroupKey(group.key)}
+              style={{ ['--planet-index' as string]: index }}
+            >
+              <span className="planet-icon">{group.icon}</span>
+              <span>{group.name}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="admin-star-orbit">
+        <div className="admin-star-orbit-head">
+          <span>{activeGroup.icon}</span>
+          <div>
+            <h3>{activeGroup.name}</h3>
+            <p>点击二级星球进入业务页面</p>
+          </div>
+        </div>
+        <div className="admin-star-secondary">
+          {activeGroup.children.map((item) => (
+            <button
+              className={`admin-star-card ${activePanel === item.key ? 'active' : ''}`}
+              key={item.key}
+              onClick={() => onSelect(item.key)}
+            >
+              <span className="planet-icon">{item.icon}</span>
+              <span>
+                <b>{item.name}</b>
+                <em>{item.desc}</em>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -568,11 +631,11 @@ function AllUsersPanel() {
 
   useEffect(() => { load(1); }, []);
 
-  const batch = async (kind: 'status' | 'type', value: string) => {
+  const batch = async (kind: 'status' | 'type', value: string | number) => {
     if (!selected.length) return setError('请先选择用户');
     try {
-      if (kind === 'status') await adminApi.batchUpdateStatus(selected, value);
-      else await adminApi.batchUpdateType(selected, value);
+      if (kind === 'status') await adminApi.batchUpdateStatus(selected, Number(value));
+      else await adminApi.batchUpdateType(selected, String(value));
       await load();
     } catch (e: any) {
       setError(e.message || '操作失败');
@@ -600,11 +663,11 @@ function AllUsersPanel() {
             <option value="">全部类型</option><option value="student">学生</option><option value="teacher">老师</option>
           </select>
           <select className="admin-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">全部状态</option><option value="NORMAL">正常</option><option value="DISABLED">禁用</option>
+            <option value="">全部状态</option><option value="1">启用</option><option value="0">禁用</option>
           </select>
           <button className="admin-btn primary" onClick={() => load(1)}>查询</button>
-          <button className="admin-btn" onClick={() => batch('status', 'NORMAL')}>启用</button>
-          <button className="admin-btn danger" onClick={() => batch('status', 'DISABLED')}>禁用</button>
+          <button className="admin-btn" onClick={() => batch('status', 1)}>启用</button>
+          <button className="admin-btn danger" onClick={() => batch('status', 0)}>禁用</button>
           <button className="admin-btn" onClick={() => batch('type', 'student')}>设为学生</button>
           <button className="admin-btn" onClick={() => batch('type', 'teacher')}>设为老师</button>
         </div>
@@ -619,7 +682,7 @@ function AllUsersPanel() {
                   <td>{user.username || '-'}</td>
                   <td>{user.account || '-'}</td>
                   <td><span className="admin-pill">{user.userTypeText || enumText(user.userType)}</span></td>
-                  <td><span className={`admin-pill ${user.status === 'DISABLED' ? 'err' : 'ok'}`}>{user.statusText || enumText(user.status)}</span></td>
+                  <td><span className={`admin-pill ${statusIsDisabled(user.status) ? 'err' : 'ok'}`}>{user.statusText || enumText(user.status)}</span></td>
                   <td>{user.online ? <span className="admin-pill ok">在线</span> : <span className="admin-muted">离线</span>}</td>
                   <td>{formatDate(user.lastLoginTime)}</td>
                   <td>{formatDate(user.createTime)}</td>

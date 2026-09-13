@@ -84,7 +84,7 @@ export interface ManagedUser {
   avatar?: string;
   userType?: string;
   userTypeText?: string;
-  status?: string;
+  status?: string | number;
   statusText?: string;
   online?: boolean;
   lastLoginTime?: string;
@@ -190,7 +190,7 @@ export const adminApi = {
 
   allUsers: (params: { pageNum: number; pageSize: number; keyword?: string; userType?: string; status?: string }) =>
     apiCall<PageResult<ManagedUser>>(`/superadmin/users/all/page${qs(params)}`),
-  batchUpdateStatus: (userIds: number[], status: string) =>
+  batchUpdateStatus: (userIds: number[], status: number) =>
     apiCall<void>('/superadmin/users/all/status', { method: 'PUT', body: JSON.stringify({ userIds, status }) }),
   batchUpdateType: (userIds: number[], userType: string) =>
     apiCall<void>('/superadmin/users/all/type', { method: 'PUT', body: JSON.stringify({ userIds, userType }) }),

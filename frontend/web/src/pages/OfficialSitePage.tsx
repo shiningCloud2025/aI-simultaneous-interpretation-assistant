@@ -15,6 +15,7 @@ export function OfficialSitePage() {
         <nav className="official-nav">
           <a href="#features">核心场景</a>
           <a href="#workflow">课堂流程</a>
+          <Link to="/admin/login" className="official-admin-link">管理入口</Link>
           {token ? <button onClick={() => nav('/dashboard')} className="official-primary">进入平台</button> : <Link to="/login" className="official-primary">登录</Link>}
         </nav>
       </header>
@@ -132,6 +133,13 @@ export function OfficialSitePage() {
         .official-nav a {
           color: #555;
           text-decoration: none;
+        }
+        .official-admin-link {
+          color: #6d746f !important;
+          font-weight: 600;
+        }
+        .official-admin-link:hover {
+          color: #223f3d !important;
         }
         .official-primary,
         .official-action-main,
