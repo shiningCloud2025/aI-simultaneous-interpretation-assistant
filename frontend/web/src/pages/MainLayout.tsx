@@ -15,7 +15,12 @@ import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
+import { TeacherClassrooms } from '../features/teacher-classroom/TeacherClassrooms';
 import { useState, useEffect } from 'react';
+
+const teacherNavGroup = { group: '教学工作', items: [
+  { id: 'teacher-classrooms', icon: '🏫', label: '我的课堂' },
+]};
 
 const navItems = [
   { group: '通用', items: [
@@ -51,6 +56,7 @@ const panelComponents: Record<string, React.FC> = {
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'vocab': EduVocab, 'writing': EduWriting, 'writing-review': EduWritingReview,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
+  'teacher-classrooms': TeacherClassrooms,
 };
 
 const panelTitles: Record<string, string> = {
@@ -59,6 +65,7 @@ const panelTitles: Record<string, string> = {
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'vocab': '单词记忆', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
+  'teacher-classrooms': '我的课堂',
 };
 
 export function MainLayout() {
@@ -96,6 +103,7 @@ export function MainLayout() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#999' }}>加载中...</div>;
 
   const PanelComponent = panelComponents[activePanel] || Dashboard;
+  const availableNavItems = user?.userType === 'teacher' ? [teacherNavGroup, ...navItems] : navItems;
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -106,7 +114,7 @@ export function MainLayout() {
           <span style={{ fontSize: 13, fontWeight: 700 }}>智语同航</span>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {navItems.map((group) => (
+          {availableNavItems.map((group) => (
             <div key={group.group} style={{ padding: '12px 12px 0' }}>
               <div className="sidebar-group-title">{group.group}</div>
               {group.items.map((item) => (

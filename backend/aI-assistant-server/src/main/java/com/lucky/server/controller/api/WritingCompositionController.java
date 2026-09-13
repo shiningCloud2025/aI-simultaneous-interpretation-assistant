@@ -3,15 +3,10 @@ package com.lucky.server.controller.api;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lucky.server.agent.write.WritingCompositionEvaluateAgent;
 import com.lucky.server.agent.write.WritingCompositionGenerateAgent;
+import com.lucky.server.agent.write.WritingCompositionTutorAgent;
 import com.lucky.server.common.basic.BaseResult;
-import com.lucky.server.domain.dto.WritingCompositionEvaluateDTO;
-import com.lucky.server.domain.dto.WritingCompositionEvaluationPageQueryDTO;
-import com.lucky.server.domain.dto.WritingCompositionGenerationPageQueryDTO;
-import com.lucky.server.domain.dto.WritingCompositionGenerateDTO;
-import com.lucky.server.domain.vo.WritingCompositionEvaluationRecordVO;
-import com.lucky.server.domain.vo.WritingCompositionEvaluateResultVO;
-import com.lucky.server.domain.vo.WritingCompositionGenerationRecordVO;
-import com.lucky.server.domain.vo.WritingCompositionGenerateResultVO;
+import com.lucky.server.domain.dto.*;
+import com.lucky.server.domain.vo.*;
 import com.lucky.server.service.WritingCompositionEvaluationService;
 import com.lucky.server.service.WritingCompositionGenerationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +28,7 @@ public class WritingCompositionController {
 
     private final WritingCompositionGenerateAgent writingCompositionGenerateAgent;
     private final WritingCompositionEvaluateAgent writingCompositionEvaluateAgent;
+    private final WritingCompositionTutorAgent writingCompositionTutorAgent;
     private final WritingCompositionGenerationService writingCompositionGenerationService;
     private final WritingCompositionEvaluationService writingCompositionEvaluationService;
 
@@ -49,6 +45,14 @@ public class WritingCompositionController {
     public Mono<BaseResult<WritingCompositionEvaluateResultVO>> evaluate(
             @Valid @RequestBody WritingCompositionEvaluateDTO dto) {
         return writingCompositionEvaluateAgent.evaluate(dto)
+                .map(BaseResult::ok);
+    }
+
+    @PostMapping("/tutor/chat")
+    @Operation(summary = "写作作文AI辅导对话")
+    public Mono<BaseResult<WritingCompositionTutorAnswerVO>> tutorChat(
+            @Valid @RequestBody WritingCompositionTutorChatDTO dto) {
+        return writingCompositionTutorAgent.chat(dto)
                 .map(BaseResult::ok);
     }
 

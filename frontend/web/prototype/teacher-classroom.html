@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智语同航 · 教师课堂管理原型</title>
+  <style>
+    :root {
+      --ink: #22233a;
+      --muted: #74758b;
+      --soft: #a3a4b5;
+      --line: #e6e3ef;
+      --line-2: #f0edf5;
+      --canvas: #f8f5ef;
+      --card: #ffffff;
+      --brand: #4c55d7;
+      --brand-2: #6269e4;
+      --brand-soft: #eeefff;
+      --gold: #ed9a43;
+      --gold-soft: #fff4e8;
+      --green: #398b75;
+      --green-soft: #e9f7f2;
+      --red: #d85c67;
+      --red-soft: #fff0f2;
+      --shadow: 0 18px 45px rgba(66, 55, 115, .11);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 3%, rgba(238, 167, 99, .15), transparent 25%),
+        radial-gradient(circle at 28% 105%, rgba(111, 119, 232, .11), transparent 30%),
+        var(--canvas);
+      font-size: 14px;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    [role="button"] { cursor: pointer; }
+
+    .app { min-height: 100vh; display: flex; }
+    .sidebar {
+      width: 236px;
+      background: rgba(255, 253, 249, .94);
+      color: var(--ink);
+      border-right: 1px solid #e9e4dc;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 20;
+    }
+    .brand { height: 72px; padding: 0 22px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eee9e1; }
+    .brand-mark { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; background: linear-gradient(145deg, #6068e2, #424ac2); color: #fff; font-size: 19px; font-weight: 800; box-shadow: 0 8px 18px rgba(76,85,215,.22); transform: rotate(-3deg); }
+    .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .5px; }
+    .brand-role { margin-top: 2px; font-size: 11px; color: var(--soft); }
+    .nav-scroll { flex: 1; overflow: auto; padding: 18px 12px; }
+    .nav-label { padding: 12px 12px 7px; color: #aaa6b4; font-size: 11px; letter-spacing: 1px; }
+    .nav-item { height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border-radius: 12px; color: #737386; margin-bottom: 4px; transition: .18s ease; user-select: none; }
+    .nav-item:hover { background: #f3f0f8; color: var(--brand); }
+    .nav-item.active { background: var(--brand); color: #fff; font-weight: 650; box-shadow: 0 9px 22px rgba(76,85,215,.22); }
+    .nav-icon { width: 21px; text-align: center; font-size: 16px; }
+    .nav-badge { margin-left: auto; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; background: #efedf5; font-size: 10px; }
+    .nav-item.active .nav-badge { background: rgba(255,255,255,.2); }
+    .profile { margin: 12px; padding: 12px; border-top: 1px solid #eee9e1; display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 36px; height: 36px; border-radius: 12px; background: #ffd9bf; color: #9c4c2d; display: grid; place-items: center; font-weight: 800; }
+    .profile strong { display: block; font-size: 13px; }
+    .profile span { color: var(--soft); font-size: 11px; }
+    .profile-more { margin-left: auto; color: var(--soft); }
+    .brand:focus-visible, .nav-item:focus-visible, .profile:focus-visible, .stat:focus-visible, .class-card:focus-visible { outline: 3px solid rgba(76,85,215,.22); outline-offset: 2px; }
+
+    .main { min-width: 0; flex: 1; margin-left: 236px; }
+    .topbar { height: 72px; padding: 0 30px; background: rgba(248,245,239,.8); border-bottom: 1px solid rgba(226,219,209,.75); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 15; backdrop-filter: blur(16px); }
+    .crumb { color: var(--muted); font-size: 13px; }
+    .crumb strong { color: var(--ink); }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; color: #53615e; position: relative; }
+    .notice-dot { position: absolute; width: 7px; height: 7px; right: 8px; top: 7px; background: #e06b5f; border-radius: 50%; border: 2px solid #fff; }
+    .teacher-pill { height: 38px; padding: 0 12px 0 5px; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; gap: 8px; background: #fff; }
+    .teacher-pill .avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+    .teacher-pill span { font-size: 12px; font-weight: 600; }
+
+    .content { padding: 30px; max-width: 1500px; margin: 0 auto; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0; font-size: 26px; letter-spacing: -.6px; }
+    .page-head p { margin: 7px 0 0; color: var(--muted); line-height: 1.6; }
+    .head-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn { min-height: 40px; padding: 0 17px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: #42514e; font-weight: 600; transition: .16s ease; }
+    .btn:hover { transform: translateY(-1px); border-color: #cac6e4; box-shadow: 0 7px 18px rgba(76,85,215,.10); }
+    .btn.primary { border-color: var(--brand); background: var(--brand); color: #fff; }
+    .btn.primary:hover { background: var(--brand-2); }
+    .btn.soft { border-color: transparent; background: var(--brand-soft); color: var(--brand); }
+    .btn.danger { color: var(--red); }
+    .btn.small { min-height: 34px; padding: 0 13px; font-size: 12px; }
+    .btn:disabled { cursor: not-allowed; opacity: .45; transform: none; box-shadow: none; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 22px; }
+    .stat { background: rgba(255,255,255,.9); border: 1px solid rgba(232,226,238,.9); border-radius: 20px; padding: 18px 19px; box-shadow: 0 7px 22px rgba(56,48,87,.04); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 13px; }
+    .stat-icon { width: 36px; height: 36px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; }
+    .stat:nth-child(2) .stat-icon { background: #eaf7f3; color: #27866e; }
+    .stat:nth-child(3) .stat-icon { background: #fff1e1; color: #d67b25; }
+    .stat:nth-child(4) .stat-icon { background: #f8eefa; color: #a35cad; }
+    .stat-value { font-size: 27px; font-weight: 750; margin-top: 13px; letter-spacing: -.5px; }
+    .stat-foot { margin-top: 5px; color: var(--soft); font-size: 12px; }
+    .stat-foot b { color: var(--green); font-weight: 600; }
+    .stat { cursor: pointer; transition: .18s ease; }
+    .stat:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+    .surface { background: rgba(255,255,255,.92); border: 1px solid rgba(232,226,238,.9); border-radius: 24px; box-shadow: 0 10px 30px rgba(56,48,87,.045); }
+    .toolbar { padding: 16px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line-2); }
+    .search { flex: 1; min-width: 220px; position: relative; }
+    .search input { width: 100%; height: 40px; padding: 0 14px 0 39px; border: 1px solid var(--line); border-radius: 10px; outline: none; color: var(--ink); background: #fbfcfc; }
+    .search input:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(76,85,215,.10); }
+    .search::before { content: '⌕'; position: absolute; left: 13px; top: 8px; color: var(--soft); font-size: 20px; }
+    .filter { height: 40px; min-width: 118px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: #52615e; outline: none; }
+    .view-switch { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 10px; }
+    .view-switch button { width: 34px; height: 32px; border: 0; background: transparent; color: var(--soft); border-radius: 7px; }
+    .view-switch button.active { background: var(--brand-soft); color: var(--brand); }
+
+    .class-grid { padding: 18px; display: grid; grid-template-columns: repeat(3, minmax(260px, 1fr)); gap: 16px; }
+    .class-card { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: #fff; transition: .2s ease; }
+    .class-card:hover { transform: translateY(-4px) rotate(-.2deg); border-color: #cbc7e7; box-shadow: var(--shadow); }
+    .class-card { cursor: pointer; }
+    .class-cover { height: 104px; padding: 18px; position: relative; color: #fff; background: linear-gradient(135deg, #6169e0, #434bc6); overflow: hidden; }
+    .class-cover.gold { background: linear-gradient(135deg, #f0a35a, #df704f); }
+    .class-cover.blue { background: linear-gradient(135deg, #8d66d5, #6847b4); }
+    .class-cover::after { content: ''; width: 110px; height: 110px; position: absolute; right: -28px; top: -46px; border-radius: 50%; border: 20px solid rgba(255,255,255,.09); }
+    .class-cover h3 { position: relative; z-index: 1; margin: 7px 0 0; font-size: 17px; }
+    .class-cover .code { position: relative; z-index: 1; color: rgba(255,255,255,.68); font-size: 11px; letter-spacing: .4px; }
+    .status { position: absolute; z-index: 2; right: 14px; bottom: 13px; padding: 4px 9px; border-radius: 12px; background: rgba(255,255,255,.16); font-size: 11px; backdrop-filter: blur(5px); }
+    .class-body { padding: 15px 16px 14px; }
+    .meta-row { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+    .avatar-stack { display: flex; align-items: center; }
+    .mini-avatar { width: 27px; height: 27px; border-radius: 50%; border: 2px solid #fff; margin-left: -6px; background: #dce8e5; color: var(--brand); display: grid; place-items: center; font-size: 10px; font-weight: 700; }
+    .mini-avatar:first-child { margin-left: 0; }
+    .mini-avatar.more { background: #f0f3f2; color: var(--muted); }
+    .card-actions { display: flex; gap: 8px; }
+    .card-actions .btn:first-child { flex: 1; }
+    .empty-result { grid-column: 1 / -1; padding: 70px 20px; text-align: center; color: var(--muted); display: none; }
+    .class-grid.list-view { grid-template-columns: 1fr; }
+    .class-grid.list-view .class-card { display: grid; grid-template-columns: minmax(240px, .7fr) 1.3fr; }
+    .class-grid.list-view .class-cover { height: 100%; min-height: 135px; }
+    .class-grid.list-view .class-body { display: grid; align-content: center; }
+
+    .dashboard-page { display: none; }
+    .welcome-card { min-height: 190px; padding: 30px; border-radius: 28px; color: #fff; background: linear-gradient(120deg, #5962db 0%, #7878df 58%, #ef9a72 140%); position: relative; overflow: hidden; box-shadow: 0 18px 42px rgba(76,85,215,.19); margin-bottom: 20px; }
+    .welcome-card::before, .welcome-card::after { content: ''; position: absolute; border-radius: 50%; border: 34px solid rgba(255,255,255,.08); }
+    .welcome-card::before { width: 190px; height: 190px; right: 60px; top: -105px; }
+    .welcome-card::after { width: 120px; height: 120px; right: -45px; bottom: -72px; }
+    .welcome-copy { position: relative; z-index: 1; max-width: 620px; }
+    .welcome-copy .eyebrow { color: rgba(255,255,255,.72); font-size: 12px; letter-spacing: .6px; }
+    .welcome-copy h1 { margin: 9px 0 7px; font-size: 29px; }
+    .welcome-copy p { margin: 0; color: rgba(255,255,255,.76); line-height: 1.7; }
+    .welcome-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .welcome-actions .btn { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.12); color: #fff; }
+    .welcome-actions .btn.primary { background: #fff; color: var(--brand); border-color: #fff; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(290px,.75fr); gap: 18px; margin-bottom: 18px; }
+    .dashboard-block { background: rgba(255,255,255,.93); border: 1px solid var(--line-2); border-radius: 22px; padding: 20px; box-shadow: 0 9px 28px rgba(56,48,87,.04); }
+    .block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .block-head h2 { margin: 0; font-size: 17px; }
+    .block-head button { border: 0; background: transparent; color: var(--brand); font-size: 12px; }
+    .schedule-list { display: grid; gap: 10px; }
+    .schedule-item { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; transition: .18s ease; cursor: pointer; }
+    .schedule-item:hover { border-color: #c8c5e6; background: #faf9ff; transform: translateX(3px); }
+    .schedule-time { padding-right: 13px; border-right: 1px solid var(--line); text-align: center; color: var(--brand); }
+    .schedule-time b { display: block; font-size: 17px; }
+    .schedule-time span { font-size: 11px; color: var(--soft); }
+    .schedule-info b { display: block; margin-bottom: 4px; }
+    .schedule-info span { color: var(--muted); font-size: 12px; }
+    .schedule-state { padding: 6px 10px; border-radius: 12px; background: var(--gold-soft); color: #c7772b; font-size: 11px; }
+    .schedule-state.live { background: var(--green-soft); color: var(--green); }
+    .todo-list { display: grid; gap: 9px; }
+    .todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 14px; background: #faf9fc; cursor: pointer; }
+    .todo-item:hover { background: var(--brand-soft); }
+    .todo-check { width: 19px; height: 19px; border: 2px solid #c8c5d7; border-radius: 6px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; font-size: 11px; }
+    .todo-item.done .todo-check { background: var(--brand); border-color: var(--brand); }
+    .todo-item.done .todo-copy { text-decoration: line-through; color: var(--soft); }
+    .todo-copy { line-height: 1.45; }
+    .todo-copy span { display: block; color: var(--soft); font-size: 11px; margin-top: 3px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .quick-card { min-height: 116px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: #fff; cursor: pointer; transition: .18s ease; }
+    .quick-card:hover { transform: translateY(-3px); border-color: #c8c5e6; box-shadow: var(--shadow); }
+    .quick-card i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-style: normal; font-size: 17px; margin-bottom: 13px; }
+    .quick-card:nth-child(2) i { background: var(--gold-soft); color: #d3782c; }
+    .quick-card:nth-child(3) i { background: var(--green-soft); color: var(--green); }
+    .quick-card:nth-child(4) i { background: #f8eefa; color: #9d55a9; }
+    .quick-card b { display: block; font-size: 13px; }
+    .quick-card span { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; line-height: 1.45; }
+    .dashboard-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .metric { padding: 17px; border-radius: 17px; background: #faf9fc; cursor: pointer; }
+    .metric:hover { background: var(--brand-soft); }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .metric b { display: block; margin-top: 7px; font-size: 24px; }
+    .metric small { color: var(--green); }
+
+    .module-page { display: none; }
+    .module-hero { padding: 24px 26px; margin-bottom: 18px; border-radius: 24px; background: linear-gradient(120deg, #fff, #f5f3ff); border: 1px solid #e6e2f4; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .module-hero h1 { margin: 0; font-size: 25px; }
+    .module-hero p { margin: 7px 0 0; color: var(--muted); line-height: 1.6; }
+    .module-actions { display: flex; gap: 9px; flex-shrink: 0; }
+    .module-grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 16px; }
+    .module-card { grid-column: span 12; padding: 20px; background: rgba(255,255,255,.94); border: 1px solid var(--line-2); border-radius: 22px; box-shadow: 0 9px 28px rgba(56,48,87,.04); }
+    .module-card.half { grid-column: span 6; }
+    .module-card.third { grid-column: span 4; }
+    .module-card.two-thirds { grid-column: span 8; }
+    .module-card h2 { margin: 0 0 15px; font-size: 16px; }
+    .module-card > p { margin: -7px 0 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .record-row, .file-row, .security-row, .option-row { display: flex; align-items: center; gap: 13px; padding: 13px 0; border-bottom: 1px solid var(--line-2); }
+    .record-row:last-child, .file-row:last-child, .security-row:last-child, .option-row:last-child { border-bottom: 0; }
+    .row-icon { width: 40px; height: 40px; border-radius: 13px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; flex: 0 0 auto; font-size: 17px; }
+    .row-copy { min-width: 0; flex: 1; }
+    .row-copy b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-copy span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .row-actions { display: flex; gap: 7px; }
+    .upload-zone { min-height: 190px; border: 2px dashed #d7d2eb; border-radius: 20px; background: #fbfaff; display: grid; place-items: center; text-align: center; cursor: pointer; transition: .18s ease; }
+    .upload-zone:hover { border-color: var(--brand); background: var(--brand-soft); }
+    .upload-zone i { width: 54px; height: 54px; margin: 0 auto 12px; border-radius: 17px; display: grid; place-items: center; background: #fff; color: var(--brand); font-style: normal; font-size: 23px; box-shadow: 0 8px 22px rgba(76,85,215,.12); }
+    .upload-zone b { display: block; }
+    .upload-zone span { display: block; color: var(--muted); margin-top: 7px; font-size: 12px; }
+    .integration-state { padding: 14px; border-radius: 15px; background: var(--green-soft); color: var(--green); display: flex; align-items: center; justify-content: space-between; }
+    .profile-panel { display: flex; align-items: center; gap: 16px; padding: 5px 0 20px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .profile-panel .avatar { width: 68px; height: 68px; border-radius: 22px; font-size: 22px; }
+    .profile-panel h2 { margin: 0 0 5px; font-size: 19px; }
+    .profile-panel p { margin: 0; color: var(--muted); }
+    .settings-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .choice-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .choice-card { padding: 15px; border: 1px solid var(--line); border-radius: 15px; cursor: pointer; }
+    .choice-card:hover, .choice-card.selected { border-color: var(--brand); background: var(--brand-soft); }
+    .choice-card b { display: block; }
+    .choice-card span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .switch { width: 42px; height: 24px; padding: 3px; border-radius: 14px; background: #d9d6e1; cursor: pointer; transition: .18s ease; margin-left: auto; }
+    .switch::after { content: ''; display: block; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.16); transition: .18s ease; }
+    .switch.on { background: var(--brand); }
+    .switch.on::after { transform: translateX(18px); }
+    .translator { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+    .translator-head { padding: 13px 16px; background: #f7f5fb; display: flex; align-items: center; justify-content: space-between; }
+    .translator-body { min-height: 230px; padding: 18px; background: #fff; }
+    .speech-line { margin-bottom: 16px; padding-left: 13px; border-left: 3px solid var(--brand); }
+    .speech-line span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 5px; }
+    .speech-line p { margin: 0 0 5px; line-height: 1.6; }
+    .speech-line em { color: var(--brand); font-style: normal; }
+    .notice-panel { position: fixed; right: 190px; top: 64px; z-index: 45; width: 330px; padding: 15px; border: 1px solid var(--line); border-radius: 17px; background: #fff; box-shadow: var(--shadow); display: none; }
+    .notice-panel.show { display: block; animation: pop .16s ease; }
+    .notice-panel h3 { margin: 0 0 10px; font-size: 15px; }
+    .notice-item { padding: 11px; border-radius: 12px; cursor: pointer; }
+    .notice-item:hover { background: var(--brand-soft); }
+    .notice-item b { display: block; font-size: 12px; }
+    .notice-item span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .feature-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 15px; color: var(--brand); font-weight: 650; cursor: pointer; }
+    .chart-bars { height: 220px; padding: 20px 10px 0; display: flex; align-items: flex-end; gap: 16px; border-bottom: 1px solid var(--line); }
+    .chart-bar { flex: 1; min-width: 34px; border-radius: 9px 9px 0 0; background: linear-gradient(180deg,#747be5,#a9adf2); position: relative; cursor: pointer; }
+    .chart-bar:hover { filter: brightness(.96); }
+    .chart-bar span { position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%); color: var(--muted); font-size: 11px; }
+    .week-grid { display: grid; grid-template-columns: 76px repeat(5,1fr); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    .week-cell { min-height: 68px; padding: 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+    .week-cell:nth-child(6n) { border-right: 0; }
+    .week-cell.head { min-height: auto; background: #f8f6fc; color: var(--ink); font-weight: 650; text-align: center; }
+    .week-event { padding: 7px; border-radius: 9px; background: var(--brand-soft); color: var(--brand); cursor: pointer; line-height: 1.35; }
+    .live-stage { min-height: 330px; border-radius: 20px; background: #20213a; color: #fff; display: grid; place-items: center; text-align: center; position: relative; overflow: hidden; }
+    .live-stage::after { content: ''; position: absolute; width: 220px; height: 220px; border-radius: 50%; background: rgba(108,116,226,.18); filter: blur(10px); }
+    .live-stage-content { position: relative; z-index: 1; }
+    .live-stage-content i { width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 50%; background: var(--brand); display: grid; place-items: center; font-size: 27px; font-style: normal; }
+    .live-controls { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+    .detail-list { display: grid; gap: 10px; }
+    .detail-item { padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .detail-item[onclick] { cursor: pointer; transition: .18s ease; }
+    .detail-item[onclick]:hover { border-color: #c8c5e6; background: var(--brand-soft); transform: translateX(2px); }
+    .detail-item b { display: block; margin-bottom: 5px; }
+    .detail-item span { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .document-preview { min-height: 430px; padding: 38px 48px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(40,35,70,.06); }
+    .document-preview h2 { text-align: center; font-size: 22px; }
+    .document-preview p { color: #55566b; line-height: 1.9; }
+
+    .detail-page { display: none; }
+    .back-link { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); margin-bottom: 16px; cursor: pointer; font-weight: 600; }
+    .back-link:hover { color: var(--brand); }
+    .class-hero { border-radius: 26px; background: linear-gradient(120deg, #555ed7 0%, #6e72df 60%, #8c70d7 100%); color: #fff; padding: 26px 28px; position: relative; overflow: hidden; margin-bottom: 18px; box-shadow: 0 18px 40px rgba(76,85,215,.2); }
+    .class-hero::after { content: ''; position: absolute; width: 230px; height: 230px; border-radius: 50%; border: 45px solid rgba(255,255,255,.05); right: -65px; top: -105px; }
+    .hero-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    .class-hero h1 { font-size: 24px; margin: 8px 0 7px; }
+    .class-hero p { margin: 0; color: rgba(255,255,255,.68); line-height: 1.6; }
+    .hero-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 14px; background: rgba(255,255,255,.13); font-size: 12px; }
+    .hero-status i { width: 7px; height: 7px; border-radius: 50%; background: #ffe19a; }
+    .hero-actions { display: flex; gap: 9px; position: relative; z-index: 1; }
+    .class-hero .btn { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.1); color: #fff; }
+    .class-hero .btn.primary { background: #fff; color: var(--brand); border-color: #fff; }
+    .hero-bottom { position: relative; z-index: 1; margin-top: 25px; display: flex; gap: 28px; color: rgba(255,255,255,.66); font-size: 12px; }
+    .hero-bottom b { display: block; color: #fff; font-size: 17px; margin-bottom: 2px; }
+
+    .tabs { padding: 0 20px; display: flex; gap: 25px; border-bottom: 1px solid var(--line-2); }
+    .tab { height: 50px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); padding: 0 2px; }
+    .tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 700; }
+    .tab-panel { display: none; padding: 20px; }
+    .tab-panel.active { display: block; }
+    .overview-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 18px; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title h2 { margin: 0; font-size: 15px; }
+    .section-title span { color: var(--muted); font-size: 12px; }
+    .invite-box { border: 1px solid #e4e0f3; border-radius: 18px; padding: 17px; background: linear-gradient(145deg, #fdfcff, #f2f1ff); }
+    .invite-code { margin: 13px 0; display: flex; gap: 8px; align-items: center; }
+    .invite-code strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 25px; letter-spacing: 4px; color: var(--brand); }
+    .invite-code button { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: #fff; }
+    .invite-hint { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .action-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+    .quick-action { padding: 14px 9px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: center; color: #465552; }
+    .quick-action:hover { border-color: var(--brand); color: var(--brand); }
+    .quick-action b { display: block; font-size: 18px; margin-bottom: 5px; }
+    .quick-action span { font-size: 12px; }
+    .activity { border: 1px solid var(--line); border-radius: 14px; padding: 8px 16px; }
+    .activity-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-2); }
+    .activity-row:last-child { border-bottom: 0; }
+    .activity-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--brand-soft); display: grid; place-items: center; flex-shrink: 0; }
+    .activity-row p { margin: 0; line-height: 1.45; font-size: 13px; }
+    .activity-row time { display: block; color: var(--soft); font-size: 11px; margin-top: 3px; }
+
+    .member-head { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .member-head .search { max-width: 360px; }
+    .member-head .btn { margin-left: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 13px; color: var(--muted); background: #f8faf9; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; font-weight: 600; }
+    td { padding: 13px; border-bottom: 1px solid var(--line-2); color: #43514f; }
+    tbody tr:hover td { background: #fbfcfc; }
+    .student { display: flex; align-items: center; gap: 10px; }
+    .student .avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 11px; }
+    .student b { display: block; color: var(--ink); }
+    .student small { color: var(--soft); }
+    .member-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 11px; background: var(--green-soft); color: var(--green); font-size: 11px; }
+    .member-status::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+    .text-btn { border: 0; background: none; color: var(--brand); padding: 5px 7px; font-size: 12px; }
+    .text-btn.danger { color: var(--red); }
+
+    .mask { position: fixed; inset: 0; z-index: 50; background: rgba(30, 27, 57, .48); display: none; align-items: center; justify-content: center; padding: 18px; backdrop-filter: blur(4px); }
+    .mask.show { display: flex; }
+    .modal { width: min(500px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: #fff; border-radius: 19px; box-shadow: 0 25px 70px rgba(8,34,30,.22); animation: pop .18s ease; }
+    .modal.wide { width: min(620px, 100%); }
+    @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+    .modal-head { padding: 20px 22px 15px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--line-2); }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .close { width: 32px; height: 32px; border: 0; border-radius: 9px; background: #f2f5f4; color: var(--muted); font-size: 19px; }
+    .modal-body { padding: 20px 22px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; margin-bottom: 7px; font-weight: 600; color: #41504d; font-size: 13px; }
+    .field label em { color: var(--red); font-style: normal; }
+    .field input, .field textarea, .field select { width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfc; outline: none; padding: 10px 12px; color: var(--ink); }
+    .field textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(76,85,215,.10); }
+    .field-note { margin-top: 5px; color: var(--soft); font-size: 11px; }
+    .modal-foot { padding: 14px 22px 20px; display: flex; justify-content: flex-end; gap: 9px; }
+
+    .invite-tabs { display: flex; gap: 6px; padding: 4px; background: #f2f5f4; border-radius: 11px; margin-bottom: 18px; }
+    .invite-tabs button { flex: 1; height: 36px; border: 0; background: transparent; border-radius: 8px; color: var(--muted); }
+    .invite-tabs button.active { background: #fff; color: var(--brand); font-weight: 700; box-shadow: 0 3px 10px rgba(76,85,215,.10); }
+    .invite-panel { display: none; }
+    .invite-panel.active { display: block; }
+    .share-card { padding: 19px; border: 1px solid var(--line); border-radius: 18px; background: #faf9ff; text-align: center; }
+    .share-symbol { width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 16px; background: var(--brand-soft); display: grid; place-items: center; font-size: 22px; color: var(--brand); }
+    .share-card h3 { margin: 0 0 6px; font-size: 15px; }
+    .share-card p { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+    .copy-row { display: flex; gap: 8px; }
+    .copy-row input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 0 11px; color: #61706d; }
+    .big-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 36px; letter-spacing: 8px; color: var(--brand); font-weight: 800; margin: 13px 0 17px; }
+    .add-preview { display: none; margin-top: 13px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; align-items: center; gap: 10px; text-align: left; }
+    .add-preview.show { display: flex; }
+    .add-preview .avatar { flex-shrink: 0; }
+    .add-preview b { display: block; }
+    .add-preview span { color: var(--muted); font-size: 12px; }
+    .add-preview .btn { margin-left: auto; }
+
+    .toast { position: fixed; z-index: 90; top: 22px; left: 50%; transform: translate(-50%, -15px); background: #292b52; color: #fff; border-radius: 12px; padding: 11px 17px; box-shadow: 0 12px 30px rgba(36,34,78,.25); opacity: 0; pointer-events: none; transition: .22s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .account-menu { position: fixed; right: 28px; top: 64px; z-index: 45; width: 210px; padding: 8px; border: 1px solid var(--line); border-radius: 15px; background: #fff; box-shadow: var(--shadow); display: none; }
+    .account-menu.show { display: block; animation: pop .16s ease; }
+    .account-menu button { width: 100%; height: 38px; padding: 0 11px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); text-align: left; }
+    .account-menu button:hover { background: var(--brand-soft); color: var(--brand); }
+
+    @media (max-width: 1050px) {
+      .class-grid { grid-template-columns: repeat(2, minmax(250px, 1fr)); }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .overview-grid { grid-template-columns: 1fr; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .quick-grid { grid-template-columns: repeat(2,1fr); }
+      .module-card.half, .module-card.third, .module-card.two-thirds { grid-column: span 12; }
+    }
+    @media (max-width: 760px) {
+      .sidebar { width: 72px; }
+      .brand { padding: 0 17px; }
+      .brand-copy, .nav-label, .nav-item span:not(.nav-icon), .nav-badge, .profile-copy, .profile-more { display: none; }
+      .nav-item { justify-content: center; padding: 0; }
+      .profile { padding: 5px; justify-content: center; }
+      .main { margin-left: 72px; }
+      .topbar { padding: 0 16px; }
+      .content { padding: 20px 15px; }
+      .page-head, .hero-top { flex-direction: column; }
+      .head-actions, .hero-actions { width: 100%; }
+      .head-actions .btn, .hero-actions .btn { flex: 1; }
+      .class-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-wrap: wrap; }
+      .search { flex-basis: 100%; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .action-list { grid-template-columns: 1fr; }
+      .member-head { flex-wrap: wrap; }
+      .member-head .search { max-width: none; flex-basis: 100%; }
+      .member-head .btn { margin-left: 0; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 700px; }
+      .quick-grid, .dashboard-metrics { grid-template-columns: 1fr; }
+      .schedule-item { grid-template-columns: 64px 1fr; }
+      .schedule-state { grid-column: 2; width: max-content; }
+      .module-hero { align-items: flex-start; flex-direction: column; }
+      .settings-form, .choice-grid { grid-template-columns: 1fr; }
+      .notice-panel { right: 15px; width: calc(100vw - 102px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" role="button" tabindex="0" onclick="goHome()" onkeydown="keyboardClick(event,this)">
+        <div class="brand-mark">语</div>
+        <div class="brand-copy"><div class="brand-name">智语同航</div><div class="brand-role">教师工作台</div></div>
+      </div>
+      <div class="nav-scroll">
+        <div class="nav-label">教学工作</div>
+        <div class="nav-item active" role="button" tabindex="0" data-nav="工作台"><span class="nav-icon">⌂</span><span>工作台</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="我的课堂"><span class="nav-icon">▣</span><span>我的课堂</span><span class="nav-badge">3</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="课堂记录"><span class="nav-icon">◎</span><span>课堂记录</span></div>
+        <div class="nav-label">教学工具</div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="PPT 集成"><span class="nav-icon">◫</span><span>PPT 集成</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="Word 集成"><span class="nav-icon">▤</span><span>Word 集成</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="Excel 集成"><span class="nav-icon">▥</span><span>Excel 集成</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="实时转译"><span class="nav-icon">◉</span><span>实时转译</span></div>
+        <div class="nav-label">个人设置</div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="个人中心"><span class="nav-icon">♙</span><span>个人中心</span></div>
+        <div class="nav-item" role="button" tabindex="0" data-nav="模型与偏好"><span class="nav-icon">⚙</span><span>模型与偏好</span></div>
+      </div>
+      <div class="profile" role="button" tabindex="0" onclick="toggleAccountMenu(event)" onkeydown="keyboardClick(event,this)">
+        <div class="avatar">林</div>
+        <div class="profile-copy"><strong>林知夏老师</strong><span>英语教研组</span></div>
+        <span class="profile-more">•••</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">教师工作台&nbsp; / &nbsp;<strong id="crumbTitle">工作台</strong></div>
+        <div class="top-actions">
+          <button class="icon-btn" aria-label="消息通知" onclick="toggleNoticePanel(event)">♢<i class="notice-dot"></i></button>
+          <div class="teacher-pill" role="button" tabindex="0" onclick="toggleAccountMenu(event)" onkeydown="keyboardClick(event,this)"><div class="avatar">林</div><span>林知夏</span></div>
+        </div>
+      </header>
+
+      <section class="content dashboard-page" id="dashboardPage" style="display:block">
+        <div class="welcome-card">
+          <div class="welcome-copy">
+            <div class="eyebrow">2026 年 3 月 10 日 · 星期二</div>
+            <h1>下午好，林知夏老师</h1>
+            <p>今天有 3 节课，其中“高一英语口语 2 班”将在 14:30 开始。课前材料与实时转译均已准备就绪。</p>
+            <div class="welcome-actions"><button class="btn primary" onclick="openQuickClass()">▶ 开始快速课堂</button><button class="btn" onclick="openModal('createModal')">＋ 创建新课堂</button></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat" role="button" tabindex="0" onclick="showClassList('all')"><div class="stat-top"><span>本学期课堂</span><span class="stat-icon">▣</span></div><div class="stat-value">3</div><div class="stat-foot">点击查看全部课堂</div></div>
+          <div class="stat" role="button" tabindex="0" onclick="openDashboardMembers()"><div class="stat-top"><span>覆盖学生</span><span class="stat-icon">♙</span></div><div class="stat-value">86</div><div class="stat-foot"><b>+8</b> 本周新加入</div></div>
+          <div class="stat" role="button" tabindex="0" onclick="openFeature('analytics','dashboard')"><div class="stat-top"><span>本周授课</span><span class="stat-icon">◷</span></div><div class="stat-value">7.5h</div><div class="stat-foot">较上周增加 1.5 小时</div></div>
+          <div class="stat" role="button" tabindex="0" onclick="openFeature('analytics','dashboard')"><div class="stat-top"><span>平均到课率</span><span class="stat-icon">↗</span></div><div class="stat-value">96.8%</div><div class="stat-foot"><b>+2.4%</b> 较上周</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-block">
+            <div class="block-head"><h2>今日课程</h2><button onclick="openFeature('schedule','dashboard')">查看课程表 →</button></div>
+            <div class="schedule-list">
+              <div class="schedule-item" role="button" tabindex="0" onclick="openClass('高一英语口语 2 班','7HK9Q2M8',32)"><div class="schedule-time"><b>14:30</b><span>45 分钟</span></div><div class="schedule-info"><b>高一英语口语 2 班</b><span>32 名学生 · 口语训练 · 第二教学楼 302</span></div><span class="schedule-state live">即将开始</span></div>
+              <div class="schedule-item" role="button" tabindex="0" onclick="openClass('考研英语写作强化班','K3F8N6PX',28)"><div class="schedule-time"><b>16:10</b><span>90 分钟</span></div><div class="schedule-info"><b>考研英语写作强化班</b><span>28 名学生 · 议论文结构训练 · 线上课堂</span></div><span class="schedule-state">待备课</span></div>
+              <div class="schedule-item" role="button" tabindex="0" onclick="openClass('大学英语视听说 A 班','M8DW4TQ7',26)"><div class="schedule-time"><b>19:00</b><span>45 分钟</span></div><div class="schedule-info"><b>大学英语视听说 A 班</b><span>26 名学生 · 听力情景练习 · 线上课堂</span></div><span class="schedule-state">已准备</span></div>
+            </div>
+          </div>
+
+          <div class="dashboard-block">
+            <div class="block-head"><h2>今日待办</h2><button onclick="addTodo()">＋ 添加</button></div>
+            <div class="todo-list" id="todoList">
+              <div class="todo-item" role="button" tabindex="0" onclick="toggleTodo(this)"><span class="todo-check"></span><div class="todo-copy">上传下午口语课课件<span>截止 13:30</span></div></div>
+              <div class="todo-item" role="button" tabindex="0" onclick="toggleTodo(this)"><span class="todo-check"></span><div class="todo-copy">确认 2 位待加入学生<span>来自高一英语口语 2 班</span></div></div>
+              <div class="todo-item done" role="button" tabindex="0" onclick="toggleTodo(this)"><span class="todo-check">✓</span><div class="todo-copy">检查实时转译语言设置<span>已于 09:20 完成</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-block">
+            <div class="block-head"><h2>快捷教学工具</h2><button onclick="openFeature('tools','dashboard')">全部工具 →</button></div>
+            <div class="quick-grid">
+              <div class="quick-card" role="button" tabindex="0" onclick="openInvite('高一英语口语 2 班','7HK9Q2M8','link')"><i>↗</i><b>邀请学生</b><span>复制链接、邀请码或直接添加</span></div>
+              <div class="quick-card" role="button" tabindex="0" onclick="openFeature('materials','dashboard')"><i>◫</i><b>上传课件</b><span>导入 PPT、Word 和课堂资料</span></div>
+              <div class="quick-card" role="button" tabindex="0" onclick="openModule('实时转译')"><i>◉</i><b>实时转译</b><span>检查麦克风并配置翻译语言</span></div>
+              <div class="quick-card" role="button" tabindex="0" onclick="openModule('课堂记录')"><i>◎</i><b>课堂记录</b><span>回看转写、翻译和课堂活动</span></div>
+            </div>
+          </div>
+
+          <div class="dashboard-block">
+            <div class="block-head"><h2>本周教学数据</h2><button onclick="openFeature('analytics','dashboard')">查看报告 →</button></div>
+            <div class="dashboard-metrics">
+              <div class="metric" role="button" tabindex="0" onclick="openFeature('analytics','dashboard')"><span>课堂互动</span><b>10</b><small>↑ 25%</small></div>
+              <div class="metric" role="button" tabindex="0" onclick="openFeature('analytics','dashboard')"><span>实时转译</span><b>326</b><small>↑ 18%</small></div>
+              <div class="metric" role="button" tabindex="0" onclick="openFeature('analytics','dashboard')"><span>平均参与</span><b>41m</b><small>↑ 6%</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content list-page" id="listPage" style="display:none">
+        <div class="page-head">
+          <div><h1>我的课堂</h1><p>创建并管理课堂，邀请学生加入后即可开始协作教学。</p></div>
+          <div class="head-actions"><button class="btn" onclick="openInvite()">邀请学生</button><button class="btn primary" onclick="openModal('createModal')">＋ 创建课堂</button></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat" role="button" tabindex="0" data-stat="all"><div class="stat-top"><span>课堂总数</span><span class="stat-icon">▣</span></div><div class="stat-value" id="classCount">3</div><div class="stat-foot">本学期创建的课堂</div></div>
+          <div class="stat" role="button" tabindex="0" data-stat="students"><div class="stat-top"><span>学生总数</span><span class="stat-icon">♙</span></div><div class="stat-value" id="studentCount">86</div><div class="stat-foot"><b>+8</b> 本周新加入</div></div>
+          <div class="stat" role="button" tabindex="0" data-stat="preparing"><div class="stat-top"><span>待开课</span><span class="stat-icon">◷</span></div><div class="stat-value">2</div><div class="stat-foot">1 个课堂今日有安排</div></div>
+          <div class="stat" role="button" tabindex="0" data-stat="running"><div class="stat-top"><span>进行中</span><span class="stat-icon">▶</span></div><div class="stat-value">1</div><div class="stat-foot"><b>高一英语口语 2 班</b></div></div>
+        </div>
+
+        <div class="surface">
+          <div class="toolbar">
+            <div class="search"><input id="classSearch" placeholder="搜索课堂名称或邀请码" oninput="filterClasses()"></div>
+            <select class="filter" id="statusFilter" onchange="filterClasses()"><option value="all">全部状态</option><option value="preparing">待开课</option><option value="running">进行中</option><option value="ended">已结束</option></select>
+            <select class="filter" onchange="showToast('已切换到「'+this.value+'」')"><option>本学期</option><option>2025 秋季</option><option>2025 春季</option></select>
+            <div class="view-switch"><button class="active" aria-label="卡片视图" onclick="switchClassView(this,'grid')">▦</button><button aria-label="列表视图" onclick="switchClassView(this,'list')">☷</button></div>
+          </div>
+          <div class="class-grid" id="classGrid">
+            <article class="class-card" role="button" tabindex="0" data-name="高一英语口语 2 班 7HK9Q2M8" data-status="running" data-class-name="高一英语口语 2 班" data-code="7HK9Q2M8" data-students="32">
+              <div class="class-cover"><div class="code">课堂码 · 7HK9Q2M8</div><h3>高一英语口语 2 班</h3><span class="status">● 进行中</span></div>
+              <div class="class-body"><div class="meta-row"><span>英语 · 高一</span><span>32 名学生</span></div><div class="meta-row"><div class="avatar-stack"><i class="mini-avatar">陈</i><i class="mini-avatar">周</i><i class="mini-avatar">王</i><i class="mini-avatar more">+29</i></div><span>更新于 10 分钟前</span></div><div class="card-actions"><button class="btn small soft" onclick="openClass('高一英语口语 2 班','7HK9Q2M8',32)">进入课堂</button><button class="btn small" onclick="openInvite('高一英语口语 2 班','7HK9Q2M8')">邀请</button></div></div>
+            </article>
+            <article class="class-card" role="button" tabindex="0" data-name="考研英语写作强化班 K3F8N6PX" data-status="preparing" data-class-name="考研英语写作强化班" data-code="K3F8N6PX" data-students="28">
+              <div class="class-cover gold"><div class="code">课堂码 · K3F8N6PX</div><h3>考研英语写作强化班</h3><span class="status">待开课</span></div>
+              <div class="class-body"><div class="meta-row"><span>英语 · 研究生</span><span>28 名学生</span></div><div class="meta-row"><div class="avatar-stack"><i class="mini-avatar">李</i><i class="mini-avatar">许</i><i class="mini-avatar">吴</i><i class="mini-avatar more">+25</i></div><span>更新于 昨天</span></div><div class="card-actions"><button class="btn small soft" onclick="openClass('考研英语写作强化班','K3F8N6PX',28)">查看详情</button><button class="btn small" onclick="openInvite('考研英语写作强化班','K3F8N6PX')">邀请</button></div></div>
+            </article>
+            <article class="class-card" role="button" tabindex="0" data-name="大学英语视听说 A 班 M8DW4TQ7" data-status="preparing" data-class-name="大学英语视听说 A 班" data-code="M8DW4TQ7" data-students="26">
+              <div class="class-cover blue"><div class="code">课堂码 · M8DW4TQ7</div><h3>大学英语视听说 A 班</h3><span class="status">待开课</span></div>
+              <div class="class-body"><div class="meta-row"><span>英语 · 大学</span><span>26 名学生</span></div><div class="meta-row"><div class="avatar-stack"><i class="mini-avatar">赵</i><i class="mini-avatar">孙</i><i class="mini-avatar">钱</i><i class="mini-avatar more">+23</i></div><span>更新于 3 天前</span></div><div class="card-actions"><button class="btn small soft" onclick="openClass('大学英语视听说 A 班','M8DW4TQ7',26)">查看详情</button><button class="btn small" onclick="openInvite('大学英语视听说 A 班','M8DW4TQ7')">邀请</button></div></div>
+            </article>
+            <div class="empty-result" id="emptyResult"><div style="font-size:36px;margin-bottom:10px">⌕</div>没有找到符合条件的课堂</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content detail-page" id="detailPage">
+        <div class="back-link" onclick="backToList()">← 返回课堂列表</div>
+        <div class="class-hero">
+          <div class="hero-top"><div><span class="hero-status"><i></i><span id="detailStatus">进行中</span></span><h1 id="detailName">高一英语口语 2 班</h1><p>英语 · 高一 · 2026 春季学期</p></div><div class="hero-actions"><button class="btn" onclick="openInvite()">邀请学生</button><button class="btn primary" onclick="openFeature('live-class','class')">进入课堂</button></div></div>
+          <div class="hero-bottom"><div role="button" onclick="openMemberPanel()"><b id="detailStudentCount">32</b>学生</div><div role="button" onclick="openInvite(undefined,undefined,'code')"><b id="detailCode">7HK9Q2M8</b>邀请码</div><div role="button" onclick="openFeature('activities','class')"><b>12</b>课堂活动</div><div role="button" onclick="openFeature('class-info','class')"><b>3 月 2 日</b>创建时间</div></div>
+        </div>
+        <div class="surface">
+          <div class="tabs"><button class="tab active" onclick="switchDetailTab(this,'overviewPanel')">课堂概览</button><button class="tab" onclick="switchDetailTab(this,'memberPanel')">成员管理 <span id="memberTabCount">32</span></button></div>
+          <div class="tab-panel active" id="overviewPanel">
+            <div class="overview-grid">
+              <div><div class="section-title"><h2>邀请学生加入</h2><span>邀请码长期有效，可随时刷新</span></div><div class="invite-box"><div class="invite-hint">课堂邀请码</div><div class="invite-code"><strong id="overviewCode">7HK9Q2M8</strong><button title="复制邀请码" onclick="copyText(currentCode,'邀请码已复制')">▣</button></div><div class="invite-hint">学生可以在“我的课堂”中输入邀请码，也可以直接打开老师分享的邀请链接。</div><div class="action-list"><button class="quick-action" onclick="openInvite(undefined,undefined,'link')"><b>↗</b><span>复制邀请链接</span></button><button class="quick-action" onclick="openInvite(undefined,undefined,'code')"><b>#</b><span>展示邀请码</span></button><button class="quick-action" onclick="openInvite(undefined,undefined,'direct')"><b>＋</b><span>直接添加学生</span></button></div></div></div>
+              <div><div class="section-title"><h2>最近动态</h2><span role="button" tabindex="0" onclick="openFeature('activities','class')">查看全部</span></div><div class="activity"><div class="activity-row" role="button" tabindex="0" onclick="openFeature('activity-detail','class','王雨桐通过邀请码加入课堂')"><div class="activity-icon">＋</div><div><p><b>王雨桐</b> 通过邀请码加入课堂</p><time>10 分钟前</time></div></div><div class="activity-row" role="button" tabindex="0" onclick="openFeature('activity-detail','class','老师直接添加了李明哲')"><div class="activity-icon">♙</div><div><p>老师直接添加了 <b>李明哲</b></p><time>昨天 16:32</time></div></div><div class="activity-row" role="button" tabindex="0" onclick="openFeature('activity-detail','class','课堂邀请码已刷新')"><div class="activity-icon">↻</div><div><p>课堂邀请码已刷新</p><time>3 月 6 日 09:20</time></div></div></div></div>
+            </div>
+          </div>
+          <div class="tab-panel" id="memberPanel">
+            <div class="member-head"><div class="search"><input id="memberSearch" placeholder="搜索学生姓名或账号" oninput="filterMembers()"></div><select class="filter" onchange="showToast('成员排序：'+this.value)"><option>全部成员</option><option>最近加入</option></select><button class="btn primary" onclick="openInvite(undefined,undefined,'direct')">＋ 添加学生</button></div>
+            <div class="table-wrap"><table><thead><tr><th>学生</th><th>账号</th><th>加入方式</th><th>加入时间</th><th>状态</th><th style="text-align:right">操作</th></tr></thead><tbody id="memberRows">
+              <tr data-member="陈思远 20260128"><td><div class="student"><div class="avatar" style="background:#eeefff;color:#4c55d7">陈</div><div><b>陈思远</b><small>高一（2）班</small></div></div></td><td>20260128</td><td>邀请码加入</td><td>2026-03-02 09:12</td><td><span class="member-status">正常</span></td><td style="text-align:right"><button class="text-btn" onclick="viewMember('陈思远','20260128')">查看</button><button class="text-btn danger" onclick="removeMember(this,'陈思远')">移除</button></td></tr>
+              <tr data-member="周可欣 20260135"><td><div class="student"><div class="avatar" style="background:#f6e8d0;color:#80591c">周</div><div><b>周可欣</b><small>高一（2）班</small></div></div></td><td>20260135</td><td>老师添加</td><td>2026-03-02 09:20</td><td><span class="member-status">正常</span></td><td style="text-align:right"><button class="text-btn" onclick="viewMember('周可欣','20260135')">查看</button><button class="text-btn danger" onclick="removeMember(this,'周可欣')">移除</button></td></tr>
+              <tr data-member="王雨桐 20260141"><td><div class="student"><div class="avatar" style="background:#e2e8f3;color:#31557a">王</div><div><b>王雨桐</b><small>高一（2）班</small></div></div></td><td>20260141</td><td>邀请链接</td><td>2026-03-10 14:08</td><td><span class="member-status">正常</span></td><td style="text-align:right"><button class="text-btn" onclick="viewMember('王雨桐','20260141')">查看</button><button class="text-btn danger" onclick="removeMember(this,'王雨桐')">移除</button></td></tr>
+              <tr data-member="李明哲 20260156"><td><div class="student"><div class="avatar" style="background:#efe2ef;color:#744d74">李</div><div><b>李明哲</b><small>高一（2）班</small></div></div></td><td>20260156</td><td>老师添加</td><td>2026-03-09 16:32</td><td><span class="member-status">正常</span></td><td style="text-align:right"><button class="text-btn" onclick="viewMember('李明哲','20260156')">查看</button><button class="text-btn danger" onclick="removeMember(this,'李明哲')">移除</button></td></tr>
+            </tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content module-page" id="modulePage">
+        <div id="moduleContent"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="mask" id="createModal" onclick="maskClose(event,'createModal')"><div class="modal"><div class="modal-head"><div><h2>创建课堂</h2><p>创建后即可邀请学生加入课堂</p></div><button class="close" onclick="closeModal('createModal')">×</button></div><div class="modal-body"><div class="field"><label>课堂名称 <em>*</em></label><input id="newClassName" maxlength="64" placeholder="例如：高一英语口语 3 班"></div><div class="form-row"><div class="field"><label>学科</label><select id="newSubject"><option>英语</option><option>日语</option><option>韩语</option><option>其他</option></select></div><div class="field"><label>学习阶段</label><select id="newStage"><option>小学</option><option>初中</option><option selected>高中</option><option>大学</option><option>研究生</option></select></div></div><div class="field"><label>课堂说明</label><textarea id="newDescription" maxlength="500" placeholder="简单介绍课堂目标、适合学生或教学安排"></textarea><div class="field-note">最多 500 字，创建后仍可修改</div></div></div><div class="modal-foot"><button class="btn" onclick="closeModal('createModal')">取消</button><button class="btn primary" onclick="createClassroom()">创建并邀请学生</button></div></div></div>
+
+  <div class="mask" id="inviteModal" onclick="maskClose(event,'inviteModal')"><div class="modal wide"><div class="modal-head"><div><h2>邀请学生</h2><p id="inviteClassName">高一英语口语 2 班</p></div><button class="close" onclick="closeModal('inviteModal')">×</button></div><div class="modal-body"><div class="invite-tabs"><button data-invite-tab="link" class="active" onclick="switchInviteTab('link')">邀请链接</button><button data-invite-tab="code" onclick="switchInviteTab('code')">邀请码</button><button data-invite-tab="direct" onclick="switchInviteTab('direct')">直接添加</button></div>
+    <div class="invite-panel active" id="invite-link"><div class="share-card"><div class="share-symbol">↗</div><h3>分享邀请链接</h3><p>学生登录后打开链接，即可确认加入当前课堂。</p><div class="copy-row"><input id="inviteLink" readonly value="https://class.zhiyutonghang.cn/join/7HK9Q2M8"><button class="btn primary" onclick="copyInviteLink()">复制链接</button></div></div></div>
+    <div class="invite-panel" id="invite-code"><div class="share-card"><div class="share-symbol">#</div><h3>让学生输入课堂邀请码</h3><div class="big-code" id="modalCode">7HK9Q2M8</div><div style="display:flex;justify-content:center;gap:9px"><button class="btn primary" onclick="copyText(currentCode,'邀请码已复制')">复制邀请码</button><button class="btn" onclick="refreshCode()">刷新邀请码</button></div><p style="margin-top:13px;margin-bottom:0">刷新后原邀请码立即失效，已加入的学生不受影响。</p></div></div>
+    <div class="invite-panel" id="invite-direct"><div class="share-card" style="text-align:left"><div class="share-symbol">＋</div><h3 style="text-align:center">按学生账号直接添加</h3><p style="text-align:center">适合少量学生。输入学生账号后先核对身份，再加入课堂。</p><div class="field"><label>学生账号</label><div class="copy-row"><input id="studentAccount" placeholder="输入 5–12 位学生账号" oninput="lookupStudent()"><button class="btn" onclick="lookupStudent(true)">查找学生</button></div></div><div class="add-preview" id="studentPreview"><div class="avatar" style="background:#e2e8f3;color:#31557a">顾</div><div><b>顾清禾</b><span>账号 20260218 · 学生</span></div><button class="btn primary small" onclick="addStudent()">确认添加</button></div></div></div>
+  </div></div></div>
+
+  <div class="account-menu" id="accountMenu">
+    <button onclick="openModule('个人中心')">个人资料</button>
+    <button onclick="openModule('个人中心');setTimeout(()=>document.getElementById('securityCard').scrollIntoView({behavior:'smooth'}),50)">账号与安全</button>
+    <button onclick="openModule('模型与偏好')">工作台设置</button>
+    <button onclick="confirm('确定退出教师端吗？')&&showToast('已退出当前账号（原型演示）')">退出登录</button>
+  </div>
+
+  <div class="notice-panel" id="noticePanel">
+    <h3>消息通知</h3>
+    <div class="notice-item" role="button" tabindex="0" onclick="openClass('高一英语口语 2 班','7HK9Q2M8',32)"><b>课堂即将开始</b><span>高一英语口语 2 班将在 14:30 开始</span></div>
+    <div class="notice-item" role="button" tabindex="0" onclick="openDashboardMembers()"><b>2 位学生申请加入</b><span>请进入成员管理确认学生身份</span></div>
+    <div class="notice-item" role="button" tabindex="0" onclick="openModule('课堂记录')"><b>课堂记录已生成</b><span>昨日的实时转写和教学摘要可以查看了</span></div>
+  </div>
+
+  <div class="toast" id="toast">操作成功</div>
+
+  <script>
+    let currentClassName = '高一英语口语 2 班';
+    let currentCode = '7HK9Q2M8';
+    let currentStudents = 32;
+    let toastTimer;
+    let currentModuleName = '';
+    let featureParent = { type: 'dashboard', name: '' };
+
+    document.querySelectorAll('[data-nav]').forEach(item => {
+      item.addEventListener('click', () => handleNav(item));
+      item.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleNav(item); } });
+    });
+
+    document.querySelectorAll('[data-stat]').forEach(item => {
+      item.addEventListener('click', () => handleStat(item.dataset.stat));
+      item.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleStat(item.dataset.stat); } });
+    });
+
+    document.getElementById('classGrid').addEventListener('click', event => {
+      if (event.target.closest('button')) return;
+      const card = event.target.closest('.class-card');
+      if (card) openClass(card.dataset.className, card.dataset.code, Number(card.dataset.students));
+    });
+
+    document.getElementById('classGrid').addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const card = event.target.closest('.class-card');
+      if (!card || event.target.closest('button')) return;
+      event.preventDefault();
+      openClass(card.dataset.className, card.dataset.code, Number(card.dataset.students));
+    });
+
+    document.addEventListener('click', event => {
+      const menu = document.getElementById('accountMenu');
+      const notices = document.getElementById('noticePanel');
+      if (!event.target.closest('#accountMenu') && !event.target.closest('.teacher-pill') && !event.target.closest('.profile')) menu.classList.remove('show');
+      if (!event.target.closest('#noticePanel') && !event.target.closest('.icon-btn')) notices.classList.remove('show');
+    });
+
+    document.addEventListener('keydown', event => {
+      if ((event.key !== 'Enter' && event.key !== ' ') || event.target.matches('input, textarea, select, button')) return;
+      const target = event.target.closest('[role="button"]');
+      if (!target || target.matches('[data-nav], .class-card')) return;
+      event.preventDefault();
+      target.click();
+    });
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1900);
+    }
+
+    function keyboardClick(event, element) {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); element.click(); }
+    }
+
+    function goHome() {
+      openDashboard();
+      showToast('已返回教师工作台');
+    }
+
+    function handleNav(item) {
+      if (item.dataset.nav === '工作台') { openDashboard(); return; }
+      if (item.dataset.nav === '我的课堂') { showClassList(); return; }
+      openModule(item.dataset.nav);
+    }
+
+    function openDashboard() {
+      document.getElementById('dashboardPage').style.display = 'block';
+      document.getElementById('listPage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'none';
+      document.getElementById('crumbTitle').textContent = '工作台';
+      document.querySelectorAll('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === '工作台'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showClassList(status) {
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'none';
+      document.getElementById('listPage').style.display = 'block';
+      document.getElementById('crumbTitle').textContent = '我的课堂';
+      document.querySelectorAll('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === '我的课堂'));
+      if (status) {
+        document.getElementById('statusFilter').value = status;
+        filterClasses();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openQuickClass() {
+      currentClassName = '高一英语口语 2 班'; currentCode = '7HK9Q2M8'; currentStudents = 32;
+      openFeature('live-class', 'dashboard');
+    }
+
+    function openDashboardMembers() {
+      openClass('高一英语口语 2 班', '7HK9Q2M8', 32);
+      openMemberPanel();
+      showToast('已打开课堂成员管理');
+    }
+
+    function openClassMembers() {
+      openClass(currentClassName, currentCode, currentStudents);
+      openMemberPanel();
+    }
+
+    function toggleTodo(item) {
+      item.classList.toggle('done');
+      item.querySelector('.todo-check').textContent = item.classList.contains('done') ? '✓' : '';
+      showToast(item.classList.contains('done') ? '待办已完成' : '待办已恢复');
+    }
+
+    function addTodo() {
+      const item = document.createElement('div');
+      item.className = 'todo-item';
+      item.setAttribute('role', 'button');
+      item.tabIndex = 0;
+      item.onclick = function () { toggleTodo(this); };
+      item.innerHTML = '<span class="todo-check"></span><div class="todo-copy">准备一项新的教学任务<span>刚刚添加 · 点击完成</span></div>';
+      document.getElementById('todoList').prepend(item);
+      showToast('已添加一项教学待办');
+    }
+
+    function openModule(name) {
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('listPage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'block';
+      document.getElementById('moduleContent').innerHTML = getModuleTemplate(name);
+      currentModuleName = name;
+      document.getElementById('crumbTitle').textContent = name;
+      document.querySelectorAll('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === name));
+      document.getElementById('accountMenu').classList.remove('show');
+      document.getElementById('noticePanel').classList.remove('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openFeature(type, parent, payload) {
+      featureParent = { type: parent || 'module', name: currentModuleName };
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('listPage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'block';
+      const result = getFeatureTemplate(type, payload);
+      document.getElementById('moduleContent').innerHTML = `<div class="feature-back" role="button" tabindex="0" onclick="returnFromFeature()">← 返回上一页</div>${result.html}`;
+      document.getElementById('crumbTitle').textContent = result.title;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function returnFromFeature() {
+      if (featureParent.type === 'dashboard') return openDashboard();
+      if (featureParent.type === 'class') return openClass(currentClassName, currentCode, currentStudents);
+      openModule(featureParent.name || '工作台');
+    }
+
+    function getFeatureTemplate(type, payload) {
+      if (type === 'analytics') return { title: '教学数据报告', html: `
+        <div class="module-hero"><div><h1>教学数据报告</h1><p>查看授课时长、到课率、课堂互动和实时转译的变化趋势。</p></div><div class="module-actions"><select class="filter"><option>本周</option><option>本月</option><option>本学期</option></select><button class="btn primary" onclick="showToast('教学数据报告已导出')">导出报告</button></div></div>
+        <div class="stats"><div class="stat"><div class="stat-top"><span>授课时长</span><span class="stat-icon">◷</span></div><div class="stat-value">7.5h</div><div class="stat-foot"><b>+25%</b> 环比上周</div></div><div class="stat"><div class="stat-top"><span>平均到课率</span><span class="stat-icon">↗</span></div><div class="stat-value">96.8%</div><div class="stat-foot"><b>+2.4%</b> 环比上周</div></div><div class="stat"><div class="stat-top"><span>课堂互动</span><span class="stat-icon">◎</span></div><div class="stat-value">10</div><div class="stat-foot">3 个课堂参与</div></div><div class="stat"><div class="stat-top"><span>实时转译</span><span class="stat-icon">字</span></div><div class="stat-value">326</div><div class="stat-foot">累计语句</div></div></div>
+        <div class="module-grid"><div class="module-card two-thirds"><h2>近五日授课时长</h2><div class="chart-bars"><div class="chart-bar" style="height:42%" onclick="showToast('周一授课 1.2 小时')"><span>周一</span></div><div class="chart-bar" style="height:66%" onclick="showToast('周二授课 1.8 小时')"><span>周二</span></div><div class="chart-bar" style="height:35%" onclick="showToast('周三授课 1 小时')"><span>周三</span></div><div class="chart-bar" style="height:82%" onclick="showToast('周四授课 2.1 小时')"><span>周四</span></div><div class="chart-bar" style="height:55%" onclick="showToast('周五授课 1.4 小时')"><span>周五</span></div></div></div><div class="module-card third"><h2>课堂表现</h2><div class="detail-list"><div class="detail-item"><b>参与度最高</b><span>高一英语口语 2 班 · 98%</span></div><div class="detail-item"><b>互动增长最快</b><span>考研英语写作强化班 · +32%</span></div><div class="detail-item"><b>建议关注</b><span>3 位学生本周到课率低于 80%</span></div></div></div></div>` };
+      if (type === 'schedule') return { title: '完整课程表', html: `
+        <div class="module-hero"><div><h1>本周课程表</h1><p>安排、调整并进入本周的全部线上与线下课堂。</p></div><div class="module-actions"><button class="btn" onclick="showToast('已切换到上一周')">← 上一周</button><button class="btn" onclick="showToast('已回到本周')">本周</button><button class="btn" onclick="showToast('已切换到下一周')">下一周 →</button><button class="btn primary" onclick="openModal('createModal')">＋ 安排课堂</button></div></div>
+        <div class="module-card"><div class="week-grid"><div class="week-cell head">时间</div><div class="week-cell head">周一</div><div class="week-cell head">周二</div><div class="week-cell head">周三</div><div class="week-cell head">周四</div><div class="week-cell head">周五</div><div class="week-cell">上午</div><div class="week-cell"></div><div class="week-cell"><div class="week-event" onclick="openClass('高一英语口语 2 班','7HK9Q2M8',32)">09:00<br>口语训练</div></div><div class="week-cell"></div><div class="week-cell"><div class="week-event" onclick="openClass('大学英语视听说 A 班','M8DW4TQ7',26)">10:20<br>视听说</div></div><div class="week-cell"></div><div class="week-cell">下午</div><div class="week-cell"><div class="week-event" onclick="openClass('考研英语写作强化班','K3F8N6PX',28)">16:10<br>写作强化</div></div><div class="week-cell"><div class="week-event" onclick="openClass('高一英语口语 2 班','7HK9Q2M8',32)">14:30<br>口语 2 班</div></div><div class="week-cell"></div><div class="week-cell"><div class="week-event" onclick="openClass('考研英语写作强化班','K3F8N6PX',28)">16:10<br>写作讲评</div></div><div class="week-cell"></div><div class="week-cell">晚上</div><div class="week-cell"></div><div class="week-cell"><div class="week-event" onclick="openClass('大学英语视听说 A 班','M8DW4TQ7',26)">19:00<br>视听说 A</div></div><div class="week-cell"></div><div class="week-cell"></div><div class="week-cell"><div class="week-event" onclick="openClass('大学英语视听说 A 班','M8DW4TQ7',26)">19:00<br>听力练习</div></div></div></div>` };
+      if (type === 'tools') return { title: '教学工具中心', html: `
+        <div class="module-hero"><div><h1>教学工具中心</h1><p>从备课、授课到课后复盘，集中使用教师端全部工具。</p></div></div><div class="quick-grid"><div class="quick-card" onclick="openModule('PPT 集成')"><i>◫</i><b>PPT 集成</b><span>同步演示文稿与双语字幕</span></div><div class="quick-card" onclick="openModule('Word 集成')"><i>▤</i><b>Word 集成</b><span>导入教案、讲义和课堂文本</span></div><div class="quick-card" onclick="openModule('Excel 集成')"><i>▥</i><b>Excel 集成</b><span>调用成绩、考勤和词汇表</span></div><div class="quick-card" onclick="openModule('实时转译')"><i>◉</i><b>实时转译</b><span>课堂原文、译文和投屏字幕</span></div><div class="quick-card" onclick="openModule('课堂记录')"><i>◎</i><b>课堂记录</b><span>转写、摘要和成员参与数据</span></div><div class="quick-card" onclick="openFeature('materials','dashboard')"><i>夹</i><b>课件中心</b><span>统一管理全部课堂材料</span></div><div class="quick-card" onclick="openFeature('analytics','dashboard')"><i>数</i><b>教学数据</b><span>查看课程趋势和学生参与度</span></div><div class="quick-card" onclick="openModule('模型与偏好')"><i>⚙</i><b>课堂设置</b><span>模型、字幕和通知偏好</span></div></div>` };
+      if (type === 'materials') return { title: '课件中心', html: `
+        <div class="module-hero"><div><h1>课件中心</h1><p>统一管理 PPT、Word、Excel 和其他课堂资料。</p></div><div class="module-actions"><button class="btn primary" onclick="openFeature('office-upload','${featureParent.type}','课件')">＋ 上传课件</button></div></div><div class="module-grid"><div class="module-card third"><div class="upload-zone" onclick="openFeature('office-upload','${featureParent.type}','课件')"><div><i>＋</i><b>上传新课件</b><span>支持 PPT、Word、Excel、PDF</span></div></div></div><div class="module-card two-thirds"><h2>最近课件</h2>${fileRow('◫','高一口语 Unit 4.pptx','今天 10:20',featureParent.type)}${fileRow('▤','高一口语课堂教案.docx','昨天 15:12',featureParent.type)}${fileRow('▥','三月课堂考勤.xlsx','3 月 8 日 11:36',featureParent.type)}</div></div>` };
+      if (type === 'live-class') return { title: '课堂授课', html: `
+        <div class="module-hero"><div><h1>${currentClassName}</h1><p>课堂已连接 · ${currentStudents} 名学生 · 英语 → 中文实时转译</p></div><div class="module-actions"><button class="btn" onclick="openFeature('materials','class')">打开课件</button><button class="btn danger" onclick="returnFromFeature();showToast('课堂已结束并开始生成记录')">结束课堂</button></div></div><div class="module-grid"><div class="module-card two-thirds"><div class="live-stage"><div class="live-stage-content"><i>林</i><h2>林知夏老师正在授课</h2><p>麦克风正常 · 实时转译已开启</p><div class="live-controls"><button class="btn" onclick="showToast('麦克风已静音')">麦克风</button><button class="btn" onclick="openFeature('screen-share','class')">共享屏幕</button><button class="btn" onclick="openInvite()">邀请学生</button></div></div></div></div><div class="module-card third"><h2>课堂成员</h2><div class="detail-list"><div class="detail-item" onclick="openClassMembers()"><b>在线 30 人</b><span>2 人暂时离线</span></div><div class="detail-item" onclick="viewMember('王雨桐','20260141')"><b>王雨桐正在发言</b><span>音频状态正常</span></div><div class="detail-item" onclick="openFeature('hand-requests','class')"><b>3 条举手请求</b><span>点击按顺序回应学生</span></div></div></div><div class="module-card"><h2>实时字幕</h2><div class="speech-line"><span>14:30:08 · 林老师</span><p>Today we are going to practice how to express opinions clearly.</p><em>今天我们将练习如何清晰地表达观点。</em></div></div></div>` };
+      if (type === 'activities') return { title: '课堂活动', html: `
+        <div class="module-hero"><div><h1>${currentClassName} · 课堂活动</h1><p>查看成员加入、邀请码变更、课堂互动和课件操作记录。</p></div><div class="module-actions"><button class="btn primary" onclick="showToast('课堂活动记录已导出')">导出记录</button></div></div><div class="module-card"><div class="detail-list"><div class="detail-item" onclick="openFeature('activity-detail','class','王雨桐通过邀请码加入课堂')"><b>王雨桐通过邀请码加入课堂</b><span>今天 14:08 · 成员事件</span></div><div class="detail-item" onclick="openFeature('activity-detail','class','老师直接添加了李明哲')"><b>老师直接添加了李明哲</b><span>昨天 16:32 · 成员事件</span></div><div class="detail-item" onclick="openFeature('activity-detail','class','课堂邀请码已刷新')"><b>课堂邀请码已刷新</b><span>3 月 6 日 09:20 · 安全事件</span></div><div class="detail-item" onclick="openFeature('activity-detail','class','完成一次口语投票活动')"><b>完成一次口语投票活动</b><span>3 月 5 日 15:02 · 课堂互动</span></div><div class="detail-item" onclick="openFeature('activity-detail','class','使用课件 Unit 4 Speaking')"><b>使用课件“Unit 4 Speaking”</b><span>3 月 5 日 14:31 · 课件操作</span></div></div></div>` };
+      if (type === 'activity-detail') return { title: '活动详情', html: `<div class="module-hero"><div><h1>活动详情</h1><p>${payload || '课堂活动记录'}</p></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>事件信息</h2><div class="detail-list"><div class="detail-item"><b>事件内容</b><span>${payload || '课堂活动记录'}</span></div><div class="detail-item"><b>发生时间</b><span>2026 年 3 月 10 日 14:08:26</span></div><div class="detail-item"><b>操作来源</b><span>教师 Web 端 · Chrome · 上海</span></div></div></div><div class="module-card third"><h2>关联课堂</h2><div class="detail-item" onclick="openClass(currentClassName,currentCode,currentStudents)"><b>${currentClassName}</b><span>邀请码 ${currentCode} · 点击进入课堂</span></div></div></div>` };
+      if (type === 'class-info') return { title: '课堂资料', html: `<div class="module-hero"><div><h1>课堂资料</h1><p>查看并维护课堂的基础信息和教学安排。</p></div><div class="module-actions"><button class="btn primary" onclick="showToast('课堂资料已保存')">保存修改</button></div></div><div class="module-grid"><div class="module-card two-thirds"><div class="settings-form"><div class="field"><label>课堂名称</label><input value="${currentClassName}"></div><div class="field"><label>邀请码</label><input value="${currentCode}" readonly></div><div class="field"><label>学科</label><select><option selected>英语</option><option>日语</option></select></div><div class="field"><label>学习阶段</label><select><option selected>高中</option><option>大学</option></select></div><div class="field"><label>学期</label><input value="2026 春季学期"></div><div class="field"><label>创建时间</label><input value="2026-03-02 09:01" readonly></div></div><div class="field"><label>课堂说明</label><textarea>以英语口语表达和课堂实时转译为核心的教学课堂。</textarea></div></div><div class="module-card third"><h2>课堂状态</h2><div class="integration-state"><span>● 正常使用中</span></div><div class="option-row"><div class="row-copy"><b>允许邀请码加入</b><span>学生可自主加入课堂</span></div><span class="switch on" onclick="toggleSetting(this)"></span></div><div class="option-row"><div class="row-copy"><b>加入需要审核</b><span>教师确认后成为成员</span></div><span class="switch" onclick="toggleSetting(this)"></span></div></div></div>` };
+      if (type === 'member-detail') return { title: '学生详情', html: memberDetailTemplate(payload) };
+      if (type === 'record-summary') return { title: '课堂摘要', html: `<div class="module-hero"><div><h1>课堂教学摘要</h1><p>${payload || '高一英语口语 2 班'} · AI 根据课堂转写自动整理</p></div><div class="module-actions"><button class="btn" onclick="showToast('摘要已复制')">复制摘要</button><button class="btn primary" onclick="showToast('摘要已导出为 Word')">导出 Word</button></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>本节课重点</h2><div class="detail-list"><div class="detail-item"><b>表达观点的基本结构</b><span>观点陈述、理由说明、举例支持和结论回扣。</span></div><div class="detail-item"><b>重点语言表达</b><span>In my opinion、The main reason is、For example、Therefore。</span></div><div class="detail-item"><b>课堂表现</b><span>学生整体参与积极，8 位学生完成了完整口语陈述。</span></div></div></div><div class="module-card third"><h2>课后任务</h2><div class="detail-item"><b>口语录音</b><span>围绕校园手机管理表达个人观点，时长 2 分钟。</span></div><div class="detail-item"><b>需要关注</b><span>3 位学生在理由展开部分需要额外练习。</span></div></div></div>` };
+      if (type === 'record-all') return { title: '全部课堂记录', html: `<div class="module-hero"><div><h1>全部课堂记录</h1><p>共 26 条记录，可查看回放、转写、摘要和参与数据。</p></div><div class="module-actions"><button class="btn" onclick="openFeature('record-filters','module')">筛选</button><button class="btn primary" onclick="showToast('全部记录已导出')">批量导出</button></div></div><div class="module-card"><div class="toolbar"><div class="search"><input placeholder="搜索课堂名称"></div><select class="filter"><option>最近更新</option><option>最早创建</option></select></div>${recordRow('高一英语口语 2 班','今天 14:30 · 45 分钟','生成中')}${recordRow('考研英语写作强化班','昨天 16:10 · 90 分钟','已完成')}${recordRow('大学英语视听说 A 班','3 月 8 日 19:00 · 45 分钟','已完成')}${recordRow('高一英语口语 2 班','3 月 5 日 14:30 · 45 分钟','已完成')}${recordRow('大学英语视听说 A 班','3 月 3 日 19:00 · 45 分钟','已完成')}</div>` };
+      if (type === 'record-playback') return { title: '课堂回放', html: `<div class="module-hero"><div><h1>${payload} · 课堂回放</h1><p>同步查看课堂音频、双语转写和课件操作时间轴。</p></div><div class="module-actions"><button class="btn" onclick="openFeature('record-summary','module','${payload}')">查看摘要</button><button class="btn primary" onclick="showToast('课堂回放文件已下载')">下载记录</button></div></div><div class="module-grid"><div class="module-card two-thirds"><div class="live-stage"><div class="live-stage-content"><i>▶</i><h2>00:18:26 / 00:45:12</h2><p>点击下方按钮控制课堂回放</p><div class="live-controls"><button class="btn" onclick="showToast('已后退 10 秒')">−10s</button><button class="btn primary" onclick="playRecord(this)">播放</button><button class="btn" onclick="showToast('已前进 10 秒')">+10s</button></div></div></div></div><div class="module-card third"><h2>转写时间轴</h2><div class="speech-line"><span>00:18:26 · 林老师</span><p>How can we support this opinion?</p><em>我们可以怎样支持这个观点？</em></div><div class="speech-line"><span>00:18:42 · 王雨桐</span><p>We can give an example.</p><em>我们可以举一个例子。</em></div></div></div>` };
+      if (type === 'record-filters') return { title: '筛选课堂记录', html: `<div class="module-hero"><div><h1>筛选课堂记录</h1><p>按照课堂、日期、记录状态和教学类型组合查询。</p></div></div><div class="module-card"><div class="settings-form"><div class="field"><label>课堂</label><select><option>全部课堂</option><option>高一英语口语 2 班</option><option>考研英语写作强化班</option></select></div><div class="field"><label>记录状态</label><select><option>全部状态</option><option>已完成</option><option>生成中</option></select></div><div class="field"><label>开始日期</label><input type="date" value="2026-03-01"></div><div class="field"><label>结束日期</label><input type="date" value="2026-03-10"></div></div><div class="module-actions"><button class="btn" onclick="openModule('课堂记录')">重置</button><button class="btn primary" onclick="openModule('课堂记录');showToast('筛选条件已应用')">查询记录</button></div></div>` };
+      if (type === 'office-guide') return { title: `${payload} 使用说明`, html: `<div class="module-hero"><div><h1>${payload} 集成使用说明</h1><p>从上传解析到课堂调用的完整操作流程。</p></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>操作步骤</h2><div class="detail-list"><div class="detail-item"><b>1. 上传文件</b><span>选择本地 ${payload} 文件，系统会解析文字、页面和表格结构。</span></div><div class="detail-item"><b>2. 检查解析结果</b><span>预览文件内容并选择是否启用自动翻译与课堂同步。</span></div><div class="detail-item"><b>3. 关联课堂</b><span>选择目标课堂，授课时即可从课件面板调用。</span></div><div class="detail-item"><b>4. 课堂中使用</b><span>同步翻页、展示双语内容，并将操作写入课堂记录。</span></div></div></div><div class="module-card third"><h2>支持范围</h2><div class="detail-item"><b>文件大小</b><span>单个文件建议不超过 100 MB</span></div><div class="detail-item"><b>版本</b><span>支持常见 Office Open XML 格式</span></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="returnFromFeature()">开始使用</button></div></div>` };
+      if (type === 'office-upload') return { title: `上传${payload}`, html: `<div class="module-hero"><div><h1>上传${payload}</h1><p>选择文件、配置解析选项并关联到目标课堂。</p></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>选择文件</h2><div class="upload-zone" onclick="this.querySelector('b').textContent='已选择：高一口语 Unit 4.pptx';showToast('示例文件已选择')"><div><i>＋</i><b>点击选择或拖拽文件</b><span>单个文件不超过 100 MB</span></div></div></div><div class="module-card third"><h2>上传设置</h2><div class="field"><label>关联课堂</label><select><option>暂不关联</option><option>高一英语口语 2 班</option><option>考研英语写作强化班</option></select></div><div class="option-row"><div class="row-copy"><b>自动解析</b><span>提取文字和页面结构</span></div><span class="switch on" onclick="toggleSetting(this)"></span></div><div class="option-row"><div class="row-copy"><b>生成双语内容</b><span>解析完成后自动翻译</span></div><span class="switch on" onclick="toggleSetting(this)"></span></div><button class="btn primary" style="width:100%;margin-top:14px" onclick="showToast('文件已上传并进入解析队列')">开始上传</button></div></div>` };
+      if (type === 'office-files') return { title: `${payload} 文件库`, html: `<div class="module-hero"><div><h1>${payload} 文件库</h1><p>浏览、搜索和管理已经上传解析的全部文件。</p></div><div class="module-actions"><button class="btn primary" onclick="uploadOffice('${payload}')">＋ 上传${payload}</button></div></div><div class="module-card"><div class="toolbar"><div class="search"><input placeholder="搜索文件名"></div><select class="filter"><option>最近更新</option><option>按名称</option></select></div>${fileRow(payload==='PPT'?'◫':payload==='Word'?'▤':'▥',payload==='PPT'?'高一口语 Unit 4.pptx':payload==='Word'?'高一课堂教案.docx':'三月课堂考勤.xlsx','今天 10:20')}${fileRow(payload==='PPT'?'◫':payload==='Word'?'▤':'▥',payload==='PPT'?'考研写作结构精讲.pptx':payload==='Word'?'写作范文批注.docx':'英语词汇训练表.xlsx','3 月 8 日 16:42')}</div>` };
+      if (type === 'file-preview') return { title: '文件预览', html: `<div class="module-hero"><div><h1>${payload}</h1><p>文件预览、课堂关联和双语内容检查。</p></div><div class="module-actions"><button class="btn" onclick="showToast('已切换到上一页')">上一页</button><button class="btn" onclick="showToast('已切换到下一页')">下一页</button><button class="btn primary" onclick="showToast('文件已关联到高一英语口语 2 班')">用于课堂</button></div></div><div class="module-grid"><div class="module-card two-thirds"><div class="document-preview"><h2>Unit 4 · Expressing Opinions</h2><p><b>Learning objective</b></p><p>Students will learn to state an opinion, explain reasons, provide examples and respond to different viewpoints.</p><p><b>课堂目标</b></p><p>学生将学习陈述观点、解释理由、提供例子，并回应不同意见。</p></div></div><div class="module-card third"><h2>文件信息</h2><div class="detail-item"><b>解析状态</b><span>已完成 · 共 18 页</span></div><div class="detail-item"><b>双语内容</b><span>已生成 126 个翻译片段</span></div><div class="detail-item"><b>课堂关联</b><span>尚未关联课堂</span></div></div></div>` };
+      if (type === 'device-setup') return { title: '音频设备设置', html: `<div class="module-hero"><div><h1>音频设备设置</h1><p>检查课堂麦克风、扬声器和实时转译输入状态。</p></div></div><div class="module-grid"><div class="module-card half"><h2>输入设备</h2><div class="field"><label>麦克风</label><select><option>MacBook 麦克风</option><option>外接 USB 麦克风</option></select></div><div class="detail-item"><b>输入音量</b><span>████████░░ 82% · 状态良好</span></div><button class="btn primary" onclick="showToast('麦克风测试录音播放完成')">测试麦克风</button></div><div class="module-card half"><h2>输出设备</h2><div class="field"><label>扬声器</label><select><option>MacBook 扬声器</option><option>外接音响</option></select></div><div class="detail-item"><b>输出音量</b><span>███████░░░ 70%</span></div><button class="btn primary" onclick="showToast('测试声音已播放')">播放测试声音</button></div></div>` };
+      if (type === 'security') return { title: payload || '账号安全', html: `<div class="module-hero"><div><h1>${payload || '账号安全'}</h1><p>按照安全流程验证身份并更新账号信息。</p></div></div><div class="module-card" style="max-width:680px"><div class="field"><label>当前登录密码</label><input type="password" placeholder="请输入当前密码"></div><div class="field"><label>验证码</label><div class="copy-row"><input placeholder="请输入验证码"><button class="btn" onclick="showToast('验证码已发送')">获取验证码</button></div></div><div class="field"><label>新的信息</label><input placeholder="请输入新的密码、手机号或邮箱"></div><div class="module-actions"><button class="btn" onclick="returnFromFeature()">取消</button><button class="btn primary" onclick="showToast('安全设置已更新')">确认更新</button></div></div>` };
+      if (type === 'screen-share') return { title: '共享屏幕', html: `<div class="module-hero"><div><h1>选择共享内容</h1><p>选择整个屏幕、应用窗口或浏览器标签页供课堂成员观看。</p></div></div><div class="choice-grid"><div class="choice-card selected" onclick="selectChoice(this)"><b>整个屏幕</b><span>共享当前显示器上的全部内容</span></div><div class="choice-card" onclick="selectChoice(this)"><b>应用窗口</b><span>仅共享指定的 PPT 或 Word 窗口</span></div><div class="choice-card" onclick="selectChoice(this)"><b>浏览器标签页</b><span>共享网页内容并同步页面音频</span></div></div><div class="module-card" style="margin-top:16px"><h2>共享预览</h2><div class="live-stage"><div class="live-stage-content"><i>▣</i><h2>桌面 1</h2><p>1920 × 1080 · 系统音频未共享</p><button class="btn primary" style="margin-top:15px" onclick="returnFromFeature();showToast('屏幕共享已开始')">开始共享</button></div></div></div>` };
+      if (type === 'hand-requests') return { title: '举手请求', html: `<div class="module-hero"><div><h1>课堂举手请求</h1><p>当前有 3 位学生等待发言，按举手时间排序。</p></div></div><div class="module-card"><div class="record-row"><span class="row-icon">1</span><div class="row-copy"><b>王雨桐</b><span>已等待 42 秒 · 想回答当前问题</span></div><button class="btn primary small" onclick="viewMember('王雨桐','20260141')">允许发言</button></div><div class="record-row"><span class="row-icon">2</span><div class="row-copy"><b>陈思远</b><span>已等待 28 秒 · 有一个问题</span></div><button class="btn primary small" onclick="viewMember('陈思远','20260128')">允许发言</button></div><div class="record-row"><span class="row-icon">3</span><div class="row-copy"><b>周可欣</b><span>已等待 16 秒 · 想补充观点</span></div><button class="btn primary small" onclick="viewMember('周可欣','20260135')">允许发言</button></div></div>` };
+      return { title: '功能详情', html: '<div class="module-card"><h2>功能详情</h2><p>该操作已进入独立页面。</p></div>' };
+    }
+
+    function memberDetailTemplate(payload) {
+      const parts = String(payload || '王雨桐|20260141').split('|');
+      return `<div class="module-hero"><div><h1>${parts[0]} · 学生详情</h1><p>账号 ${parts[1]} · 高一（2）班 · 状态正常</p></div><div class="module-actions"><button class="btn" onclick="showToast('已向学生发送课堂提醒')">发送提醒</button><button class="btn primary" onclick="showToast('学生备注已保存')">保存备注</button></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>课堂参与情况</h2><div class="stats"><div class="stat"><div class="stat-top"><span>到课率</span></div><div class="stat-value">96%</div></div><div class="stat"><div class="stat-top"><span>课堂发言</span></div><div class="stat-value">18</div></div><div class="stat"><div class="stat-top"><span>参与时长</span></div><div class="stat-value">42m</div></div><div class="stat"><div class="stat-top"><span>课后任务</span></div><div class="stat-value">5/6</div></div></div><div class="detail-list"><div class="detail-item"><b>最近参与</b><span>今天 14:08 通过邀请链接进入课堂</span></div><div class="detail-item"><b>口语表现</b><span>表达较流畅，建议加强理由展开和连接词使用。</span></div></div></div><div class="module-card third"><h2>教师备注</h2><div class="field"><textarea>课堂参与积极，愿意主动发言。</textarea></div><div class="option-row"><div class="row-copy"><b>重点关注</b><span>在成员列表中标记</span></div><span class="switch" onclick="toggleSetting(this)"></span></div></div></div>`;
+    }
+
+    function getModuleTemplate(name) {
+      if (name === '课堂记录') return `
+        <div class="module-hero"><div><h1>课堂记录</h1><p>集中查看课堂转写、实时翻译、成员参与情况和课后教学摘要。</p></div><div class="module-actions"><button class="btn" onclick="openFeature('record-filters','module')">筛选记录</button><button class="btn primary" onclick="showToast('本学期课堂记录已导出')">导出记录</button></div></div>
+        <div class="stats"><div class="stat" onclick="openFeature('record-all','module')"><div class="stat-top"><span>课堂总数</span><span class="stat-icon">◎</span></div><div class="stat-value">26</div><div class="stat-foot">本学期累计</div></div><div class="stat" onclick="openFeature('analytics','module')"><div class="stat-top"><span>授课时长</span><span class="stat-icon">◷</span></div><div class="stat-value">18.5h</div><div class="stat-foot">较上月增加 12%</div></div><div class="stat" onclick="openFeature('record-all','module')"><div class="stat-top"><span>完整转写</span><span class="stat-icon">▤</span></div><div class="stat-value">24</div><div class="stat-foot">2 份正在生成</div></div><div class="stat" onclick="openFeature('analytics','module')"><div class="stat-top"><span>平均到课率</span><span class="stat-icon">↗</span></div><div class="stat-value">96.8%</div><div class="stat-foot">表现稳定</div></div></div>
+        <div class="module-grid"><div class="module-card two-thirds"><div class="block-head"><h2>最近课堂</h2><button onclick="openFeature('record-all','module')">全部记录 →</button></div>${recordRow('高一英语口语 2 班','今天 14:30 · 45 分钟','生成中')}${recordRow('考研英语写作强化班','昨天 16:10 · 90 分钟','已完成')}${recordRow('大学英语视听说 A 班','3 月 8 日 19:00 · 45 分钟','已完成')}</div><div class="module-card third"><h2>记录包含</h2><div class="option-row"><span class="row-icon">字</span><div class="row-copy"><b>双语课堂转写</b><span>按时间轴查看教师与学生发言</span></div></div><div class="option-row"><span class="row-icon">摘</span><div class="row-copy"><b>AI 教学摘要</b><span>自动整理重点、问题与课后任务</span></div></div><div class="option-row"><span class="row-icon">数</span><div class="row-copy"><b>成员参与数据</b><span>到课、发言与互动统计</span></div></div></div></div>`;
+      if (name === 'PPT 集成') return officeTemplate('PPT','◫','上传演示文稿，在课堂中同步翻页并生成双语字幕。','高一口语 Unit 4.pptx','考研写作结构精讲.pptx');
+      if (name === 'Word 集成') return officeTemplate('Word','▤','导入教案和讲义，快速提取段落并生成课堂讲解内容。','高一口语课堂教案.docx','写作范文批注.docx');
+      if (name === 'Excel 集成') return officeTemplate('Excel','▥','导入成绩、考勤和词汇表，在课堂中快速调用结构化数据。','三月课堂考勤.xlsx','英语词汇训练表.xlsx');
+      if (name === '实时转译') return `
+        <div class="module-hero"><div><h1>实时转译</h1><p>配置课堂语言和音频设备，实时生成原文、译文与课堂字幕。</p></div><div class="module-actions"><button class="btn" onclick="openFeature('device-setup','module')">检测设备</button><button class="btn primary" onclick="toggleTranslation(this)">▶ 开始转译</button></div></div>
+        <div class="module-grid"><div class="module-card third"><h2>转译设置</h2><div class="field"><label>讲话语言</label><select onchange="showToast('讲话语言已设为 '+this.value)"><option>中文</option><option selected>英语</option><option>日语</option></select></div><div class="field"><label>翻译为</label><select onchange="showToast('目标语言已设为 '+this.value)"><option selected>中文</option><option>英语</option><option>日语</option></select></div><div class="field"><label>音频输入</label><select onchange="showToast('音频输入设备已切换')"><option>MacBook 麦克风</option><option>外接 USB 麦克风</option></select></div><div class="integration-state"><span>● 设备状态正常</span><button class="text-btn" onclick="openFeature('device-setup','module')">重新检测</button></div></div><div class="module-card two-thirds"><div class="block-head"><h2>实时课堂字幕</h2><button onclick="openFeature('live-class','module')">投屏模式</button></div><div class="translator"><div class="translator-head"><span>英语 → 中文</span><span id="translationState">等待开始</span></div><div class="translator-body"><div class="speech-line"><span>14:30:08 · 林老师</span><p>Today we are going to practice how to express opinions clearly.</p><em>今天我们将练习如何清晰地表达观点。</em></div><div class="speech-line"><span>14:30:21 · 学生</span><p>Can I use an example from my own experience?</p><em>我可以使用自己经历中的例子吗？</em></div></div></div></div></div>`;
+      if (name === '个人中心') return `
+        <div class="module-hero"><div><h1>个人中心</h1><p>维护教师资料、教学身份和账号安全信息。</p></div><div class="module-actions"><button class="btn primary" onclick="saveProfile()">保存资料</button></div></div>
+        <div class="module-grid"><div class="module-card two-thirds"><div class="profile-panel"><div class="avatar">林</div><div><h2>林知夏</h2><p>英语教研组 · 高中英语教师</p></div><button class="btn small" style="margin-left:auto" onclick="openFeature('security','module','更换头像')">更换头像</button></div><div class="settings-form"><div class="field"><label>姓名</label><input value="林知夏"></div><div class="field"><label>教师编号</label><input value="T20260018" readonly></div><div class="field"><label>所属学校</label><input value="智语实验中学"></div><div class="field"><label>教研组</label><select><option selected>英语教研组</option><option>国际课程组</option></select></div><div class="field"><label>手机号</label><input value="138****6218"></div><div class="field"><label>邮箱</label><input value="lin.zhixia@example.com"></div></div><div class="field"><label>个人简介</label><textarea>高中英语教师，主要负责口语教学与跨语言课堂实践。</textarea></div></div><div class="module-card third" id="securityCard"><h2>账号与安全</h2>${securityRow('登录密码','已设置','修改密码')}${securityRow('手机绑定','138****6218','更换手机')}${securityRow('邮箱绑定','已验证','更换邮箱')}${securityRow('登录设备','当前 2 台设备','管理设备')}</div></div>`;
+      if (name === '模型与偏好') return `
+        <div class="module-hero"><div><h1>模型与偏好</h1><p>配置教师端默认模型、转译方式、课堂字幕和消息提醒。</p></div><div class="module-actions"><button class="btn" onclick="showToast('偏好已恢复为推荐设置')">恢复默认</button><button class="btn primary" onclick="showToast('模型与偏好已保存')">保存设置</button></div></div>
+        <div class="module-grid"><div class="module-card"><h2>默认课堂模型</h2><p>不同模型会影响实时转写速度、翻译质量和课堂摘要效果。</p><div class="choice-grid"><div class="choice-card selected" onclick="selectChoice(this)"><b>均衡模式</b><span>兼顾速度和准确度，适合日常课堂</span></div><div class="choice-card" onclick="selectChoice(this)"><b>高精度模式</b><span>优先翻译质量，适合专业内容</span></div><div class="choice-card" onclick="selectChoice(this)"><b>极速模式</b><span>优先低延迟，适合连续口语互动</span></div></div></div><div class="module-card half"><h2>课堂偏好</h2>${settingRow('自动生成双语字幕','课堂开始后自动开启字幕',true)}${settingRow('保存完整课堂转写','结束后生成可检索记录',true)}${settingRow('自动生成教学摘要','提取重点、问题和课后任务',true)}${settingRow('显示学生端加入提醒','学生加入时在教师端提示',false)}</div><div class="module-card half"><h2>通知偏好</h2>${settingRow('开课前 15 分钟提醒','通过站内消息提醒',true)}${settingRow('学生申请加入提醒','需要确认时立即通知',true)}${settingRow('课堂记录生成提醒','转写和摘要完成后通知',true)}${settingRow('每周教学报告','每周一生成数据报告',false)}</div></div>`;
+      return '<div class="module-card"><h2>页面正在准备</h2><p>该模块的原型内容即将呈现。</p></div>';
+    }
+
+    function recordRow(name, meta, state) {
+      return `<div class="record-row"><span class="row-icon">▶</span><div class="row-copy"><b>${name}</b><span>${meta} · ${state}</span></div><div class="row-actions"><button class="btn small" onclick="openFeature('record-playback','module','${name}')">回放</button><button class="btn small soft" onclick="openFeature('record-summary','module','${name}')">查看摘要</button></div></div>`;
+    }
+
+    function officeTemplate(type, icon, description, fileOne, fileTwo) {
+      return `<div class="module-hero"><div><h1>${type} 集成</h1><p>${description}</p></div><div class="module-actions"><button class="btn" onclick="openFeature('office-guide','module','${type}')">使用说明</button><button class="btn primary" onclick="uploadOffice('${type}')">＋ 上传${type}</button></div></div><div class="module-grid"><div class="module-card two-thirds"><h2>导入${type}文件</h2><div class="upload-zone" role="button" tabindex="0" onclick="uploadOffice('${type}')"><div><i>${icon}</i><b>点击选择或拖拽${type}文件到这里</b><span>原型支持上传、解析、课堂调用和历史文件管理</span></div></div></div><div class="module-card third"><h2>集成状态</h2><div class="integration-state"><span>● ${type} 组件已连接</span><button class="text-btn" onclick="showToast('${type} 组件连接正常')">检测</button></div><div class="option-row"><span class="row-icon">同</span><div class="row-copy"><b>课堂同步</b><span>授课时同步展示文件内容</span></div><span class="switch on" onclick="toggleSetting(this)"></span></div><div class="option-row"><span class="row-icon">译</span><div class="row-copy"><b>自动翻译</b><span>提取内容并生成双语文本</span></div><span class="switch on" onclick="toggleSetting(this)"></span></div></div><div class="module-card"><div class="block-head"><h2>最近使用</h2><button onclick="openFeature('office-files','module','${type}')">全部文件 →</button></div>${fileRow(icon,fileOne,'今天 10:20')}${fileRow(icon,fileTwo,'3 月 8 日 16:42')}</div></div>`;
+    }
+
+    function fileRow(icon, name, time) {
+      const returnTo = arguments[3] || 'module';
+      return `<div class="file-row"><span class="row-icon">${icon}</span><div class="row-copy"><b>${name}</b><span>${time} · 已解析完成</span></div><div class="row-actions"><button class="btn small" onclick="openFeature('file-preview','${returnTo}','${name}')">预览</button><button class="btn small soft" onclick="showToast('已选择 ${name} 用于课堂')">用于课堂</button></div></div>`;
+    }
+
+    function securityRow(title, value, action) {
+      return `<div class="security-row"><div class="row-copy"><b>${title}</b><span>${value}</span></div><button class="text-btn" onclick="openFeature('security','module','${action}')">${action}</button></div>`;
+    }
+
+    function settingRow(title, description, enabled) {
+      return `<div class="option-row"><div class="row-copy"><b>${title}</b><span>${description}</span></div><span class="switch ${enabled ? 'on' : ''}" role="button" tabindex="0" onclick="toggleSetting(this)"></span></div>`;
+    }
+
+    function uploadOffice(type) { openFeature('office-upload', 'module', type); }
+    function playRecord(button) { const playing = button.textContent === '播放' || button.textContent === '回放'; button.textContent = playing ? '暂停' : '播放'; showToast(playing ? '课堂回放已开始' : '课堂回放已暂停'); }
+    function toggleSetting(setting) { setting.classList.toggle('on'); showToast(setting.classList.contains('on') ? '设置已开启' : '设置已关闭'); }
+    function selectChoice(choice) { choice.parentElement.querySelectorAll('.choice-card').forEach(item => item.classList.remove('selected')); choice.classList.add('selected'); showToast(`已选择${choice.querySelector('b').textContent}`); }
+    function saveProfile() { showToast('个人资料已保存'); }
+    function toggleTranslation(button) { const running = button.textContent.includes('停止'); button.textContent = running ? '▶ 开始转译' : '■ 停止转译'; document.getElementById('translationState').textContent = running ? '等待开始' : '实时转译中'; showToast(running ? '实时转译已停止' : '实时转译已开始'); }
+
+    function handleStat(type) {
+      if (type === 'students') {
+        openClass('高一英语口语 2 班', '7HK9Q2M8', 32);
+        openMemberPanel();
+        showToast('已进入学生成员管理');
+        return;
+      }
+      const filter = document.getElementById('statusFilter');
+      filter.value = type;
+      filterClasses();
+      document.querySelector('.surface').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showToast(type === 'all' ? '已显示全部课堂' : type === 'preparing' ? '已筛选待开课课堂' : '已筛选进行中课堂');
+    }
+
+    function switchClassView(button, view) {
+      document.querySelectorAll('.view-switch button').forEach(item => item.classList.toggle('active', item === button));
+      document.getElementById('classGrid').classList.toggle('list-view', view === 'list');
+      showToast(view === 'list' ? '已切换为列表视图' : '已切换为卡片视图');
+    }
+
+    function toggleAccountMenu(event) {
+      event.stopPropagation();
+      document.getElementById('noticePanel').classList.remove('show');
+      document.getElementById('accountMenu').classList.toggle('show');
+    }
+
+    function toggleNoticePanel(event) {
+      event.stopPropagation();
+      document.getElementById('accountMenu').classList.remove('show');
+      document.getElementById('noticePanel').classList.toggle('show');
+      event.currentTarget.querySelector('.notice-dot').style.display = 'none';
+    }
+
+    function openMemberPanel() {
+      const memberTab = document.querySelector('.tabs .tab:nth-child(2)');
+      switchDetailTab(memberTab, 'memberPanel');
+    }
+
+    function viewMember(name, account) {
+      openFeature('member-detail', 'class', `${name}|${account}`);
+    }
+
+    function startClass(button) {
+      document.getElementById('detailStatus').textContent = '授课中';
+      button.textContent = '正在上课';
+      showToast('课堂已开启，学生端将收到实时通知');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function maskClose(event, id) { if (event.target.id === id) closeModal(id); }
+
+    function createCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    function createClassroom() {
+      const input = document.getElementById('newClassName');
+      const name = input.value.trim();
+      if (!name) { showToast('请填写课堂名称'); input.focus(); return; }
+      const subject = document.getElementById('newSubject').value;
+      const stage = document.getElementById('newStage').value;
+      const code = createCode();
+      const article = document.createElement('article');
+      article.className = 'class-card';
+      article.setAttribute('role', 'button');
+      article.tabIndex = 0;
+      article.dataset.name = `${name} ${code}`;
+      article.dataset.status = 'preparing';
+      article.dataset.className = name;
+      article.dataset.code = code;
+      article.dataset.students = '0';
+      article.innerHTML = `<div class="class-cover"><div class="code">课堂码 · ${code}</div><h3>${escapeHtml(name)}</h3><span class="status">待开课</span></div><div class="class-body"><div class="meta-row"><span>${escapeHtml(subject)} · ${escapeHtml(stage)}</span><span>0 名学生</span></div><div class="meta-row"><div class="avatar-stack"><i class="mini-avatar more">暂无</i></div><span>刚刚创建</span></div><div class="card-actions"><button class="btn small soft">查看详情</button><button class="btn small">邀请</button></div></div>`;
+      const buttons = article.querySelectorAll('button');
+      buttons[0].onclick = () => openClass(name, code, 0);
+      buttons[1].onclick = () => openInvite(name, code);
+      document.getElementById('classGrid').prepend(article);
+      document.getElementById('classCount').textContent = String(document.querySelectorAll('.class-card').length);
+      closeModal('createModal');
+      input.value = '';
+      document.getElementById('newDescription').value = '';
+      showToast('课堂创建成功');
+      setTimeout(() => openInvite(name, code), 350);
+    }
+
+    function filterClasses() {
+      const keyword = document.getElementById('classSearch').value.trim().toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      let visible = 0;
+      document.querySelectorAll('.class-card').forEach(card => {
+        const matched = card.dataset.name.toLowerCase().includes(keyword) && (status === 'all' || card.dataset.status === status);
+        card.style.display = matched ? '' : 'none';
+        if (matched) visible++;
+      });
+      document.getElementById('emptyResult').style.display = visible ? 'none' : 'block';
+    }
+
+    function openClass(name, code, students) {
+      currentClassName = name;
+      currentCode = code;
+      currentStudents = students;
+      document.getElementById('detailName').textContent = name;
+      document.getElementById('detailCode').textContent = code;
+      document.getElementById('overviewCode').textContent = code;
+      document.getElementById('detailStudentCount').textContent = students;
+      document.getElementById('memberTabCount').textContent = students;
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('listPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'block';
+      document.getElementById('crumbTitle').textContent = name;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function backToList() {
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('detailPage').style.display = 'none';
+      document.getElementById('modulePage').style.display = 'none';
+      document.getElementById('listPage').style.display = 'block';
+      document.getElementById('crumbTitle').textContent = '我的课堂';
+      document.querySelectorAll('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === '我的课堂'));
+    }
+
+    function switchDetailTab(button, panelId) {
+      document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    function openInvite(name, code, tab) {
+      if (name) currentClassName = name;
+      if (code) currentCode = code;
+      document.getElementById('inviteClassName').textContent = currentClassName;
+      syncInviteCode();
+      openModal('inviteModal');
+      switchInviteTab(tab || 'link');
+    }
+
+    function switchInviteTab(tab) {
+      document.querySelectorAll('[data-invite-tab]').forEach(button => button.classList.toggle('active', button.dataset.inviteTab === tab));
+      document.querySelectorAll('.invite-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`invite-${tab}`).classList.add('active');
+    }
+
+    function syncInviteCode() {
+      document.getElementById('modalCode').textContent = currentCode;
+      document.getElementById('inviteLink').value = `https://class.zhiyutonghang.cn/join/${currentCode}`;
+      document.getElementById('overviewCode').textContent = currentCode;
+      document.getElementById('detailCode').textContent = currentCode;
+    }
+
+    async function copyText(text, message) {
+      try { await navigator.clipboard.writeText(text); } catch (_) {
+        const area = document.createElement('textarea'); area.value = text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+      }
+      showToast(message);
+    }
+
+    function copyInviteLink() { copyText(document.getElementById('inviteLink').value, '邀请链接已复制'); }
+    function refreshCode() { currentCode = createCode(); syncInviteCode(); showToast('邀请码已刷新，原邀请码已失效'); }
+
+    function lookupStudent(force) {
+      const account = document.getElementById('studentAccount').value.trim();
+      const preview = document.getElementById('studentPreview');
+      preview.classList.toggle('show', /^\d{5,12}$/.test(account));
+      if (force && !/^\d{5,12}$/.test(account)) showToast('请输入 5–12 位学生账号');
+      if (/^\d{5,12}$/.test(account)) preview.querySelector('span').textContent = `账号 ${account} · 学生`;
+    }
+
+    function addStudent() {
+      const account = document.getElementById('studentAccount').value.trim();
+      const tbody = document.getElementById('memberRows');
+      const row = document.createElement('tr');
+      row.dataset.member = `顾清禾 ${account}`;
+      row.innerHTML = `<td><div class="student"><div class="avatar" style="background:#eeefff;color:#4c55d7">顾</div><div><b>顾清禾</b><small>学生</small></div></div></td><td>${escapeHtml(account)}</td><td>老师添加</td><td>刚刚</td><td><span class="member-status">正常</span></td><td style="text-align:right"><button class="text-btn">查看</button><button class="text-btn danger">移除</button></td>`;
+      row.querySelector('.text-btn:not(.danger)').onclick = function () { viewMember('顾清禾', account); };
+      row.querySelector('.danger').onclick = function () { removeMember(this, '顾清禾'); };
+      tbody.prepend(row);
+      currentStudents++;
+      document.getElementById('studentCount').textContent = String(Number(document.getElementById('studentCount').textContent) + 1);
+      document.getElementById('detailStudentCount').textContent = currentStudents;
+      document.getElementById('memberTabCount').textContent = currentStudents;
+      document.getElementById('studentAccount').value = '';
+      document.getElementById('studentPreview').classList.remove('show');
+      closeModal('inviteModal');
+      showToast('顾清禾已加入课堂');
+    }
+
+    function filterMembers() {
+      const keyword = document.getElementById('memberSearch').value.trim().toLowerCase();
+      document.querySelectorAll('#memberRows tr').forEach(row => { row.style.display = row.dataset.member.toLowerCase().includes(keyword) ? '' : 'none'; });
+    }
+
+    function removeMember(button, name) {
+      if (!confirm(`确定将“${name}”移出课堂吗？`)) return;
+      button.closest('tr').remove();
+      currentStudents = Math.max(0, currentStudents - 1);
+      document.getElementById('detailStudentCount').textContent = currentStudents;
+      document.getElementById('memberTabCount').textContent = currentStudents;
+      showToast(`${name} 已移出课堂`);
+    }
+
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

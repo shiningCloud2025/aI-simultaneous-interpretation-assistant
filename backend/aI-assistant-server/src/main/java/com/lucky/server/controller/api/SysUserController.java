@@ -1,10 +1,7 @@
 package com.lucky.server.controller.api;
 
 import com.lucky.server.common.basic.BaseResult;
-import com.lucky.server.domain.dto.SysUserLoginDTO;
-import com.lucky.server.domain.dto.SysUserRegisterDTO;
-import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
-import com.lucky.server.domain.dto.SysUserUpdateDTO;
+import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserInfoVO;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
@@ -27,17 +24,42 @@ import org.springframework.web.bind.annotation.*;
 public class SysUserController {
     private final SysUserService sysUserService;
 
-    @PostMapping("/login")
-    @Operation(summary = "系统用户登录")
-    public BaseResult<SysUserLoginTokenVO> login(@Valid @RequestBody SysUserLoginDTO dto,HttpServletRequest request){
-        return BaseResult.ok(sysUserService.login(dto, request));
+    @PostMapping("/student/login")
+    @Operation(summary = "学生登录")
+    public BaseResult<SysUserLoginTokenVO> studentLogin(@Valid @RequestBody SysUserStudentLoginDTO dto,
+                                                        HttpServletRequest request){
+        return BaseResult.ok(sysUserService.studentLogin(dto, request));
     }
 
-    @PostMapping("/register")
-    @Operation(summary = "系统用户注册")
-    public BaseResult<SysUserLoginTokenVO> register(@Valid @RequestBody SysUserRegisterDTO dto, HttpServletRequest request) {
-        return BaseResult.ok(sysUserService.register(dto, request));
+    @PostMapping("/student/register")
+    @Operation(summary = "学生注册")
+    public BaseResult<SysUserLoginTokenVO> studentRegister(@Valid @RequestBody SysUserStudentRegisterDTO dto,
+                                                           HttpServletRequest request) {
+        return BaseResult.ok(sysUserService.studentRegister(dto, request));
     }
+
+    /**
+     * 老师登录
+     * <p>用户类型固定为 TEACHER，前端无法指定。
+     */
+    @PostMapping("/teacher/login")
+    @Operation(summary = "老师登录")
+    public BaseResult<SysUserLoginTokenVO> teacherLogin(@Valid @RequestBody SysUserTeacherLoginDTO dto,
+                                                        HttpServletRequest request){
+        return BaseResult.ok(sysUserService.teacherLogin(dto, request));
+    }
+
+    /**
+     * 老师注册
+     * <p>用户类型固定为 TEACHER，注册即登录。
+     */
+    @PostMapping("/teacher/register")
+    @Operation(summary = "老师注册")
+    public BaseResult<SysUserLoginTokenVO> teacherRegister(@Valid @RequestBody SysUserTeacherRegisterDTO dto,
+                                                           HttpServletRequest request) {
+        return BaseResult.ok(sysUserService.teacherRegister(dto, request));
+    }
+
 
     @PutMapping("/profile")
     @Operation(summary = "修改个人资料")

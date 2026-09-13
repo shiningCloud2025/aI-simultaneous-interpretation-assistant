@@ -1,10 +1,7 @@
 package com.lucky.server.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.lucky.server.domain.dto.SysUserLoginDTO;
-import com.lucky.server.domain.dto.SysUserRegisterDTO;
-import com.lucky.server.domain.dto.SysUserResetPasswordDTO;
-import com.lucky.server.domain.dto.SysUserUpdateDTO;
+import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.SysUserLoginTokenVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,22 +12,46 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 public interface SysUserService  extends IService<SysUser> {
     /**
-     * 登录
+     * 学生登录
      * @param dto     登录请求
      * @param request HTTP请求
      * @return JWT Token
      */
-    SysUserLoginTokenVO login(SysUserLoginDTO dto, HttpServletRequest request);
+    SysUserLoginTokenVO studentLogin(SysUserStudentLoginDTO dto, HttpServletRequest request);
 
 
     /**
-     * 用户注册（注册即登录，返回Token）
+     * 学生注册（注册即登录，返回Token）
      *
      * @param dto     注册信息
      * @param request HTTP 请求（用于获取 IP）
      * @return Token
      */
-    SysUserLoginTokenVO register(SysUserRegisterDTO dto, HttpServletRequest request);
+    SysUserLoginTokenVO studentRegister(SysUserStudentRegisterDTO dto, HttpServletRequest request);
+
+
+    /**
+     * 老师登录
+     *
+     * <p>用户类型固定为 TEACHER，由实现内部指定，前端无法干预。
+     *
+     * @param dto     老师登录请求
+     * @param request HTTP请求
+     * @return JWT Token
+     */
+    SysUserLoginTokenVO teacherLogin(SysUserTeacherLoginDTO dto, HttpServletRequest request);
+
+
+    /**
+     * 老师注册（注册即登录，返回Token）
+     *
+     * <p>用户类型固定为 TEACHER。
+     *
+     * @param dto     老师注册信息
+     * @param request HTTP 请求（用于获取 IP）
+     * @return Token
+     */
+    SysUserLoginTokenVO teacherRegister(SysUserTeacherRegisterDTO dto, HttpServletRequest request);
 
 
     /**

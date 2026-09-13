@@ -4,6 +4,7 @@ import { useAppStore, api } from '../stores/appStore';
 import { AuthBox } from '../components/AuthBox';
 
 export function LoginPage() {
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [tab, setTab] = useState<'password' | 'sms' | 'email'>('password');
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
@@ -25,11 +26,13 @@ export function LoginPage() {
     if (!password.trim()) return showToast('请输入密码');
     setLoading(true);
     try {
-      const data = await api.login({ keyword: account, password });
+      const data = role === 'teacher'
+        ? await api.teacherLogin({ keyword: account, password })
+        : await api.login({ keyword: account, password });
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav('/dashboard');
+      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -42,11 +45,13 @@ export function LoginPage() {
     if (!code.trim()) return showToast('请输入验证码');
     setLoading(true);
     try {
-      const data = await api.loginByPhone({ phone, captcha: code });
+      const data = role === 'teacher'
+        ? await api.teacherLogin({ phone, captcha: code })
+        : await api.loginByPhone({ phone, captcha: code });
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav('/dashboard');
+      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -59,11 +64,13 @@ export function LoginPage() {
     if (!code.trim()) return showToast('请输入验证码');
     setLoading(true);
     try {
-      const data = await api.loginByEmail({ email, captcha: code });
+      const data = role === 'teacher'
+        ? await api.teacherLogin({ email, captcha: code })
+        : await api.loginByEmail({ email, captcha: code });
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav('/dashboard');
+      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -109,6 +116,10 @@ export function LoginPage() {
 
   return (
     <AuthBox title="智语同航" subtitle="基于多 Harness 智能体协作与编排的智慧外语课堂">
+      <div style={{ display: 'flex', marginBottom: 12, background: '#eeefff', borderRadius: 10, padding: 4 }}>
+        <button onClick={() => setRole('student')} style={roleButton(role === 'student')}>我是学生</button>
+        <button onClick={() => setRole('teacher')} style={roleButton(role === 'teacher')}>我是老师</button>
+      </div>
       <div style={{ display: 'flex', marginBottom: 24, background: '#f5f3f0', borderRadius: 10, padding: 4 }}>
         <button onClick={() => setTab('password')} style={tb(tab === 'password')}>密码登录</button>
         <button onClick={() => setTab('sms')} style={tb(tab === 'sms')}>短信登录</button>
@@ -176,6 +187,10 @@ function tb(a: boolean): React.CSSProperties {
 
 function sendBtn(disabled: boolean): React.CSSProperties {
   return { padding: '11px 14px', background: '#f5f3f0', border: 'none', borderRadius: 10, fontSize: 13, color: disabled ? '#bbb' : '#666', cursor: disabled ? 'default' : 'pointer', whiteSpace: 'nowrap', fontWeight: 500 };
+}
+
+function roleButton(active: boolean): React.CSSProperties {
+  return { flex: 1, padding: 10, border: 'none', background: active ? '#5962d9' : 'transparent', color: active ? '#fff' : '#74758b', borderRadius: 8, cursor: 'pointer', fontWeight: active ? 700 : 500, fontSize: 13 };
 }
 
 const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', background: '#f7f6f4', border: '1px solid transparent', borderRadius: 10, color: '#1a1a1a', fontSize: 14, outline: 'none', boxSizing: 'border-box' };

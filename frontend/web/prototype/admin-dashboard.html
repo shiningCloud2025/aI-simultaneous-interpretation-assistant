@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="star" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智语同航 · 超管看板</title>
+<style>
+:root{
+  --bg:#070b16; --bg2:#0c1322;
+  --card:rgba(255,255,255,.045); --card-hi:rgba(255,255,255,.075);
+  --border:rgba(255,255,255,.09); --border-hi:rgba(255,255,255,.16);
+  --txt:#e8edfa; --txt2:#9aa5c0; --txt3:#616d8a;
+  --c-user:#3ddc97;      /* 用户看板 - 青绿 */
+  --c-ops:#ffb454;       /* 运营看板 - 琥珀 */
+  --c-ai:#7b8cff;        /* AI 看板 - 蓝紫 */
+  --c-dev:#ff6b8a;       /* 日志看板 - 玫红 */
+  --gold:#ffd166;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%;overflow:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--txt); font-size:13px; overflow:hidden;
+  height:100%;-webkit-font-smoothing:antialiased;
+}
+.app{display:flex;height:100vh}
+
+/* ══════════ 背景：极光 + 网格 ══════════ */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.30;
+  animation:drift 22s ease-in-out infinite alternate}
+.a1{width:620px;height:620px;top:-14%;left:-8%;background:radial-gradient(circle,#1d5cff,transparent 68%)}
+.a2{width:560px;height:560px;bottom:-16%;right:-6%;background:radial-gradient(circle,#00d2a8,transparent 68%)}
+.a3{width:480px;height:480px;top:36%;left:44%;background:radial-gradient(circle,#8a4dff,transparent 68%);animation-delay:-8s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,-38px) scale(1.14)}}
+.grid{position:absolute;inset:0;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 45%,#000 25%,transparent 78%)}
+#stars{position:absolute;inset:0}
+#stars i{position:absolute;background:#fff;border-radius:50%;animation:tw 3.5s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.1}50%{opacity:.85}}
+
+/* ══════════ 经典模式：侧边栏 ══════════ */
+.sidebar{
+  width:210px;flex-shrink:0;z-index:2;
+  background:rgba(255,255,255,.028);backdrop-filter:blur(16px);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:18px 12px;
+}
+body[data-mode="classic"] .sidebar{display:flex}
+body[data-mode="star"] .sidebar{display:none}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 20px}
+.logo{width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--c-user),var(--c-ai));
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#071018}
+.brand b{font-size:14px;letter-spacing:.4px}
+.brand small{display:block;font-size:10px;color:var(--txt3);font-weight:400}
+.grp{font-size:10px;color:var(--txt3);padding:0 8px;margin:14px 0 6px;letter-spacing:1px}
+.grp:first-of-type{margin-top:0}
+.nav{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;cursor:pointer;
+  color:var(--txt2);font-size:13px;margin-bottom:2px;border:none;background:none;
+  font-family:inherit;width:100%;text-align:left;transition:.16s;position:relative}
+.nav:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+.nav.active{color:#fff;font-weight:600}
+.nav.active:before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:16px;border-radius:0 3px 3px 0;background:var(--nc,var(--c-user));
+  box-shadow:0 0 10px var(--nc,var(--c-user))}
+.nav .ic{font-size:14px}
+.nav .tag{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:5px;
+  background:rgba(255,255,255,.08);color:var(--txt3)}
+
+/* ══════════ 星空模式 ══════════ */
+.starfield{
+  position:fixed;inset:0;z-index:40;display:none;
+}
+body[data-mode="star"] .starfield{display:block}
+.orbit-wrap{position:absolute;top:50%;left:50%;width:0;height:0}
+.orbit{position:absolute;top:50%;left:50%;border-radius:50%;
+  border:1px solid rgba(255,255,255,.055);transform:translate(-50%,-50%)}
+.planet{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;
+  animation:spinrev 80s linear infinite}
+@keyframes spinrev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+.orbit.spin{animation:spin 80s linear infinite}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}}
+.pbody{
+  width:104px;height:104px;border-radius:50%;cursor:pointer;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:radial-gradient(circle at 33% 26%,var(--pb2),var(--pb1) 62%,#0a1020 100%);
+  border:1px solid rgba(255,255,255,.14);
+  transition:transform .3s cubic-bezier(.34,1.5,.64,1),box-shadow .3s;
+}
+.pbody:hover{transform:scale(1.14);box-shadow:0 0 44px var(--pg),0 0 90px var(--pg2)}
+.pbody .pi{font-size:26px;line-height:1;filter:drop-shadow(0 0 8px var(--pg))}
+.pbody .pl{font-size:12px;font-weight:600;letter-spacing:.5px}
+.pbody .pd{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.3px}
+.sf-top{position:absolute;top:0;left:0;right:0;padding:26px 32px;
+  display:flex;justify-content:space-between;align-items:flex-start;z-index:3}
+.sf-t b{display:block;font-size:20px;letter-spacing:1.4px;font-weight:600;
+  background:linear-gradient(92deg,#fff,#9fb4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sf-t span{font-size:11px;color:var(--txt3);letter-spacing:.6px}
+.sf-hint{position:absolute;bottom:30px;left:0;right:0;text-align:center;font-size:11px;color:var(--txt3);letter-spacing:.8px}
+
+/* ══════════ 主区 ══════════ */
+.main{flex:1;display:flex;flex-direction:column;z-index:2;position:relative;overflow:hidden}
+.topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.022);backdrop-filter:blur(14px)}
+body[data-mode="star"] .topbar{display:none}
+.tb-l{display:flex;align-items:center;gap:12px}
+.tb-l h1{font-size:16px;font-weight:600}
+.tb-l .dot{width:8px;height:8px;border-radius:50%;background:var(--nc);box-shadow:0 0 10px var(--nc)}
+.tb-r{display:flex;gap:8px;align-items:center}
+.mbtn{padding:7px 15px;border-radius:9px;cursor:pointer;font:inherit;font-size:12px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--txt2);transition:.18s}
+.mbtn:hover{background:rgba(255,255,255,.12);color:#fff}
+.mbtn.on{background:linear-gradient(92deg,var(--c-ai),var(--c-user));color:#07101a;border:none;font-weight:600}
+
+/* 一屏式看板：整页严格锁定，永不出现页面级滚动；只有卡片内部可滚 */
+.content{flex:1;display:flex;flex-direction:column;
+  padding:18px 24px 22px;overflow:hidden;min-height:0}
+.board{display:flex;flex-direction:column;gap:13px;flex:1;min-height:0}
+
+/* ══════════ 看板面板（星空模式全屏） ══════════ */
+.panel{display:none;animation:pin .42s cubic-bezier(.2,.9,.3,1)}
+.panel.on{display:block}
+@keyframes pin{from{opacity:0;transform:scale(.965) translateY(14px)}}
+body[data-mode="star"] .panel.on{
+  position:fixed;inset:0;z-index:45;overflow-y:auto;padding:0 0 40px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(20,30,60,.9),rgba(6,10,22,.97) 62%);
+  backdrop-filter:blur(20px);animation:pinfly .5s cubic-bezier(.2,.9,.3,1)}
+@keyframes pinfly{from{opacity:0;transform:scale(1.14)}}
+body[data-mode="star"] .panel-inner{max-width:1560px;margin:0 auto;padding:26px 32px}
+
+/* 用户看板：与 AI 看板一致，电脑 100% 缩放下一屏铺满 */
+body[data-mode="star"] #panel-user.panel.on{overflow:hidden;padding:0}
+body[data-mode="star"] #panel-user .panel-inner{
+  max-width:none;width:100%;height:100vh;padding:8px 24px 18px;display:flex}
+#panel-user .user-board{
+  width:100%;height:100%;min-height:0;display:grid;gap:12px;
+  grid-template-rows:58px 110px minmax(0,1.55fr) minmax(0,1.15fr)}
+#panel-user .mb{margin-bottom:0}
+#panel-user .sb-head{margin-bottom:0;align-items:center}
+#panel-user .sb-head h1{font-size:24px}
+#panel-user .sb-head .sub{margin-top:4px}
+#panel-user .sb-stats{margin-bottom:0;gap:12px;min-height:0}
+#panel-user .sb-stat{padding:14px 16px;border-radius:13px}
+#panel-user .sb-stat .lb{font-size:11.5px;margin-bottom:9px}
+#panel-user .sb-stat .vl{font-size:30px;letter-spacing:-.8px}
+#panel-user .sb-stat .dl{margin-top:10px;font-size:11.5px}
+#panel-user .sb-card{margin-bottom:0;padding:14px 16px;border-radius:13px;min-height:0;display:flex;flex-direction:column;overflow:auto}
+#panel-user .sb-card::-webkit-scrollbar{width:6px;height:6px}
+#panel-user .sb-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+#panel-user .sb-card h2{font-size:12px;margin-bottom:9px;flex-shrink:0}
+#panel-user .sb-card h2 .hint{font-size:10.5px}
+#panel-user .trend-tools input{height:26px;width:112px;font-size:10.5px}
+#panel-user .trend-tools button{height:26px;font-size:10.5px;padding:0 9px}
+#panel-user .sb-chart{height:auto;flex:1;min-height:0}
+#panel-user .lg{margin-top:7px;font-size:10.5px!important;flex-shrink:0}
+#panel-user .sb-pies{margin-bottom:0;gap:12px;min-height:0}
+#panel-user .sb-piew{gap:12px;min-height:0;flex:1}
+#panel-user .sb-pie{width:min(58px,12vh);height:min(58px,12vh)}
+#panel-user .sb-pie-lg{gap:5px;font-size:10.8px;min-width:0}
+#panel-user .sb-pie-lg .i{font-size:10.8px}
+#panel-user .sb-pie-lg .d{width:7px;height:7px}
+#panel-user .sb-pie-lg .vv{font-size:11px}
+#panel-user .sb-pie-lg .pc{font-size:9.5px;width:38px}
+#panel-user .sb-row2{gap:12px;min-height:0;grid-auto-rows:minmax(0,1fr)}
+#panel-user .dist-card .dist-grid{gap:12px}
+#panel-user .sb-tbl{font-size:11.5px}
+#panel-user .sb-tbl th,#panel-user .sb-tbl td{padding:7px 9px}
+#panel-user .sb-oh{margin-bottom:6px}
+#panel-user .sb-oh .big{font-size:22px}
+#panel-user .online-filters{margin-bottom:6px}
+#panel-user .online-filters input,#panel-user .online-filters select{height:28px;font-size:11px}
+#panel-user .sb-ol{min-height:0;overflow:auto}
+#panel-user .sb-ol .r{font-size:11.5px;padding:5px 2px}
+
+/* AI 看板：电脑 100% 缩放下一屏铺满，页面本身不滚动 */
+body[data-mode="star"] #panel-ai.panel.on{overflow:hidden;padding:0}
+body[data-mode="star"] #panel-ai .panel-inner{
+  max-width:none;width:100%;height:100vh;padding:8px 24px 18px;display:flex}
+#panel-ai .ai-board{
+  width:100%;height:100%;min-height:0;display:grid;gap:12px;
+  grid-template-rows:58px 110px minmax(0,1.42fr) minmax(0,1.04fr) minmax(0,.8fr) minmax(0,.8fr)}
+#panel-ai .mb{margin-bottom:0}
+#panel-ai .sb-head{margin-bottom:0;align-items:center}
+#panel-ai .sb-head h1{font-size:24px}
+#panel-ai .sb-head .sub{margin-top:4px}
+#panel-ai .sb-stats{margin-bottom:0;gap:12px;min-height:0}
+#panel-ai .sb-stat{padding:14px 16px;border-radius:13px}
+#panel-ai .sb-stat .lb{font-size:11.5px;margin-bottom:9px}
+#panel-ai .sb-stat .vl{font-size:30px;letter-spacing:-.8px}
+#panel-ai .sb-stat .dl{margin-top:10px;font-size:11.5px}
+#panel-ai .sb-card{margin-bottom:0;padding:14px 16px;border-radius:13px;min-height:0;display:flex;flex-direction:column;overflow:auto}
+#panel-ai .sb-card::-webkit-scrollbar{width:6px;height:6px}
+#panel-ai .sb-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+#panel-ai .sb-card h2{font-size:12px;margin-bottom:9px;flex-shrink:0}
+#panel-ai .sb-card h2 .hint{font-size:10.5px}
+#panel-ai .sb-chart{height:auto;flex:1;min-height:0}
+#panel-ai .lg{margin-top:7px;font-size:10.5px;flex-shrink:0}
+#panel-ai .sb-pies{margin-bottom:0;gap:12px;min-height:0}
+#panel-ai .sb-piew{gap:16px;min-height:0;flex:1}
+#panel-ai .sb-pie{width:min(78px,16vh);height:min(78px,16vh)}
+#panel-ai .sb-pie-lg{gap:8px;font-size:11.5px;min-width:0}
+#panel-ai .sb-pie-lg .i{font-size:11.5px}
+#panel-ai .sb-pie-lg .vv{font-size:12px}
+#panel-ai .sb-row2{gap:12px;min-height:0;grid-auto-rows:minmax(0,1fr)}
+#panel-ai .bl .r{font-size:11px;min-height:0}
+#panel-ai .sb-tbl{font-size:11.5px}
+#panel-ai .sb-tbl th,#panel-ai .sb-tbl td{padding:7px 9px}
+
+/* 日志看板：本期聚焦日志查看，后续监控能力可独立扩展 */
+body[data-mode="star"] #panel-dev.panel.on{overflow:hidden;padding:0}
+body[data-mode="star"] #panel-dev .panel-inner{
+  max-width:none;width:100%;height:100vh;padding:8px 24px 18px;display:flex}
+#panel-dev .dev-board{
+  width:100%;height:100%;min-height:0;display:grid;gap:12px;
+  grid-template-rows:58px 104px minmax(0,1fr)}
+#panel-dev .sb-head{margin-bottom:0;align-items:center}
+#panel-dev .sb-head h1{font-size:24px}
+#panel-dev .sb-head .sub{margin-top:4px}
+#panel-dev .sb-stats{margin-bottom:0;gap:12px;min-height:0;grid-template-columns:repeat(4,1fr)}
+#panel-dev .sb-stat{padding:14px 16px;border-radius:13px}
+#panel-dev .sb-stat .lb{font-size:11.5px;margin-bottom:9px}
+#panel-dev .sb-stat .vl{font-size:30px;letter-spacing:-.8px}
+#panel-dev .sb-stat .dl{margin-top:10px;font-size:11.5px}
+#panel-dev .dev-log-layout{display:grid;grid-template-columns:1fr 360px;gap:12px;min-height:0}
+#panel-dev .dev-log-layout>*{min-height:0}
+.log-console{background:rgba(3,7,16,.62);border:1px solid var(--border);border-radius:13px;
+  min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.log-toolbar{display:flex;gap:8px;align-items:center;padding:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.log-title{font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;margin-right:4px}
+.log-input,.log-select{height:32px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.055);
+  color:var(--txt);font:inherit;font-size:12px;padding:0 10px;outline:none}
+.log-input{flex:1;min-width:0}
+.log-select{width:128px}
+.log-btn{height:32px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.07);
+  color:var(--txt);font:inherit;font-size:12px;padding:0 12px}
+.log-btn.primary{border-color:rgba(255,107,138,.35);background:rgba(255,107,138,.16);color:#ff91a8}
+.log-body{flex:1;min-height:0;overflow:auto;padding:12px 14px;font-family:"SFMono-Regular",Consolas,monospace;
+  font-size:12px;line-height:1.75;color:#cbd3e8}
+.log-body::-webkit-scrollbar,.log-file-list::-webkit-scrollbar{width:6px;height:6px}
+.log-body::-webkit-scrollbar-thumb,.log-file-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+.log-line{white-space:pre-wrap;border-bottom:1px solid rgba(255,255,255,.035);padding:2px 0}
+.log-line .time{color:#65708d}.log-line .lv-info{color:#7b8cff}.log-line .lv-warn{color:#ffb454}.log-line .lv-error{color:#ff6b8a}
+.log-mark{color:#fff;background:rgba(255,180,84,.28);border-radius:4px;padding:0 3px}
+.log-side{display:grid;grid-template-rows:minmax(0,1fr);gap:12px;min-height:0}
+.log-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px 16px;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.log-card h2{font-size:12px;margin-bottom:10px}
+.log-file-list{display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:0}
+.log-file{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.045);
+  border:1px solid transparent;font-size:12px}
+.log-file.on{border-color:rgba(255,107,138,.38);background:rgba(255,107,138,.12)}
+.log-file .name{font-weight:600;color:var(--txt)}.log-file .size,.log-file .date{font-size:10.5px;color:var(--txt3)}
+
+/* ══════════ 星空模式：全屏大屏看板（独立于经典模式，允许滚动） ══════════ */
+.sb-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:24px}
+.sb-head h1{font-size:27px;font-weight:700;letter-spacing:-.6px;line-height:1.1}
+.sb-head .sub{font-size:12px;color:var(--txt3);margin-top:6px}
+.sb-head .live{margin-left:auto;padding:5px 13px;border-radius:8px;font-size:10px;
+  letter-spacing:.6px;background:rgba(61,220,151,.14);color:var(--c-user);font-weight:600}
+
+/* 大指标卡 */
+.sb-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:20px}
+.sb-stat{background:var(--card);border:1px solid var(--border);border-radius:17px;
+  padding:20px 22px;position:relative;overflow:hidden;transition:.2s}
+.sb-stat:hover{border-color:var(--border-hi)}
+.sb-stat:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--nc)}
+.sb-stat .lb{font-size:12px;color:var(--txt2);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.sb-stat .lb .ic{font-size:15px}
+.sb-stat .vl{font-size:37px;font-weight:700;letter-spacing:-1.6px;line-height:1;
+  font-variant-numeric:tabular-nums}
+.sb-stat .dl{margin-top:13px;font-size:12px;color:var(--c-user)}
+.sb-stat .dl.dim{color:var(--txt3)}
+
+/* 大卡片 */
+.sb-card{background:var(--card);border:1px solid var(--border);border-radius:17px;
+  padding:20px 22px;margin-bottom:20px;position:relative;overflow:hidden}
+.sb-card:before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--nc),transparent);opacity:.5}
+.sb-card h2{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sb-card h2 .hint{font-size:11.5px;color:var(--txt3);font-weight:400}
+.trend-tools{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px}
+.trend-tools input{height:28px;width:124px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,.055);color:var(--txt);font:inherit;font-size:11px;padding:0 8px;outline:none}
+.trend-tools button{height:28px;border-radius:8px;border:1px solid rgba(61,220,151,.35);
+  background:rgba(61,220,151,.14);color:#6ee7b7;font:inherit;font-size:11px;padding:0 10px;cursor:pointer}
+
+/* 大趋势图 */
+.sb-chart{height:290px;position:relative}
+.sb-chart svg{width:100%;height:100%;overflow:visible}
+
+/* 大饼图（并排） */
+.sb-pies{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.sb-piew{display:flex;align-items:center;gap:26px}
+.sb-pie{width:158px;height:158px;border-radius:50%;flex-shrink:0;position:relative}
+.sb-pie:after{content:'';position:absolute;inset:0;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.sb-pie-lg{display:flex;flex-direction:column;gap:13px;flex:1}
+.sb-pie-lg .i{display:flex;align-items:center;gap:10px;font-size:13px}
+.sb-pie-lg .d{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.sb-pie-lg .nm{flex:1;color:var(--txt2)}
+.sb-pie-lg .vv{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+.sb-pie-lg .pc{color:var(--txt3);font-size:11.5px;width:44px;text-align:right}
+
+/* 底部两栏 */
+.sb-row2{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+.sb-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.sb-tbl th{text-align:left;padding:11px 13px;background:rgba(255,255,255,.045);
+  color:var(--txt2);font-weight:500;font-size:11.5px;border-bottom:1px solid var(--border)}
+.sb-tbl td{padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.05);
+  font-variant-numeric:tabular-nums}
+
+/* 在线面板 */
+.sb-oh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.sb-oh .big{font-size:24px;font-weight:700;letter-spacing:-.6px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(92deg,#3ddc97,#7b8cff);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.sb-oh .unit{font-size:12px;color:var(--txt2);margin-left:4px}
+.sb-oh .src{font-size:11px;color:var(--txt3);white-space:nowrap}
+.online-filters{display:grid;grid-template-columns:1fr 104px;gap:8px;margin-bottom:8px}
+.online-filters input,.online-filters select{height:30px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,.055);color:var(--txt);font:inherit;font-size:11.5px;padding:0 10px;outline:none;min-width:0}
+.online-filters input::placeholder{color:var(--txt3)}
+.sb-ol{display:flex;flex-direction:column}
+.sb-ol .r{display:flex;align-items:center;gap:11px;padding:8px 2px;font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,.05)}
+.sb-ol .r:last-child{border:none}
+.sb-ol .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#3ddc97;
+  box-shadow:0 0 7px rgba(61,220,151,.75)}
+.sb-ol .dot.idle{background:#ffb454;box-shadow:0 0 7px rgba(255,180,84,.6)}
+.sb-ol .t{flex:1}
+.sb-ol .tm{color:var(--txt3);font-size:11px;flex-shrink:0}
+.back{position:fixed;top:20px;left:22px;z-index:60;display:none;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:10px;cursor:pointer;font:inherit;font-size:12px;
+  background:rgba(255,255,255,.07);border:1px solid var(--border-hi);color:var(--txt);
+  backdrop-filter:blur(12px);transition:.18s}
+.back:hover{background:rgba(255,255,255,.15);transform:translateX(-3px)}
+body[data-mode="star"] .back{display:flex}
+.back .ar{font-size:15px}
+
+/* ══════════ 卡片 ══════════ */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:15px;padding:15px 17px;
+  display:flex;flex-direction:column;min-height:0;
+  backdrop-filter:blur(12px);position:relative;overflow:hidden;
+  transition:border-color .2s,background .2s}
+.card:hover{border-color:var(--border-hi);background:var(--card-hi)}
+.card:before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--nc),transparent);opacity:.5}
+.card h2{font-size:12px;font-weight:600;margin-bottom:7px;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.card-body{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.card-body::-webkit-scrollbar{width:6px}
+.card-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+.card h2 .hint{font-size:11px;color:var(--txt3);font-weight:400}
+.card h2 .live{margin-left:auto;font-size:9px;padding:2px 8px;border-radius:6px;
+  background:rgba(61,220,151,.14);color:var(--c-user);letter-spacing:.5px}
+
+/* 指标卡 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex-shrink:0}
+.stats.s6{grid-template-columns:repeat(6,1fr)}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 13px;
+  backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:.2s}
+.stat:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.stat:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--nc)}
+.stat .lb{font-size:11px;color:var(--txt2);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.stat .lb .ic{font-size:13px}
+.stat .vl{font-size:27px;font-weight:700;letter-spacing:-.6px;line-height:1;
+  font-variant-numeric:tabular-nums}
+.stat .vl small{font-size:14px;font-weight:500;color:var(--txt2);margin-left:2px}
+.stat .dl{margin-top:9px;font-size:11px;color:var(--c-user);display:flex;align-items:center;gap:5px}
+.stat .dl.dn{color:var(--c-dev)}
+.stat .spark{position:absolute;right:12px;bottom:10px;opacity:.32}
+
+.row2{display:grid;grid-template-columns:1.75fr 1fr;gap:13px;flex:1.35;min-height:0;
+  grid-auto-rows:minmax(0,1fr)}
+.row2>div{margin-bottom:0;min-height:0}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;flex:0.85;min-height:0;
+  grid-auto-rows:minmax(0,1fr)}
+.row3>div{margin-bottom:0;min-height:0}
+/* 中部：趋势图（左） + 两个饼图（右，上下堆叠） */
+.row-mid{display:grid;grid-template-columns:1.6fr 1fr;gap:13px;flex:1.55;min-height:0}
+.row-mid>.card{min-height:0}
+.pie-col{display:grid;grid-template-rows:1fr 1fr;gap:10px;min-height:0}
+.pie-col>.card{min-height:0;padding:9px 12px}
+.pie-col .card h2{margin-bottom:4px;font-size:11.2px}
+.row-trend{flex:0.85;min-height:0;display:flex}
+.dist-card .card-body{overflow:hidden}
+.dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;flex:1;min-height:0}
+.dist-block{display:flex;flex-direction:column;min-height:0}
+.dist-block h3{font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--txt)}
+
+/* 中部：饼图区（用户类型 + 账号状态） */
+.piw{display:flex;align-items:center;gap:10px;flex:1;min-height:0}
+.pie{height:100%;aspect-ratio:1;max-height:58px;border-radius:50%;flex-shrink:0;position:relative}
+.pie:after{content:'';position:absolute;inset:0;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.pie-lg{display:flex;flex-direction:column;gap:5px;flex:1;min-height:0;font-size:10.8px}
+.pie-lg .i{display:flex;align-items:center;gap:6px}
+.pie-lg .d{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.pie-lg .nm{flex:1;color:var(--txt2)}
+.pie-lg .vv{font-weight:600;font-variant-numeric:tabular-nums}
+.pie-lg .pc{color:var(--txt3);font-size:10px;width:36px;text-align:right}
+.row-trend>.card{flex:1;min-height:0}
+.mb{margin-bottom:16px}
+
+/* 图表 */
+.chart{flex:1;min-height:52px;position:relative}
+.chart svg{width:100%;height:100%;overflow:visible}
+.lg{display:flex;gap:15px;margin-top:9px;font-size:11px;color:var(--txt2);flex-wrap:wrap;flex-shrink:0}
+.lg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.bars{display:flex;align-items:flex-end;gap:5px;height:190px}
+.bars .b{flex:1;border-radius:4px 4px 0 0;position:relative;min-height:4px;
+  background:linear-gradient(180deg,var(--nc),transparent);opacity:.85;transition:.2s}
+.bars .b:hover{opacity:1;transform:scaleY(1.04)}
+.bar-x{display:flex;gap:5px;margin-top:7px}
+.bar-x span{flex:1;text-align:center;font-size:9px;color:var(--txt3)}
+
+/* 列表条 */
+/* TOP 榜：10 行自适应平分卡片高度，保证任何视口下都完整显示、不产生滚动 */
+.bl{display:flex;flex-direction:column;flex:1;min-height:0}
+.bl .r{display:flex;align-items:center;gap:9px;padding:0 2px;border-bottom:1px solid var(--border);
+  font-size:11px;flex:1 1 0;min-height:15px}
+
+/* 当前在线面板 */
+.oh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-shrink:0}
+.oh .big{font-size:24px;font-weight:700;letter-spacing:-.6px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(92deg,#3ddc97,#7b8cff);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.oh .unit{font-size:11px;color:var(--txt2);margin-left:3px}
+.oh .src{font-size:10.5px;color:var(--txt3);white-space:nowrap}
+.ol{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto}
+.ol .r{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:11.5px;
+  border-bottom:1px solid rgba(255,255,255,.045)}
+.ol .r:last-child{border:none}
+.ol .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#3ddc97;
+  box-shadow:0 0 6px rgba(61,220,151,.75)}
+.ol .dot.idle{background:#ffb454;box-shadow:0 0 6px rgba(255,180,84,.6)}
+.ol .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol .tm{color:var(--txt3);font-size:10px;font-variant-numeric:tabular-nums;flex-shrink:0}
+.bl .r:last-child{border:none}
+.bl .n{width:22px;height:22px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:700;background:rgba(255,255,255,.08);color:var(--txt2)}
+.bl .r:nth-child(1) .n{background:linear-gradient(135deg,var(--gold),#c9962c);color:#3a2a08}
+.bl .r:nth-child(2) .n{background:linear-gradient(135deg,#d7dee8,#9aa5b8);color:#2a3038}
+.bl .r:nth-child(3) .n{background:linear-gradient(135deg,#e0a06a,#b5743d);color:#3a2410}
+.bl .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bl .v{font-weight:600;font-variant-numeric:tabular-nums}
+.bl .pc{width:44px;text-align:right;color:var(--txt3);font-size:11px}
+.tk{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 9px;background:rgba(255,255,255,.045);color:var(--txt2);
+  font-weight:500;font-size:11px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.05);font-variant-numeric:tabular-nums}
+tr:hover td{background:rgba(255,255,255,.032)}
+.pill{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600}
+.pill.ok{background:rgba(61,220,151,.15);color:var(--c-user)}
+.pill.wn{background:rgba(255,180,84,.15);color:var(--c-ops)}
+.pill.er{background:rgba(255,107,138,.15);color:var(--c-dev)}
+.pill.ai{background:rgba(123,140,255,.17);color:#9aa5ff}
+.bar-mini{width:64px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+
+/* 环形图 */
+.donut{display:flex;align-items:center;gap:16px;height:100%;min-height:0}
+.donut svg{width:auto;height:100%;max-height:126px;flex-shrink:0;transform:rotate(-90deg)}
+.donut circle{fill:none;stroke-width:15;stroke-linecap:round}
+.dl-list{display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;overflow-y:auto}
+.dl-list .i{display:flex;align-items:center;gap:9px;font-size:12px}
+.dl-list .i .d{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.dl-list .i .nm{flex:1;color:var(--txt2)}
+.dl-list .i .vv{font-weight:600;font-variant-numeric:tabular-nums}
+
+/* 进度条列表 */
+/* 数据可得性角标 */
+.src{position:absolute;top:9px;right:10px;font-size:9px;padding:2px 7px;border-radius:5px;
+  letter-spacing:.3px;font-weight:600;z-index:2;white-space:nowrap}
+.src.ok{background:rgba(61,220,151,.16);color:var(--c-user)}
+.src.pt{background:rgba(255,180,84,.16);color:var(--c-ops)}
+.src.fu{background:rgba(255,255,255,.07);color:var(--txt3)}
+.note{margin-top:13px;padding:10px 13px;border-radius:9px;font-size:11px;line-height:1.8;
+  background:rgba(255,255,255,.032);border:1px solid var(--border);color:var(--txt2)}
+.note b{color:var(--c-ops)}
+.note code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:10px;color:var(--txt)}
+
+.prg{display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:0;flex:1}
+.prg .i{font-size:12px}
+.prg .h{display:flex;justify-content:space-between;margin-bottom:6px}
+.prg .h .nm{color:var(--txt2)}
+.prg .h .vv{font-weight:600;font-variant-numeric:tabular-nums}
+.prg .tk{height:7px}
+
+/* 待建占位 */
+.soon{text-align:center;padding:52px 20px;color:var(--txt3)}
+.soon .ic{font-size:44px;margin-bottom:16px;opacity:.4}
+.soon b{display:block;font-size:14px;color:var(--txt2);margin-bottom:8px}
+.soon p{font-size:12px;line-height:1.9;max-width:440px;margin:0 auto}
+.soon code{background:rgba(255,255,255,.07);padding:2px 7px;border-radius:5px;
+  font-size:11px;color:var(--c-ops)}
+
+/* 响应式：窄屏收窄多列布局 */
+@media(max-width:1240px){.stats.s6{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1000px){.stats.s6{grid-template-columns:repeat(2,1fr)}
+  .row3{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
+  <div class="grid"></div>
+  <div id="stars"></div>
+</div>
+
+<div class="app">
+  <!-- ══ 经典模式侧边栏 ══ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">语</div>
+      <div><b>智语同航</b><small>超管看板</small></div>
+    </div>
+    <div class="grp">数据看板</div>
+    <button class="nav active" data-p="user"  style="--nc:var(--c-user)"><span class="ic">👥</span>用户看板</button>
+    <button class="nav"        data-p="ops"   style="--nc:var(--c-ops)"><span class="ic">📈</span>运营看板</button>
+    <button class="nav"        data-p="ai"    style="--nc:var(--c-ai)"><span class="ic">🤖</span>AI 看板</button>
+    <button class="nav"        data-p="dev"   style="--nc:var(--c-dev)"><span class="ic">📄</span>日志看板</button>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-l">
+        <span class="dot" style="--nc:var(--c-user)"></span>
+        <h1 id="pgTitle">用户看板</h1>
+      </div>
+      <div class="tb-r">
+        <button class="mbtn on" id="mStar">✨ 星空</button>
+        <button class="mbtn" id="mCls">☰ 经典</button>
+      </div>
+    </header>
+
+    <div class="content" id="clsContent"></div>
+  </div>
+</div>
+
+<!-- ══ 星空模式 ══ -->
+<div class="starfield" id="sf">
+  <div class="sf-top">
+    <div class="sf-t"><b>智语同航 · 超管看板</b><span>点击星球进入对应看板</span></div>
+  </div>
+  <div class="orbit-wrap" id="orb"></div>
+  <div class="sf-hint">用户 · 运营 · AI · 日志　四大看板</div>
+</div>
+
+<button class="back" id="backBtn"><span class="ar">←</span>返回星空</button>
+
+<!-- ══ 看板面板（星空模式下全屏） ══ -->
+<div id="panels"></div>
+
+<script>
+/* ══════════ 星点背景 ══════════ */
+(function(){
+  const box=document.getElementById('stars');
+  for(let i=0;i<110;i++){
+    const s=document.createElement('i');
+    const sz=(Math.random()*1.7+0.5).toFixed(1);
+    s.style.cssText=`left:${(Math.random()*100).toFixed(2)}%;top:${(Math.random()*100).toFixed(2)}%;
+      width:${sz}px;height:${sz}px;animation-delay:${(Math.random()*3.5).toFixed(2)}s`;
+    box.appendChild(s);
+  }
+})();
+
+/* ══════════ 看板定义 ══════════ */
+const BOARDS = [
+  {key:'user', name:'用户看板', icon:'👥', desc:'用户规模与活跃', color:'var(--c-user)', glow:'rgba(61,220,151,.6)', glow2:'rgba(61,220,151,.28)'},
+  {key:'ops',  name:'运营看板', icon:'📈', desc:'资源与产出',     color:'var(--c-ops)',  glow:'rgba(255,180,84,.6)',  glow2:'rgba(255,180,84,.28)'},
+  {key:'ai',   name:'AI 看板',  icon:'🤖', desc:'调用与质量',     color:'var(--c-ai)',   glow:'rgba(123,140,255,.6)', glow2:'rgba(123,140,255,.28)'},
+  {key:'dev',  name:'日志看板', icon:'📄', desc:'日志检索与过滤', color:'var(--c-dev)', glow:'rgba(255,107,138,.6)', glow2:'rgba(255,107,138,.28)'}
+];
+
+const SVG_AREA = (c,pts,fill)=>`
+<svg viewBox="0 0 700 190" preserveAspectRatio="none">
+  <defs><linearGradient id="g${c}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${fill}" stop-opacity=".45"/>
+    <stop offset="100%" stop-color="${fill}" stop-opacity="0"/></linearGradient></defs>
+  <g stroke="rgba(255,255,255,.05)" stroke-width="1">
+    <line x1="0" y1="38" x2="700" y2="38"/><line x1="0" y1="76" x2="700" y2="76"/>
+    <line x1="0" y1="114" x2="700" y2="114"/><line x1="0" y1="152" x2="700" y2="152"/>
+  </g>
+  <polygon fill="url(#g${c})" points="${pts} 700,190 0,190"/>
+  <polyline fill="none" stroke="${fill}" stroke-width="2.4" stroke-linejoin="round"
+    points="${pts}" style="filter:drop-shadow(0 0 7px ${fill})"/>
+</svg>`;
+
+/* 双轴趋势图：底部柱状 = 每日新增，上部折线 = 累计用户 */
+const SVG_TREND = (c,news,cums,cb,cl)=>{
+  const W=700,H=190,n=news.length,step=W/n,bw=step*0.56;
+  const maxN=Math.max(...news),maxC=Math.max(...cums),minC=Math.min(...cums);
+  const grid=[38,76,114,152].map(y=>`<line x1="0" y1="${y}" x2="700" y2="${y}"/>`).join('');
+  const bars=news.map((v,i)=>{
+    const h=Math.max(2,v/maxN*58);
+    return `<rect x="${(i*step+(step-bw)/2).toFixed(1)}" y="${(H-h-3).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="${cb}" opacity=".62"/>`;
+  }).join('');
+  const line=cums.map((v,i)=>`${(i*step+step/2).toFixed(1)},${(16+(1-(v-minC)/((maxC-minC)||1))*70).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 700 190" preserveAspectRatio="none">
+    <defs><linearGradient id="gt${c}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${cl}" stop-opacity=".32"/>
+      <stop offset="100%" stop-color="${cl}" stop-opacity="0"/></linearGradient></defs>
+    <g stroke="rgba(255,255,255,.05)" stroke-width="1">${grid}</g>
+    ${bars}
+    <polygon fill="url(#gt${c})" points="${line} 700,96 0,96"/>
+    <polyline fill="none" stroke="${cl}" stroke-width="2.2" stroke-linejoin="round"
+      points="${line}" style="filter:drop-shadow(0 0 6px ${cl})"/>
+  </svg>`;
+};
+
+/* 近 30 天新增；累计末值与总用户数 1,234 对齐 */
+const TREND_NEW=[8,12,10,15,9,14,18,12,16,20,15,22,18,25,20,28,24,30,26,32,28,35,30,38,34,40,36,42,38,45];
+const TREND_CUM=(a=>{let s=1234-a.reduce((x,y)=>x+y,0);return a.map(v=>s+=v);})(TREND_NEW);
+
+/* ── 用户看板 ── */
+const P_USER = `
+  <div class="stats s6">
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">👥</span>总用户数</div>
+      <div class="vl" data-num="1234">0</div>
+      <div class="dl">↑ 12.4% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">✨</span>今日新增</div>
+      <div class="vl" data-num="38">0</div>
+      <div class="dl">↑ 6 较昨日</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ops)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">📅</span>本月新增</div>
+      <div class="vl" data-num="186">0</div>
+      <div class="dl">↑ 23.2% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">⚡</span>日活跃 DAU</div>
+      <div class="vl" data-num="89">0</div>
+      <div class="dl">活跃率 7.2%</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">📊</span>周活跃 WAU</div>
+      <div class="vl" data-num="412">0</div>
+      <div class="dl">活跃率 33.4%</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <span class="src ok">可直接算</span>
+      <div class="lb"><span class="ic">🗓</span>月活跃 MAU</div>
+      <div class="vl" data-num="876">0</div>
+      <div class="dl">活跃率 71.0%</div>
+    </div>
+  </div>
+
+  <div class="row-mid">
+    <div class="card" style="--nc:var(--c-user)">
+      <h2>
+        用户增长趋势 <span class="hint">默认近 7 天 · 柱状=每日新增 折线=累计用户</span><span class="live">LIVE</span>
+        <span class="trend-tools"><input type="date" value="2026-09-02" aria-label="开始日期"><input type="date" value="2026-09-08" aria-label="结束日期"><button>查询</button></span>
+      </h2>
+      <div class="card-body">
+        <div class="chart">${SVG_TREND('u',TREND_NEW,TREND_CUM,'#3ddc97','#7b8cff')}</div>
+        <div class="lg"><span><i style="background:#3ddc97"></i>每日新增</span><span><i style="background:#7b8cff"></i>累计用户</span><span style="margin-left:auto;color:var(--txt3)">累计 1,234 · 月均增长 12.4%</span></div>
+      </div>
+    </div>
+    <div class="card" style="--nc:var(--c-user)">
+      <h2>当前在线 <span class="live">LIVE</span></h2>
+      <div class="card-body">
+        <div class="oh">
+          <div><span class="big" data-num="23">0</span><span class="unit">人在线</span></div>
+          <div class="src">auth:user:token</div>
+        </div>
+        <div class="online-filters">
+          <input class="online-search" value="" placeholder="输入用户名 / 账号" aria-label="搜索在线用户名称">
+          <select class="online-type" aria-label="在线用户类型"><option value="">全部类型</option><option>老师</option><option>学生</option><option>超管</option></select>
+        </div>
+        <div class="ol">
+          <div class="r"><span class="dot"></span><span class="t">陈思远 <span class="pill ai">老师</span></span><span class="tm">刚刚</span></div>
+          <div class="r"><span class="dot"></span><span class="t">李雪 <span class="pill ok">学生</span></span><span class="tm">1 分钟前</span></div>
+          <div class="r"><span class="dot"></span><span class="t">王梓涵 <span class="pill ok">学生</span></span><span class="tm">2 分钟前</span></div>
+          <div class="r"><span class="dot idle"></span><span class="t">张明轩 <span class="pill ai">老师</span></span><span class="tm">5 分钟前</span></div>
+          <div class="r"><span class="dot"></span><span class="t">刘欣怡 <span class="pill ok">学生</span></span><span class="tm">6 分钟前</span></div>
+          <div class="r"><span class="dot idle"></span><span class="t">赵子豪 <span class="pill ok">学生</span></span><span class="tm">9 分钟前</span></div>
+          <div class="r"><span class="dot"></span><span class="t">孙佳琪 <span class="pill ok">学生</span></span><span class="tm">11 分钟前</span></div>
+          <div class="r"><span class="dot idle"></span><span class="t">周文博 <span class="pill ai">老师</span></span><span class="tm">13 分钟前</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row2" style="grid-template-columns:1fr 1.42fr">
+    <div class="card dist-card" style="--nc:var(--c-user)">
+      <h2>用户结构 <span class="hint">类型与状态</span></h2>
+      <div class="card-body">
+        <div class="dist-grid">
+          <div class="dist-block">
+            <h3>用户类型</h3>
+            <div class="piw">
+              <div class="pie" style="background:conic-gradient(#3ddc97 0 88.2%, #7b8cff 88.2% 99.8%, #616d8a 99.8% 100%)"></div>
+              <div class="pie-lg">
+                <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">学生</span><span class="vv">1,089</span><span class="pc">88.2%</span></div>
+                <div class="i"><span class="d" style="background:#7b8cff"></span><span class="nm">老师</span><span class="vv">142</span><span class="pc">11.5%</span></div>
+                <div class="i"><span class="d" style="background:#616d8a"></span><span class="nm">超管</span><span class="vv">3</span><span class="pc">0.2%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="dist-block">
+            <h3>账号状态</h3>
+            <div class="piw">
+              <div class="pie" style="background:conic-gradient(#3ddc97 0 84.1%, #ffb454 84.1% 99.8%, #ff6b8a 99.8% 100%)"></div>
+              <div class="pie-lg">
+                <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">已激活</span><span class="vv">1,038</span><span class="pc">84.1%</span></div>
+                <div class="i"><span class="d" style="background:#ffb454"></span><span class="nm">未激活</span><span class="vv">193</span><span class="pc">15.6%</span></div>
+                <div class="i"><span class="d" style="background:#ff6b8a"></span><span class="nm">已禁用</span><span class="vv">3</span><span class="pc">0.2%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="--nc:var(--c-user)">
+      <h2>最近注册 <span class="hint">实时</span></h2>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>账号</th><th>昵称</th><th>类型</th><th>最后登录</th><th>注册时间</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>10001234</td><td>陈思远</td><td><span class="pill ai">老师</span></td><td>09-03 08:12</td><td>08-31 10:20</td><td><span class="pill ok">启用</span></td></tr>
+            <tr><td>10001233</td><td>李雪</td><td><span class="pill ok">学生</span></td><td>09-02 21:44</td><td>08-31 09:41</td><td><span class="pill ok">启用</span></td></tr>
+            <tr><td>10001232</td><td>周婷</td><td><span class="pill ok">学生</span></td><td>从未登录</td><td>08-30 22:03</td><td><span class="pill ok">启用</span></td></tr>
+            <tr><td>10001231</td><td>吴磊</td><td><span class="pill ai">老师</span></td><td>08-30 16:33</td><td>08-30 16:33</td><td><span class="pill er">禁用</span></td></tr>
+            <tr><td>10001230</td><td>孙浩</td><td><span class="pill ok">学生</span></td><td>09-01 12:07</td><td>08-29 19:24</td><td><span class="pill ok">启用</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+/* ── 用户看板 · 星空大屏版（全屏展示，独立于经典模式，允许滚动） ── */
+const P_USER_STAR = `
+<div class="user-board">
+  <div class="sb-head" style="--nc:var(--c-user)">
+    <div>
+      <h1>用户看板</h1>
+      <div class="sub">用户规模 · 活跃 · 构成 · 实时动态　全平台数据总览</div>
+    </div>
+    <span class="live">● LIVE 实时</span>
+  </div>
+
+  <div class="sb-stats">
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <div class="lb"><span class="ic">👥</span>总用户数</div>
+      <div class="vl" data-num="1234">0</div>
+      <div class="dl">↑ 12.4% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <div class="lb"><span class="ic">✨</span>今日新增</div>
+      <div class="vl" data-num="38">0</div>
+      <div class="dl">↑ 6 较昨日</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ops)">
+      <div class="lb"><span class="ic">📅</span>本月新增</div>
+      <div class="vl" data-num="186">0</div>
+      <div class="dl">↑ 23.2% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <div class="lb"><span class="ic">⚡</span>日活跃 DAU</div>
+      <div class="vl" data-num="89">0</div>
+      <div class="dl dim">活跃率 7.2%</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <div class="lb"><span class="ic">📊</span>周活跃 WAU</div>
+      <div class="vl" data-num="412">0</div>
+      <div class="dl dim">活跃率 33.4%</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <div class="lb"><span class="ic">🗓</span>月活跃 MAU</div>
+      <div class="vl" data-num="876">0</div>
+      <div class="dl dim">活跃率 71.0%</div>
+    </div>
+  </div>
+
+  <div class="row-mid">
+    <div class="sb-card" style="--nc:var(--c-user)">
+      <h2>
+        用户增长趋势 <span class="hint">默认近 7 天 · 柱状 = 每日新增，折线 = 累计用户</span>
+        <span class="trend-tools"><input type="date" value="2026-09-02" aria-label="开始日期"><input type="date" value="2026-09-08" aria-label="结束日期"><button>查询</button></span>
+      </h2>
+      <div class="sb-chart" id="sbTrend"></div>
+      <div class="lg" style="font-size:12px"><span><i style="background:#3ddc97"></i>每日新增</span><span><i style="background:#7b8cff"></i>累计用户</span><span style="margin-left:auto;color:var(--txt3)">累计 1,234 · 月均增长 12.4% · 近 30 天新增 740</span></div>
+    </div>
+    <div class="sb-card" style="--nc:var(--c-user)">
+      <h2>当前在线</h2>
+      <div class="sb-oh">
+        <div><span class="big" data-num="23">0</span><span class="unit">人在线</span></div>
+        <div class="src">auth:user:token</div>
+      </div>
+      <div class="online-filters">
+        <input class="online-search" value="" placeholder="输入用户名 / 账号" aria-label="搜索在线用户名称">
+        <select class="online-type" aria-label="在线用户类型"><option value="">全部类型</option><option>老师</option><option>学生</option><option>超管</option></select>
+      </div>
+      <div class="sb-ol">
+        <div class="r"><span class="dot"></span><span class="t">陈思远 <span class="pill ai">老师</span></span><span class="tm">刚刚</span></div>
+        <div class="r"><span class="dot"></span><span class="t">李雪 <span class="pill ok">学生</span></span><span class="tm">1 分钟前</span></div>
+        <div class="r"><span class="dot"></span><span class="t">王梓涵 <span class="pill ok">学生</span></span><span class="tm">2 分钟前</span></div>
+        <div class="r"><span class="dot idle"></span><span class="t">张明轩 <span class="pill ai">老师</span></span><span class="tm">5 分钟前</span></div>
+        <div class="r"><span class="dot"></span><span class="t">刘欣怡 <span class="pill ok">学生</span></span><span class="tm">6 分钟前</span></div>
+        <div class="r"><span class="dot idle"></span><span class="t">赵子豪 <span class="pill ok">学生</span></span><span class="tm">9 分钟前</span></div>
+        <div class="r"><span class="dot"></span><span class="t">孙佳琪 <span class="pill ok">学生</span></span><span class="tm">11 分钟前</span></div>
+        <div class="r"><span class="dot idle"></span><span class="t">周文博 <span class="pill ai">老师</span></span><span class="tm">13 分钟前</span></div>
+        <div class="r"><span class="dot"></span><span class="t">吴雨桐 <span class="pill ok">学生</span></span><span class="tm">14 分钟前</span></div>
+        <div class="r"><span class="dot idle"></span><span class="t">郑浩然 <span class="pill ok">学生</span></span><span class="tm">15 分钟前</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-row2" style="grid-template-columns:1fr 1.42fr">
+    <div class="sb-card dist-card" style="--nc:var(--c-user)">
+      <h2>用户结构 <span class="hint">类型与状态</span></h2>
+      <div class="dist-grid">
+        <div class="dist-block">
+          <h3>用户类型</h3>
+          <div class="sb-piew">
+            <div class="sb-pie" style="background:conic-gradient(#3ddc97 0 88.2%, #7b8cff 88.2% 99.8%, #616d8a 99.8% 100%)"></div>
+            <div class="sb-pie-lg">
+              <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">学生</span><span class="vv">1,089</span><span class="pc">88.2%</span></div>
+              <div class="i"><span class="d" style="background:#7b8cff"></span><span class="nm">老师</span><span class="vv">142</span><span class="pc">11.5%</span></div>
+              <div class="i"><span class="d" style="background:#616d8a"></span><span class="nm">超管</span><span class="vv">3</span><span class="pc">0.2%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dist-block">
+          <h3>账号状态</h3>
+          <div class="sb-piew">
+            <div class="sb-pie" style="background:conic-gradient(#3ddc97 0 84.1%, #ffb454 84.1% 99.8%, #ff6b8a 99.8% 100%)"></div>
+            <div class="sb-pie-lg">
+              <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">已激活</span><span class="vv">1,038</span><span class="pc">84.1%</span></div>
+              <div class="i"><span class="d" style="background:#ffb454"></span><span class="nm">未激活</span><span class="vv">193</span><span class="pc">15.6%</span></div>
+              <div class="i"><span class="d" style="background:#ff6b8a"></span><span class="nm">已禁用</span><span class="vv">3</span><span class="pc">0.2%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-card" style="--nc:var(--c-user)">
+      <h2>最近注册 <span class="hint">实时 · 最近 10 条</span></h2>
+      <table class="sb-tbl">
+        <thead><tr><th>账号</th><th>昵称</th><th>类型</th><th>最后登录</th><th>注册时间</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>10001234</td><td>陈思远</td><td><span class="pill ai">老师</span></td><td>09-03 08:12</td><td>08-31 10:20</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001233</td><td>李雪</td><td><span class="pill ok">学生</span></td><td>09-02 21:44</td><td>08-31 09:41</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001232</td><td>周婷</td><td><span class="pill ok">学生</span></td><td>从未登录</td><td>08-30 22:03</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001231</td><td>吴磊</td><td><span class="pill ai">老师</span></td><td>08-30 16:33</td><td>08-30 16:33</td><td><span class="pill er">禁用</span></td></tr>
+          <tr><td>10001230</td><td>孙浩</td><td><span class="pill ok">学生</span></td><td>09-01 12:07</td><td>08-29 19:24</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001229</td><td>郑文静</td><td><span class="pill ok">学生</span></td><td>08-29 14:52</td><td>08-28 20:11</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001228</td><td>冯强</td><td><span class="pill ok">学生</span></td><td>08-28 09:30</td><td>08-27 16:45</td><td><span class="pill ok">启用</span></td></tr>
+          <tr><td>10001227</td><td>许晴</td><td><span class="pill ok">学生</span></td><td>从未登录</td><td>08-27 11:02</td><td><span class="pill ok">启用</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+
+/* ── 运营看板 ── */
+const P_OPS = `
+  <div class="stats">
+    <div class="sb-stat" style="--nc:var(--c-ops)">
+      <div class="lb"><span class="ic">📝</span>本月内容产出</div>
+      <div class="vl" data-num="5678">0</div>
+      <div class="dl">↑ 19.2% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ops)">
+      <div class="lb"><span class="ic">🏫</span>活跃课堂</div>
+      <div class="vl" data-num="46">0</div>
+      <div class="dl">↑ 7 较上周</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <div class="lb"><span class="ic">🎯</span>任务完成率</div>
+      <div class="vl" data-num="94" data-suffix="%">0</div>
+      <div class="dl">↑ 2.1% 较上周</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-dev)">
+      <div class="lb"><span class="ic">💬</span>待处理反馈</div>
+      <div class="vl" data-num="3">0</div>
+      <div class="dl dn">需 24h 内响应</div>
+    </div>
+  </div>
+
+  <div class="card mb" style="--nc:var(--c-ops)">
+    <h2>内容产出趋势 <span class="hint">近 14 天</span></h2>
+    <div class="bars" style="--nc:var(--c-ops)">
+      <div class="b" style="height:42%"></div><div class="b" style="height:58%"></div>
+      <div class="b" style="height:49%"></div><div class="b" style="height:71%"></div>
+      <div class="b" style="height:63%"></div><div class="b" style="height:82%"></div>
+      <div class="b" style="height:56%"></div><div class="b" style="height:94%"></div>
+      <div class="b" style="height:77%"></div><div class="b" style="height:88%"></div>
+      <div class="b" style="height:69%"></div><div class="b" style="height:97%"></div>
+      <div class="b" style="height:81%"></div><div class="b" style="height:91%"></div>
+    </div>
+    <div class="bar-x"><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span></div>
+  </div>
+
+  <div class="row2 mb">
+    <div class="card" style="--nc:var(--c-ops)">
+      <h2>功能使用排行</h2>
+      <div class="bl">
+        <div class="r"><span class="n">1</span><span class="t">作文出题</span><span class="tk"><span style="display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffb454,#ff6b8a);border-radius:3px"></span></span><span class="v">2,845</span><span class="pc">45%</span></div>
+        <div class="r"><span class="n">2</span><span class="t">作文批阅</span><span class="tk"><span style="display:block;height:100%;width:67%;background:linear-gradient(90deg,#ffb454,#ff6b8a);border-radius:3px"></span></span><span class="v">1,702</span><span class="pc">30%</span></div>
+        <div class="r"><span class="n">3</span><span class="t">单词素材</span><span class="tk"><span style="display:block;height:100%;width:40%;background:linear-gradient(90deg,#ffb454,#ff6b8a);border-radius:3px"></span></span><span class="v">1,131</span><span class="pc">18%</span></div>
+        <div class="r"><span class="n">4</span><span class="t">实时转译</span><span class="tk"><span style="display:block;height:100%;width:16%;background:#616d8a;border-radius:3px"></span></span><span class="v">440</span><span class="pc">7%</span></div>
+      </div>
+    </div>
+    <div class="card" style="--nc:var(--c-ops)">
+      <h2>课堂活跃 TOP 5</h2>
+      <div class="bl">
+        <div class="r"><span class="n">1</span><span class="t">高三(1)班英语</span><span class="v">42 人</span></div>
+        <div class="r"><span class="n">2</span><span class="t">考研英语冲刺</span><span class="v">38 人</span></div>
+        <div class="r"><span class="n">3</span><span class="t">雅思写作精讲</span><span class="v">31 人</span></div>
+        <div class="r"><span class="n">4</span><span class="t">四级真题训练</span><span class="v">27 人</span></div>
+        <div class="r"><span class="n">5</span><span class="t">商务英语口语</span><span class="v">19 人</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="--nc:var(--c-ops)">
+    <h2>资源使用 <span class="hint">存储与配额</span></h2>
+    <table>
+      <thead><tr><th>资源</th><th>已用</th><th>总量</th><th>使用率</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>对象存储</td><td>42.6 GB</td><td>100 GB</td>
+          <td><span class="bar-mini"><span style="display:block;height:100%;width:43%;background:var(--c-user);border-radius:3px"></span></span> 43%</td>
+          <td><span class="pill ok">正常</span></td></tr>
+        <tr><td>AI 调用额度</td><td>12,345</td><td>50,000</td>
+          <td><span class="bar-mini"><span style="display:block;height:100%;width:25%;background:var(--c-user);border-radius:3px"></span></span> 25%</td>
+          <td><span class="pill ok">正常</span></td></tr>
+        <tr><td>并发任务</td><td>18</td><td>20</td>
+          <td><span class="bar-mini"><span style="display:block;height:100%;width:90%;background:var(--c-ops);border-radius:3px"></span></span> 90%</td>
+          <td><span class="pill wn">接近上限</span></td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+/* ── AI 看板 ── */
+const P_AI = `
+<div class="ai-board">
+  <div class="sb-head">
+    <div>
+      <h1>AI 看板</h1>
+      <div class="sub">调用规模、模型质量、失败原因与高频用户</div>
+    </div>
+    <span class="live">LIVE</span>
+  </div>
+
+  <div class="sb-stats">
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <div class="lb"><span class="ic">⚡</span>本月调用量</div>
+      <div class="vl" data-num="12345">0</div>
+      <div class="dl">↑ 15.3% 较上月</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <div class="lb"><span class="ic">✓</span>成功率</div>
+      <div class="vl" data-num="99" data-suffix=".2%">0</div>
+      <div class="dl">↑ 0.3% 较上周</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ops)">
+      <div class="lb"><span class="ic">⏱</span>P95 响应</div>
+      <div class="vl" data-num="4" data-suffix=".8s">0</div>
+      <div class="dl">↓ 0.6s 较上周</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-dev)">
+      <div class="lb"><span class="ic">✗</span>失败次数</div>
+      <div class="vl" data-num="98">0</div>
+      <div class="dl dn">↑ 12 较上周</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-ai)">
+      <div class="lb"><span class="ic">👥</span>调用用户</div>
+      <div class="vl" data-num="486">0</div>
+      <div class="dl">近 30 天活跃</div>
+    </div>
+    <div class="sb-stat" style="--nc:var(--c-user)">
+      <div class="lb"><span class="ic">🔑</span>有效 Key</div>
+      <div class="vl" data-num="312">0</div>
+      <div class="dl">BYOK 模式</div>
+    </div>
+  </div>
+
+  <div class="sb-card" style="--nc:var(--c-ai)">
+    <h2>调用量与成功率 <span class="hint">近 30 天 · 柱状代表调用量，折线代表成功率</span><span class="live">LIVE</span></h2>
+    <div class="sb-chart">${SVG_AREA('ai','0,236 64,218 128,194 192,205 256,164 320,176 384,132 448,145 512,98 576,112 640,70 700,56','#7b8cff')}</div>
+    <div class="lg">
+      <span><i style="background:#7b8cff"></i>调用量</span>
+      <span><i style="background:#3ddc97"></i>成功率</span>
+      <span><i style="background:#ffb454"></i>P95 响应</span>
+      <span style="margin-left:auto;color:var(--txt3)">峰值 08-28 · 1,204 次 · 成功率 99.2%</span>
+    </div>
+  </div>
+
+  <div class="sb-pies">
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>调用场景分布 <span class="hint">按业务入口聚合</span></h2>
+      <div class="sb-piew">
+        <div class="sb-pie" style="background:conic-gradient(#7b8cff 0 36%, #3ddc97 36% 63%, #ffb454 63% 84%, #ff6b8a 84% 100%)"></div>
+        <div class="sb-pie-lg">
+          <div class="i"><span class="d" style="background:#7b8cff"></span><span class="nm">作文出题</span><span class="vv">4,444</span><span class="pc">36%</span></div>
+          <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">作文批阅</span><span class="vv">3,333</span><span class="pc">27%</span></div>
+          <div class="i"><span class="d" style="background:#ffb454"></span><span class="nm">单词素材</span><span class="vv">2,592</span><span class="pc">21%</span></div>
+          <div class="i"><span class="d" style="background:#ff6b8a"></span><span class="nm">实时转译</span><span class="vv">1,976</span><span class="pc">16%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>厂商分布 <span class="hint">不统计成本，仅看调用来源</span></h2>
+      <div class="sb-piew">
+        <div class="sb-pie" style="background:conic-gradient(#7b8cff 0 41%, #3ddc97 41% 69%, #ffb454 69% 88%, #616d8a 88% 100%)"></div>
+        <div class="sb-pie-lg">
+          <div class="i"><span class="d" style="background:#7b8cff"></span><span class="nm">阿里云百炼</span><span class="vv">5,062</span><span class="pc">41%</span></div>
+          <div class="i"><span class="d" style="background:#3ddc97"></span><span class="nm">OpenAI</span><span class="vv">3,457</span><span class="pc">28%</span></div>
+          <div class="i"><span class="d" style="background:#ffb454"></span><span class="nm">DeepSeek</span><span class="vv">2,346</span><span class="pc">19%</span></div>
+          <div class="i"><span class="d" style="background:#616d8a"></span><span class="nm">其他</span><span class="vv">1,480</span><span class="pc">12%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-row2 mb">
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>模型调用排行 <span class="hint">调用量 / 成功率 / P95</span></h2>
+      <div class="bl">
+        <div class="r"><span class="n">1</span><span class="t">fun-asr-realtime</span><span class="tk"><span style="display:block;height:100%;width:100%;background:linear-gradient(90deg,#7b8cff,#3ddc97);border-radius:3px"></span></span><span class="v">5,062</span><span class="pc">99.5%</span></div>
+        <div class="r"><span class="n">2</span><span class="t">gpt-4o</span><span class="tk"><span style="display:block;height:100%;width:68%;background:linear-gradient(90deg,#7b8cff,#3ddc97);border-radius:3px"></span></span><span class="v">3,457</span><span class="pc">99.1%</span></div>
+        <div class="r"><span class="n">3</span><span class="t">deepseek-v3</span><span class="tk"><span style="display:block;height:100%;width:46%;background:linear-gradient(90deg,#7b8cff,#3ddc97);border-radius:3px"></span></span><span class="v">2,346</span><span class="pc">98.7%</span></div>
+        <div class="r"><span class="n">4</span><span class="t">qwen-max</span><span class="tk"><span style="display:block;height:100%;width:29%;background:#616d8a;border-radius:3px"></span></span><span class="v">1,480</span><span class="pc">98.2%</span></div>
+      </div>
+    </div>
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>高频调用用户 <span class="hint">Top 5</span></h2>
+      <div class="bl">
+        <div class="r"><span class="n">1</span><span class="t">陈思远 · 老师</span><span class="v">534</span><span class="pc">4.3%</span></div>
+        <div class="r"><span class="n">2</span><span class="t">张明 · 老师</span><span class="v">428</span><span class="pc">3.5%</span></div>
+        <div class="r"><span class="n">3</span><span class="t">冯强 · 老师</span><span class="v">365</span><span class="pc">3.0%</span></div>
+        <div class="r"><span class="n">4</span><span class="t">李雪 · 学生</span><span class="v">312</span><span class="pc">2.5%</span></div>
+        <div class="r"><span class="n">5</span><span class="t">刘芳 · 老师</span><span class="v">276</span><span class="pc">2.2%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-row2">
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>失败原因 TOP <span class="hint">本月</span></h2>
+      <table class="sb-tbl">
+        <thead><tr><th>错误码</th><th>场景</th><th>次数</th><th>占比</th><th>处理建议</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill er">TIMEOUT</span></td><td>作文生成</td><td>41</td><td>42%</td><td>检查模型响应时长与重试策略</td></tr>
+          <tr><td><span class="pill er">AUTH</span></td><td>API Key 无效</td><td>28</td><td>29%</td><td>提示用户更新 Key</td></tr>
+          <tr><td><span class="pill wn">RATE</span></td><td>触发限流</td><td>19</td><td>19%</td><td>提示降级或切换厂商</td></tr>
+          <tr><td><span class="pill er">OCR</span></td><td>图片识别</td><td>10</td><td>10%</td><td>单独记录图片清晰度</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sb-card" style="--nc:var(--c-ai)">
+      <h2>慢请求观察 <span class="hint">P95 以上</span></h2>
+      <table class="sb-tbl">
+        <thead><tr><th>时间</th><th>场景</th><th>模型</th><th>耗时</th></tr></thead>
+      <tbody>
+        <tr><td>10:23</td><td>作文生成</td><td>gpt-4o</td><td><span class="pill wn">8.6s</span></td></tr>
+        <tr><td>10:18</td><td>作文批阅</td><td>deepseek-v3</td><td><span class="pill wn">7.9s</span></td></tr>
+        <tr><td>10:11</td><td>单词素材</td><td>qwen-max</td><td><span class="pill wn">6.4s</span></td></tr>
+        <tr><td>09:58</td><td>实时转译</td><td>fun-asr-realtime</td><td><span class="pill ok">1.2s</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>`;
+
+/* ── 日志看板：日志查看先行，后续监控能力可独立扩展 ── */
+const P_DEV = `
+<div class="dev-board">
+  <div class="sb-head" style="--nc:var(--c-dev)">
+    <div>
+      <h1>日志看板</h1>
+      <div class="sub">读取 logback 日志文件 · 支持关键字、级别与尾部行数过滤</div>
+    </div>
+    <span class="live">LOG LIVE</span>
+  </div>
+
+  <div class="sb-stats">
+    <div class="sb-stat" style="--nc:var(--c-dev)"><div class="lb"><span class="ic">📄</span>日志文件</div><div class="vl" data-num="6">0</div><div class="dl">logback rolling</div></div>
+    <div class="sb-stat" style="--nc:var(--c-dev)"><div class="lb"><span class="ic">🔥</span>ERROR</div><div class="vl" data-num="17">0</div><div class="dl dn">当前范围</div></div>
+    <div class="sb-stat" style="--nc:var(--c-ops)"><div class="lb"><span class="ic">⚠️</span>WARN</div><div class="vl" data-num="42">0</div><div class="dl">当前范围</div></div>
+    <div class="sb-stat" style="--nc:var(--c-user)"><div class="lb"><span class="ic">🔁</span>自动刷新</div><div class="vl">5分</div><div class="dl">同步刷新当前范围</div></div>
+  </div>
+
+  <div class="dev-log-layout">
+    <div class="log-console">
+      <div class="log-toolbar">
+        <span class="log-title">日志内容</span>
+        <input class="log-input" value="" placeholder="搜索关键字" aria-label="日志关键字" title="匹配到的关键字会高亮显示">
+        <select class="log-select" aria-label="日志级别"><option selected>ALL</option><option>ERROR</option><option>WARN</option><option>INFO</option><option>DEBUG</option></select>
+        <select class="log-select" aria-label="读取范围">
+          <option>Tail 100</option><option>Tail 200</option><option>Tail 500</option><option selected>Tail 1000</option>
+          <option>Tail 2000</option><option>Tail 5000</option><option>Tail 10000</option><option>Tail 200000</option><option>全部</option>
+        </select>
+        <select class="log-select" aria-label="自动刷新间隔"><option selected>5分钟</option><option>15分钟</option><option>25分钟</option><option>35分钟</option><option>45分钟</option></select>
+        <button class="log-btn primary">刷新</button>
+      </div>
+      <div class="log-body">
+        <div class="log-line"><span class="time">2026-09-08 09:42:18.221</span> [http-nio-8080-exec-7] <span class="lv-error">ERROR</span> com.lucky.server.common.util.RedisCacheUtil - <span class="log-mark">Redis</span>获取缓存失败，key=auth:user:token:10001</div>
+        <div class="log-line"><span class="time">2026-09-08 09:41:53.904</span> [reactor-http-nio-4] <span class="lv-error">ERROR</span> com.lucky.server.agent.listen.TranslateAgent - 模型响应<span class="log-mark">TIMEOUT</span>，provider=OpenAI, model=gpt-4o</div>
+        <div class="log-line"><span class="time">2026-09-08 09:39:07.516</span> [http-nio-8080-exec-3] <span class="lv-warn">WARN </span> com.lucky.server.filter.JwtAuthFilter - token 已失效，userId=10008</div>
+        <div class="log-line"><span class="time">2026-09-08 09:33:44.128</span> [http-nio-8080-exec-9] <span class="lv-info">INFO </span> com.lucky.server.handler.AuthHandshakeInterceptor - WebSocket 握手成功: userId=10002, direction=zh-en</div>
+        <div class="log-line"><span class="time">2026-09-08 09:29:12.633</span> [http-nio-8080-exec-2] <span class="lv-error">ERROR</span> com.lucky.server.service.impl.SysUserApiKeyServiceImpl - API Key 无效或已过期，provider=DeepSeek</div>
+        <div class="log-line"><span class="time">2026-09-08 09:25:31.008</span> [scheduling-1] <span class="lv-warn">WARN </span> com.lucky.server.agent.read.ReadingWordMaterialGenerateAgent - 图片生成耗时偏高，elapsed=8600ms</div>
+        <div class="log-line"><span class="time">2026-09-08 09:20:05.777</span> [http-nio-8080-exec-1] <span class="lv-info">INFO </span> com.lucky.server.controller.api.WritingCompositionController - 作文出题完成，userId=10005</div>
+      </div>
+    </div>
+
+    <div class="log-side">
+      <div class="log-card">
+        <h2>日志文件</h2>
+        <div class="log-file-list">
+          <div class="log-file on"><span class="name">my-application.log</span><span class="size">12.4MB</span><span class="date">当前写入</span></div>
+          <div class="log-file"><span class="name">my-application.2026-09-08.0.log</span><span class="size">96.8MB</span><span class="date">今天</span></div>
+          <div class="log-file"><span class="name">my-application.2026-09-07.0.log</span><span class="size">83.1MB</span><span class="date">昨天</span></div>
+          <div class="log-file"><span class="name">my-application.2026-09-06.0.log</span><span class="size">78.6MB</span><span class="date">前天</span></div>
+          <div class="log-file"><span class="name">my-application.2026-09-05.0.log</span><span class="size">71.2MB</span><span class="date">历史</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+const HTML = {user:P_USER, ops:P_OPS, ai:P_AI, dev:P_DEV};
+/* 星空模式用独立的大屏模板（用户看板已分离，其余看板暂用同一份） */
+const HTML_STAR = {user:P_USER_STAR, ops:P_OPS, ai:P_AI, dev:P_DEV};
+
+function normalizeBoardKey(key){
+  return BOARDS.some(b=>b.key===key) ? key : 'user';
+}
+
+function getInitialBoardKey(){
+  return normalizeBoardKey((location.hash||'').replace('#',''));
+}
+
+/* ══════════ 渲染 ══════════ */
+const panelsBox=document.getElementById('panels');
+const clsContent=document.getElementById('clsContent');
+
+BOARDS.forEach(b=>{
+  // 星空模式的全屏面板
+  const d=document.createElement('div');
+  d.className='panel'; d.id='panel-'+b.key;
+  d.style.setProperty('--nc',b.color);
+  d.innerHTML=`<div class="panel-inner">${HTML_STAR[b.key]}</div>`;
+  panelsBox.appendChild(d);
+});
+
+function showBoard(key,syncHash=true){
+  key=normalizeBoardKey(key);
+  const b=BOARDS.find(x=>x.key===key);
+  if(syncHash && location.hash!==`#${key}`){
+    history.replaceState(null,'',`#${key}`);
+  }
+  // 星空：直接进面板，左上角返回
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('panel-'+key).classList.add('on');
+  document.getElementById('panel-'+key).style.setProperty('--nc',b.color);
+  document.getElementById('backBtn').style.setProperty('--nc',b.color);
+  // 经典：内容进右侧
+  clsContent.innerHTML=`<div class="board" style="--nc:${b.color}">${HTML[key]}</div>`;
+  document.getElementById('pgTitle').textContent=b.name;
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.p===key));
+  animateNums(document.getElementById('panel-'+key));
+  animateNums(clsContent);
+  renderSbTrend(key);
+  // 顶部标题点颜色
+  document.querySelector('.tb-l .dot').style.setProperty('--nc',b.color);
+}
+
+/* 星空大屏趋势图：柱状=每日新增，折线=累计用户（比经典版更高，不锁死） */
+function renderSbTrend(key){
+  const el=document.getElementById('sbTrend');
+  if(!el || !TREND_NEW) return;
+  const W=700,H=290,n=TREND_NEW.length,step=W/n,bw=step*0.58;
+  const maxN=Math.max(...TREND_NEW),maxC=Math.max(...TREND_CUM),minC=Math.min(...TREND_CUM);
+  const grid=[58,116,174,232].map(y=>`<line x1="0" y1="${y}" x2="700" y2="${y}"/>`).join('');
+  const bars=TREND_NEW.map((v,i)=>{
+    const h=Math.max(3,v/maxN*96);
+    return `<rect x="${(i*step+(step-bw)/2).toFixed(1)}" y="${(H-h-4).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2"/>`;
+  }).join('');
+  const line=TREND_CUM.map((v,i)=>`${(i*step+step/2).toFixed(1)},${(24+(1-(v-minC)/(maxC-minC))*122).toFixed(1)}`).join(' ');
+  el.innerHTML=`<svg viewBox="0 0 700 290" preserveAspectRatio="none">
+    <defs><linearGradient id="sbt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7b8cff" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#7b8cff" stop-opacity="0"/></linearGradient></defs>
+    <g stroke="rgba(255,255,255,.06)" stroke-width="1">${grid}</g>
+    <g fill="#3ddc97" opacity=".72">${bars}</g>
+    <polygon fill="url(#sbt)" points="${line} 700,160 0,160"/>
+    <polyline fill="none" stroke="#7b8cff" stroke-width="2.6" stroke-linejoin="round"
+      points="${line}" style="filter:drop-shadow(0 0 8px #7b8cff)"/>
+  </svg>`;
+}
+
+/* 数字滚动动画 */
+function animateNums(root){
+  root.querySelectorAll('[data-num]').forEach(el=>{
+    const target=+el.dataset.num, suf=el.dataset.suffix||'';
+    if(el.__done===target) return;
+    el.__done=target;
+    const dur=900, t0=performance.now();
+    (function step(t){
+      const p=Math.min(1,(t-t0)/dur);
+      const e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(target*e).toLocaleString()+suf;
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  });
+}
+
+/* ══════════ 星空轨道 ══════════ */
+(function buildOrbits(){
+  const wrap=document.getElementById('orb');
+  const R=232;
+  const orbit=document.createElement('div');
+  orbit.className='orbit spin';
+  orbit.style.cssText=`width:${R*2}px;height:${R*2}px;animation-duration:70s`;
+  BOARDS.forEach((b,i)=>{
+    const ang=(-90+i*90)*Math.PI/180;
+    const p=document.createElement('div');
+    p.className='planet';
+    p.style.cssText=`left:${50+50*Math.cos(ang)}%;top:${50+50*Math.sin(ang)}%;animation-duration:70s`;
+    p.innerHTML=`<div class="pbody" style="--pb1:${b.color};--pb2:${b.glow};--pg:${b.glow};--pg2:${b.glow2}">
+        <span class="pi">${b.icon}</span>
+        <span class="pl">${b.name.replace('看板','')}</span>
+        <span class="pd">${b.desc}</span>
+      </div>`;
+    p.querySelector('.pbody').onclick=()=>{
+      document.getElementById('sf').style.display='none';
+      showBoard(b.key);
+    };
+    orbit.appendChild(p);
+  });
+  wrap.appendChild(orbit);
+})();
+
+/* ══════════ 模式切换 ══════════ */
+function setMode(m){
+  document.body.dataset.mode=m;
+  document.getElementById('mStar').classList.toggle('on',m==='star');
+  document.getElementById('mCls').classList.toggle('on',m==='classic');
+  if(m==='star'){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+    document.getElementById('sf').style.display='block';
+  }else{
+    document.getElementById('sf').style.display='none';
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  }
+}
+document.getElementById('mStar').onclick=()=>setMode('star');
+document.getElementById('mCls').onclick=()=>setMode('classic');
+document.getElementById('backBtn').onclick=()=>{
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('sf').style.display='block';
+};
+
+/* 侧边栏点击 */
+document.querySelectorAll('.nav').forEach(n=>{
+  n.onclick=()=>{ if(document.body.dataset.mode==='classic') showBoard(n.dataset.p); };
+});
+
+/* 在线用户筛选：名称/账号模糊搜索，类型下拉精确筛选 */
+function filterOnlineUsers(control){
+  const card=control.closest('.card,.sb-card');
+  if(!card) return;
+  const kw=(card.querySelector('.online-search')?.value||'').trim().toLowerCase();
+  const type=card.querySelector('.online-type')?.value||'';
+  const rows=card?.querySelectorAll('.ol .r,.sb-ol .r')||[];
+  rows.forEach(row=>{
+    const text=row.innerText.toLowerCase();
+    const matchKeyword=!kw || text.includes(kw);
+    const matchType=!type || row.innerText.includes(type);
+    row.style.display=(matchKeyword && matchType)?'flex':'none';
+  });
+}
+document.addEventListener('input',e=>{
+  if(e.target.matches('.online-search')) filterOnlineUsers(e.target);
+});
+document.addEventListener('change',e=>{
+  if(e.target.matches('.online-type')) filterOnlineUsers(e.target);
+});
+
+window.addEventListener('hashchange',()=>{
+  document.getElementById('sf').style.display='none';
+  showBoard(getInitialBoardKey());
+});
+
+/* 初始：无 hash 展示看板星空入口；有 hash 直接进入对应看板大屏 */
+const initialHashBoard=(location.hash||'').replace('#','');
+const hasInitialBoardHash=BOARDS.some(b=>b.key===initialHashBoard);
+setMode('star');
+showBoard(getInitialBoardKey(),hasInitialBoardHash);
+if(hasInitialBoardHash){
+  document.getElementById('sf').style.display='none';
+}else{
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+}
+</script>
+</body>
+</html>

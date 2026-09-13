@@ -3,6 +3,7 @@ package com.lucky.server.domain.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.UserStatusEnum;
+import com.lucky.server.common.enums.UserTypeEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -53,6 +54,11 @@ public class SysUser implements Serializable {
     @TableField("status")
     @Schema(description = "状态：0禁用，1启用")
     private UserStatusEnum status;
+
+    @TableField("user_type")
+    @Schema(description = "用户类型：student学生 / teacher老师 / superadmin超级管理员")
+    private UserTypeEnum userType;
+
 
     @TableField("last_login_time")
     @Schema(description = "最后登录时间")
