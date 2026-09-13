@@ -71,6 +71,7 @@ interface SpeakingRecord {
   stageCode: string;
   difficultyCode: string;
   sceneCode: string;
+  customScene?: string;
   userPrompt?: string;
   title?: string;
   sceneDescription?: string;
@@ -127,6 +128,7 @@ export function EduSpeakingGenerate() {
   const [stage, setStage] = useState(STAGES[2].code);
   const [difficulty, setDifficulty] = useState(DIFFICULTIES[1].code);
   const [scene, setScene] = useState(SCENES[0].code);
+  const [customScene, setCustomScene] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [material, setMaterial] = useState<SpeakingMaterial | null>(null);
@@ -160,6 +162,7 @@ export function EduSpeakingGenerate() {
           stageCode: stage,
           difficultyCode: difficulty,
           sceneCode: scene,
+          customScene: scene === 'custom' ? customScene.trim() || undefined : undefined,
           userPrompt: userPrompt.trim() || undefined,
         }),
       });
@@ -191,6 +194,16 @@ export function EduSpeakingGenerate() {
           <Field label="练习场景">
             <Select options={SCENES.map(s => s.desc)} value={labelOf(SCENES, scene)} onChange={d => setScene(codeOf(SCENES, d))} />
           </Field>
+          {scene === 'custom' && (
+            <Field label="自定义场景">
+              <input
+                value={customScene}
+                onChange={e => setCustomScene(e.target.value)}
+                placeholder="例如：机场转机时询问登机口变更"
+                style={inputStyle}
+              />
+            </Field>
+          )}
         </div>
         <div style={{ marginTop: 14 }}>
           <Field label="偏好说明">
@@ -365,7 +378,7 @@ export function EduSpeakingPractice() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{item.title || '未命名口语素材'}</div>
                     <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                      {labelOf(LANGUAGES, item.languageCode)} · {labelOf(STAGES, item.stageCode)} · {labelOf(DIFFICULTIES, item.difficultyCode)} · {labelOf(SCENES, item.sceneCode)}
+                      {labelOf(LANGUAGES, item.languageCode)} · {labelOf(STAGES, item.stageCode)} · {labelOf(DIFFICULTIES, item.difficultyCode)} · {displayScene(item.sceneCode, item.customScene)}
                     </div>
                   </div>
                   <div style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>{formatTime(item.createTime)}</div>
@@ -574,6 +587,13 @@ function labelOf(options: { code: string; desc: string }[], code?: string) {
 
 function codeOf(options: { code: string; desc: string }[], desc: string) {
   return options.find(o => o.desc === desc)?.code || '';
+}
+
+function displayScene(sceneCode?: string, customScene?: string) {
+  if (sceneCode === 'custom' && customScene) {
+    return `自定义：${customScene}`;
+  }
+  return labelOf(SCENES, sceneCode);
 }
 
 function formatTime(value?: string) {

@@ -207,6 +207,9 @@ export function SuperAdminLoginPage() {
             ? { phone, captcha }
             : { email, captcha }
       );
+      if (!data?.token) {
+        throw new Error('登录接口未返回 token');
+      }
       setToken(data.token);
       nav('/admin', { replace: true });
     } catch (e: any) {
@@ -291,7 +294,7 @@ export function SuperAdminLoginPage() {
 
 export function SuperAdminConsole() {
   const [panel, setPanel] = useState<AdminPanelKey>('user-dashboard');
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ boards: true, console: true, operation: true, system: false });
+  const [activeMenu, setActiveMenu] = useState('boards');
   const [mode, setMode] = useState<'classic' | 'star'>('classic');
   const logout = useAppStore((s) => s.logout);
   const nav = useNavigate();
@@ -300,7 +303,7 @@ export function SuperAdminConsole() {
   const changePanel = (key: AdminPanelKey) => {
     setPanel(key);
     const group = navGroups.find((item) => item.children.some((child) => child.key === key));
-    if (group) setOpenGroups((prev) => ({ ...prev, [group.key]: true }));
+    if (group) setActiveMenu(group.key);
   };
 
   return (
@@ -317,12 +320,12 @@ export function SuperAdminConsole() {
         <div className="admin-nav">
           {navGroups.map((group) => {
             const activeGroup = group.children.some((item) => item.key === panel);
-            const open = openGroups[group.key];
+            const open = activeMenu === group.key;
             return (
               <div className="admin-nav-group" key={group.key}>
                 <button
                   className={`admin-nav-primary ${activeGroup ? 'active' : ''} ${open ? 'open' : ''}`}
-                  onClick={() => setOpenGroups((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
+                  onClick={() => setActiveMenu(group.key)}
                 >
                   <span>{group.icon}</span>
                   <span>{group.name}</span>
@@ -354,7 +357,7 @@ export function SuperAdminConsole() {
           </div>
           <div className="admin-top-actions">
             <button className={`admin-btn ${mode === 'star' ? 'primary' : ''}`} onClick={() => setMode(mode === 'star' ? 'classic' : 'star')}>
-              {mode === 'star' ? '经典模式' : '星空模式'}
+              {mode === 'star' ? '☰ 经典' : '✨ 星空'}
             </button>
             <button className="admin-btn" onClick={() => nav('/dashboard')}>返回工作台</button>
             <button className="admin-btn danger" onClick={() => { logout(); nav('/admin/login'); }}>退出</button>
@@ -364,6 +367,7 @@ export function SuperAdminConsole() {
           {mode === 'star' ? (
             <StarModePanel
               activePanel={panel}
+              onClassic={() => setMode('classic')}
               onSelect={(key) => {
                 changePanel(key);
                 setMode('classic');
@@ -388,56 +392,84 @@ export function SuperAdminConsole() {
   );
 }
 
-function StarModePanel({ activePanel, onSelect }: { activePanel: AdminPanelKey; onSelect: (key: AdminPanelKey) => void }) {
+function StarModePanel({
+  activePanel,
+  onClassic,
+  onSelect,
+}: {
+  activePanel: AdminPanelKey;
+  onClassic: () => void;
+  onSelect: (key: AdminPanelKey) => void;
+}) {
   const [activeGroupKey, setActiveGroupKey] = useState(() => {
     return navGroups.find((group) => group.children.some((child) => child.key === activePanel))?.key || navGroups[0].key;
   });
   const activeGroup = navGroups.find((group) => group.key === activeGroupKey) || navGroups[0];
+  const primaryGroups = navGroups.filter((group) => group.key !== 'boards');
 
   return (
     <div className="admin-star-panel">
-      <section className="admin-star-hero">
-        <div className="admin-login-kicker">Star Navigation</div>
-        <h2>选择一级星球</h2>
-        <p>星空模式只负责导航：一级是业务域，二级是可进入的具体页面；进入页面后回到经典布局完成管理操作。</p>
-        <div className="admin-star-primary">
-          {navGroups.map((group, index) => (
-            <button
-              key={group.key}
-              className={`admin-star-planet ${activeGroupKey === group.key ? 'active' : ''}`}
-              onClick={() => setActiveGroupKey(group.key)}
-              style={{ ['--planet-index' as string]: index }}
-            >
-              <span className="planet-icon">{group.icon}</span>
-              <span>{group.name}</span>
-            </button>
-          ))}
+      <div className="admin-star-nebula one" />
+      <div className="admin-star-nebula two" />
+      <div className="admin-star-milkyway" />
+      <div className="admin-star-dots" />
+      <div className="admin-star-top">
+        <div>
+          <b>智语同航 · 控制台</b>
+          <span>{activeGroup ? `${activeGroup.name} · 点击二级星球进入页面` : '选择一颗星球进入'}</span>
         </div>
-      </section>
-      <section className="admin-star-orbit">
-        <div className="admin-star-orbit-head">
+        <button className="admin-star-switch" onClick={onClassic}>☰ 经典模式</button>
+      </div>
+
+      <div className="admin-galaxy">
+        <button
+          className={`admin-star-sun ${activeGroupKey === 'boards' ? 'active' : ''}`}
+          onClick={() => setActiveGroupKey('boards')}
+        >
+          <span>📊</span>
+          <b>看板</b>
+          <em>Dashboard</em>
+        </button>
+        <div className="admin-star-orbit-ring ring-one" />
+        <div className="admin-star-orbit-ring ring-two" />
+        {primaryGroups.map((group, index) => (
+          <button
+            key={group.key}
+            className={`admin-star-planet admin-star-planet-${index + 1} ${activeGroupKey === group.key ? 'active' : ''}`}
+            onClick={() => setActiveGroupKey(group.key)}
+          >
+            <span>{group.icon}</span>
+            <b>{group.name}</b>
+            <em>{group.children.length} 个入口</em>
+          </button>
+        ))}
+      </div>
+
+      <div className="admin-satellite-layer">
+        <div className="admin-satellite-core">
           <span>{activeGroup.icon}</span>
-          <div>
-            <h3>{activeGroup.name}</h3>
-            <p>点击二级星球进入业务页面</p>
-          </div>
+          <b>{activeGroup.name}</b>
         </div>
-        <div className="admin-star-secondary">
-          {activeGroup.children.map((item) => (
+        <div className="admin-satellite-ring" />
+        <div className="admin-satellite-grid">
+          {activeGroup.children.map((item, index) => (
             <button
-              className={`admin-star-card ${activePanel === item.key ? 'active' : ''}`}
+              className={`admin-satellite admin-satellite-${index + 1} ${activePanel === item.key ? 'active' : ''}`}
               key={item.key}
               onClick={() => onSelect(item.key)}
             >
-              <span className="planet-icon">{item.icon}</span>
-              <span>
-                <b>{item.name}</b>
-                <em>{item.desc}</em>
-              </span>
+              <span>{item.icon}</span>
+              <b>{item.name}</b>
+              <em>{item.desc}</em>
             </button>
           ))}
         </div>
-      </section>
+        <div className="admin-star-path">
+          <button onClick={() => setActiveGroupKey('boards')}>一级星球</button>
+          <span>/</span>
+          <b>{activeGroup.name}</b>
+        </div>
+      </div>
     </div>
   );
 }
@@ -904,10 +936,10 @@ function FeedbackPanel() {
             item.typeText || enumText(item.type),
             item.title || '-',
             item.username || item.account || '-',
-            <span className="admin-pill">{item.statusText || enumText(item.status)}</span>,
-            <span title={item.content}>{(item.content || '').slice(0, 42)}</span>,
+            <span key="status" className="admin-pill">{item.statusText || enumText(item.status)}</span>,
+            <span key="content" title={item.content}>{(item.content || '').slice(0, 42)}</span>,
             formatDate(item.createTime),
-            <button className="admin-btn" onClick={() => process(item)}>{item.status === 'PENDING' ? '受理' : item.status === 'PROCESSING' ? '解决' : '查看'}</button>,
+            <button key="action" className="admin-btn" onClick={() => process(item)}>{item.status === 'PENDING' ? '受理' : item.status === 'PROCESSING' ? '解决' : '查看'}</button>,
           ])}
         />
       </div>
@@ -990,10 +1022,10 @@ function SkillPanel() {
             columns={['名称', '描述', '来源', '更新时间', '操作']}
             rows={data.records.map((item) => [
               item.name,
-              <span title={item.description}>{(item.description || '').slice(0, 52)}</span>,
+              <span key="description" title={item.description}>{(item.description || '').slice(0, 52)}</span>,
               item.source || '-',
               formatDate(item.updatedAt),
-              <><button className="admin-btn" onClick={() => edit(item)}>编辑</button> <button className="admin-btn danger" onClick={() => remove(item)}>删除</button></>,
+              <span key="action"><button className="admin-btn" onClick={() => edit(item)}>编辑</button> <button className="admin-btn danger" onClick={() => remove(item)}>删除</button></span>,
             ])}
           />
         </div>

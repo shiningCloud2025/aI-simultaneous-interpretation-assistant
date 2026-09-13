@@ -9,9 +9,9 @@ import { OfficialSitePage } from './pages/OfficialSitePage';
 import { SuperAdminConsole, SuperAdminLoginPage } from './features/superadmin/SuperAdminConsole';
 import './App.css';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, redirectTo = '/login' }: { children: React.ReactNode; redirectTo?: string }) {
   const token = useAppStore((s) => s.token);
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to={redirectTo} replace />;
   return <>{children}</>;
 }
 
@@ -24,7 +24,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/admin/login" element={<SuperAdminLoginPage />} />
-        <Route path="/admin" element={<ProtectedRoute><SuperAdminConsole /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute redirectTo="/admin/login"><SuperAdminConsole /></ProtectedRoute>} />
         <Route path="/change-pwd" element={<ProtectedRoute><ChangePwdPage /></ProtectedRoute>} />
         <Route path="/*" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
       </Routes>

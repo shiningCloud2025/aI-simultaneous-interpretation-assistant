@@ -7,6 +7,17 @@ const typeLabels: Record<FeedbackType, string> = { BUG: '问题反馈', SUGGESTI
 const statusLabels: Record<string, string> = { PENDING: '待处理', PROCESSING: '处理中', RESOLVED: '已解决', CLOSED: '已关闭' };
 const statusColors: Record<string, string> = { PENDING: '#f0ad4e', PROCESSING: '#5bc0de', RESOLVED: '#5cb85c', CLOSED: '#999' };
 
+function getFeedbackTime(item: any) {
+  return item?.createTime || item?.createdAt || item?.submitTime || item?.feedbackTime;
+}
+
+function formatFeedbackTime(value: any) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
+}
+
 export function HelpPage() {
   const [showMy, setShowMy] = useState(false);
   const [type, setType] = useState<FeedbackType>('BUG');
@@ -132,6 +143,7 @@ export function HelpPage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 15, fontWeight: 500, color: '#333' }}>{item.title}</div>
                       <div style={{ fontSize: 13, color: '#777', marginTop: 6, lineHeight: 1.6 }}>{item.content}</div>
+                      <div style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>反馈时间：{formatFeedbackTime(getFeedbackTime(item))}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
                         <span style={{ fontSize: 12, color: '#bbb' }}>{item.feedbackNo}</span>
                         <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 10, background: '#f5f3f0', color: '#888' }}>{typeLabels[item.type as FeedbackType] || item.type}</span>
