@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAppStore, api } from '../stores/appStore';
+import { APP_ORIGIN, apiCall } from '../lib/api';
 import { Card, Select } from './ui';
 
 interface ModelInfo {
@@ -34,6 +35,12 @@ const AUDIO_SOURCES = [
   { code: 'mic', label: '🎤 麦克风', tip: '采集麦克风输入的语音' },
   { code: 'speaker', label: '🔊 扬声器（屏幕共享）', tip: '需要勾选「共享音频」。可采集浏览器内视频/共享标签页/共享屏幕范围的声音；后台独立播放的桌面 app 音频采集不到。系统级采集需安装虚拟声卡（macOS BlackHole / Windows VB-Cable）。' },
 ];
+
+function buildAsrWebSocketUrl(token: string, direction: string) {
+  const origin = new URL(APP_ORIGIN);
+  const proto = origin.protocol === 'https:' ? 'wss' : 'ws';
+  return `${proto}://${origin.host}/asr/audio?token=${encodeURIComponent(token)}&direction=${encodeURIComponent(direction)}`;
+}
 
 export function RealTimeTrans() {
   const token = useAppStore((s) => s.token);
@@ -101,14 +108,12 @@ export function RealTimeTrans() {
   useEffect(() => {
     // 1. 拉厂商列表
     Promise.all([
-      fetch('/api/sys/user/ai/asr/providers').then(r => r.json()),
-      fetch('/api/sys/user/ai/llm/providers').then(r => r.json()),
+      apiCall<Provider[]>('/sys/user/ai/asr/providers'),
+      apiCall<Provider[]>('/sys/user/ai/llm/providers'),
     ]).then(([asrRes, llmRes]) => {
-      const aps: Provider[] = asrRes.code === 200 ? asrRes.data : [];
-      const lps: Provider[] = llmRes.code === 200 ? llmRes.data : [];
-      setAsrProviders(aps);
-      setLlmProviders(lps);
-    }).catch(() => {});
+      setAsrProviders(asrRes);
+      setLlmProviders(llmRes);
+    }).catch((e) => showToast(e?.message || '模型厂商加载失败'));
 
     // 2. 听力页只加载用户已经保存的模型偏好，不展示没有厂商上下文的推荐模型。
     api.listModelPreferences().then((prefs: Preference[]) => {
@@ -129,9 +134,7 @@ export function RealTimeTrans() {
       setAsrModels([]);
       return [];
     }
-    const res = await fetch(`/api/sys/user/ai/asr/models?provider=${provider}`);
-    const d = await res.json();
-    const data = d.code === 200 ? d.data : [];
+    const data = await apiCall<ModelInfo[]>(`/sys/user/ai/asr/models?provider=${encodeURIComponent(provider)}`);
     setAsrModels(data);
     return data;
   };
@@ -140,9 +143,7 @@ export function RealTimeTrans() {
       setLlmModels([]);
       return [];
     }
-    const res = await fetch(`/api/sys/user/ai/llm/models?provider=${provider}`);
-    const d = await res.json();
-    const data = d.code === 200 ? d.data : [];
+    const data = await apiCall<ModelInfo[]>(`/sys/user/ai/llm/models?provider=${encodeURIComponent(provider)}`);
     setLlmModels(data);
     return data;
   };
@@ -169,11 +170,14 @@ export function RealTimeTrans() {
     setPickerModel('');
     const type = pickerOpen!;
     const url = type === 'ASR'
-      ? `/api/sys/user/ai/asr/models?provider=${p}`
-      : `/api/sys/user/ai/llm/models?provider=${p}`;
-    const res = await fetch(url);
-    const d = await res.json();
-    if (d.code === 200) setPickerModels(d.data);
+      ? `/sys/user/ai/asr/models?provider=${encodeURIComponent(p)}`
+      : `/sys/user/ai/llm/models?provider=${encodeURIComponent(p)}`;
+    try {
+      setPickerModels(await apiCall<ModelInfo[]>(url));
+    } catch (e: any) {
+      setPickerModels([]);
+      showToast(e?.message || '模型列表加载失败');
+    }
   };
   // 弹窗里点确定
   const onPickerConfirm = async () => {
@@ -345,8 +349,7 @@ export function RealTimeTrans() {
 
       // 3. 建 WebSocket
       const direction = `${srcLang}-${tgtLang}`;
-      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const ws = new WebSocket(`${proto}://${location.host}/asr/audio?token=${encodeURIComponent(token)}&direction=${direction}`);
+      const ws = new WebSocket(buildAsrWebSocketUrl(token, direction));
       ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
 
