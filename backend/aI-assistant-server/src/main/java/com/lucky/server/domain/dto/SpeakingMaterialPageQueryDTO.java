@@ -20,6 +20,7 @@ public record SpeakingMaterialPageQueryDTO(
 
     @Schema(description = "口语素材筛选条件")
     public record Filter(
+            @Schema(description = "是否成功：true=成功 false=失败，默认成功") Boolean success,
             @Schema(description = "素材标题，模糊搜索") String title,
             @Schema(description = "语言编码") SpeakingLanguageEnum languageCode,
             @Schema(description = "学习阶段编码") SpeakingStageEnum stageCode,
