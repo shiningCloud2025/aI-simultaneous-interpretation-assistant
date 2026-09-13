@@ -10,6 +10,8 @@ export interface UserInfo {
   status: string;
   lastLoginTime: string;
   createTime: string;
+  /** 用户类型：student 学生 / teacher 老师 / superadmin 超管 */
+  userType?: string;
 }
 
 export interface AppState {
@@ -42,16 +44,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  // 登录
+  // 登录（学生端接口，用户类型由后端固定为 student，前端无法指定）
   login: (data: { keyword: string; password: string }) =>
-    request<{ token: string }>('/sys/user/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
   loginByPhone: (data: { phone: string; captcha: string }) =>
-    request<{ token: string }>('/sys/user/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
   loginByEmail: (data: { email: string; captcha: string }) =>
-    request<{ token: string }>('/sys/user/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
+  // 老师登录
+  teacherLogin: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
+    request<{ token: string }>('/sys/user/teacher/login', { method: 'POST', body: JSON.stringify(data) }),
   // 注册
   register: (data: { account: string; username: string; password: string; phone?: string; email?: string; smsCaptcha?: string; emailCaptcha?: string }) =>
-    request<{ token: string }>('/sys/user/register', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/register', { method: 'POST', body: JSON.stringify(data) }),
+  teacherRegister: (data: { account: string; username: string; password: string; phone?: string; email?: string; smsCaptcha?: string; emailCaptcha?: string }) =>
+    request<{ token: string }>('/sys/user/teacher/register', { method: 'POST', body: JSON.stringify(data) }),
   // 获取用户信息
   getUserInfo: () => request<UserInfo>('/sys/user/info'),
   // 发送短信验证码

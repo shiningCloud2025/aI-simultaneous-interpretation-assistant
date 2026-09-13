@@ -4,6 +4,7 @@ import { useAppStore, api } from '../stores/appStore';
 import { AuthBox } from '../components/AuthBox';
 
 export function RegisterPage() {
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [account, setAccount] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -52,11 +53,11 @@ export function RegisterPage() {
         body.email = email.trim();
         body.emailCaptcha = emailCode.trim();
       }
-      const data = await api.register(body);
+      const data = role === 'teacher' ? await api.teacherRegister(body) : await api.register(body);
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav('/dashboard');
+      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '注册失败');
     } finally {
@@ -88,6 +89,10 @@ export function RegisterPage() {
 
   return (
     <AuthBox title="创建账号" subtitle="加入智语同航 - 基于多 Harness 智能体协作与编排的智慧外语课堂">
+      <div style={{ display: 'flex', marginBottom: 20, background: '#eeefff', borderRadius: 10, padding: 4 }}>
+        <button onClick={() => setRole('student')} style={roleButton(role === 'student')}>注册学生账号</button>
+        <button onClick={() => setRole('teacher')} style={roleButton(role === 'teacher')}>注册老师账号</button>
+      </div>
       <Fg label="账号"><input value={account} onChange={e => setAccount(e.target.value)} placeholder="5-12位数字账号" style={inp} /></Fg>
       <Fg label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} placeholder="请输入用户名/昵称" style={inp} /></Fg>
       <Fg label="密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位密码" style={inp} /></Fg>
@@ -155,3 +160,4 @@ function Fg({ label, children }: { label: string; children: React.ReactNode }) {
 function Btn({ onClick, children, disabled }: { onClick: () => void; children: React.ReactNode; disabled?: boolean }) { return <button onClick={onClick} disabled={disabled} style={{ width: '100%', padding: 12, border: 'none', background: disabled ? '#999' : '#2c2c2c', color: '#fff', fontSize: 14, fontWeight: 600, borderRadius: 10, cursor: disabled ? 'default' : 'pointer' }}>{children}</button>; }
 function T({ msg }: { msg: string }) { return <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{msg}</div>; }
 function sendBtn(disabled: boolean): React.CSSProperties { return { padding: '11px 14px', background: '#f5f3f0', border: 'none', borderRadius: 10, fontSize: 13, color: disabled ? '#bbb' : '#666', cursor: disabled ? 'default' : 'pointer', whiteSpace: 'nowrap', fontWeight: 500 }; }
+function roleButton(active: boolean): React.CSSProperties { return { flex: 1, padding: 10, border: 'none', background: active ? '#5962d9' : 'transparent', color: active ? '#fff' : '#74758b', borderRadius: 8, cursor: 'pointer', fontWeight: active ? 700 : 500, fontSize: 13 }; }
