@@ -658,6 +658,80 @@
   gap: 8px;
 }
 
+.admin-panel-embedded {
+  min-height: 0;
+}
+
+.admin-page-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-page-tabs button {
+  min-width: 0;
+  min-height: 72px;
+  border: 1px solid #e6dfd2;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .82);
+  color: #6f695f;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  text-align: left;
+  padding: 13px 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(67, 56, 38, .04);
+}
+
+.admin-page-tabs button:hover,
+.admin-page-tabs button.active {
+  border-color: rgba(35, 75, 73, .32);
+  background: #fff;
+  color: #1f2d2b;
+}
+
+.admin-page-tabs button.active {
+  box-shadow: inset 3px 0 0 #234b49, 0 10px 26px rgba(67, 56, 38, .07);
+}
+
+.admin-page-tabs span {
+  grid-row: 1 / span 2;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f1eee7;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+.admin-page-tabs b {
+  min-width: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-page-tabs em {
+  min-width: 0;
+  margin-top: 4px;
+  color: #9a968c;
+  font-style: normal;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-page-tab-body {
+  min-height: 0;
+}
+
 .admin-muted {
   color: #8c867c;
 }

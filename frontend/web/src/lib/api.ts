@@ -11,19 +11,27 @@ export function getToken(): string {
   return localStorage.getItem('token') || '';
 }
 
+type ApiRequestInit = RequestInit & {
+  skipAuth?: boolean;
+};
+
 export async function apiCall<T = unknown>(
   path: string,
-  options: RequestInit = {}
+  options: ApiRequestInit = {}
 ): Promise<T> {
   const token = getToken();
+  const { skipAuth, ...requestOptions } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> | undefined),
+    ...(requestOptions.headers as Record<string, string> | undefined),
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (!skipAuth && token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
   const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json?.detail || json?.message || `请求失败 (HTTP ${res.status})`);
+  }
   if (json && typeof json === 'object' && 'code' in json && json.code !== 200) {
     throw new Error(json.detail || json.message || `请求失败 (code=${json.code})`);
   }
@@ -41,6 +49,9 @@ export async function uploadFile<T = unknown>(file: File): Promise<T> {
     body: formData,
   });
   const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json?.detail || json?.message || `上传失败 (HTTP ${res.status})`);
+  }
   if (json && typeof json === 'object' && 'code' in json && json.code !== 200) {
     throw new Error(json.detail || json.message || `上传失败 (code=${json.code})`);
   }

@@ -173,11 +173,11 @@ function qs(params: Record<string, string | number | boolean | undefined | null>
 
 export const adminApi = {
   login: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
-    apiCall<{ token: string }>('/sys/superadmin/login', { method: 'POST', body: JSON.stringify(data) }),
+    apiCall<{ token: string }>('/sys/superadmin/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   sendSmsCode: (phone: string) =>
-    apiCall<void>(`/sys/user/sms/send?phone=${encodeURIComponent(phone)}`, { method: 'POST' }),
+    apiCall<void>(`/sys/user/sms/send?phone=${encodeURIComponent(phone)}`, { method: 'POST', skipAuth: true }),
   sendEmailCode: (email: string) =>
-    apiCall<void>(`/sys/user/email/send?email=${encodeURIComponent(email)}`, { method: 'POST' }),
+    apiCall<void>(`/sys/user/email/send?email=${encodeURIComponent(email)}`, { method: 'POST', skipAuth: true }),
 
   userSummary: () => apiCall<UserDashboardSummary>('/superadmin/dashboard/users/summary'),
   userTrend: (startDate?: string, endDate?: string) =>

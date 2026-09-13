@@ -24,11 +24,12 @@ type AdminPanelKey =
   | 'ai-dashboard'
   | 'ops-dashboard'
   | 'log-dashboard'
-  | 'all-users'
-  | 'online-users'
+  | 'user-management'
   | 'feedback'
   | 'skills'
   | 'system';
+
+type UserManageTabKey = 'all-users' | 'online-users' | 'disabled-users' | 'operation-records';
 
 const navGroups: Array<{
   key: string;
@@ -52,8 +53,7 @@ const navGroups: Array<{
     icon: '▣',
     name: '管理控制台',
     children: [
-      { key: 'all-users', icon: '👤', name: '全部用户', desc: '用户查询、状态、类型与密码' },
-      { key: 'online-users', icon: '🟢', name: '在线用户', desc: '在线查询与踢出' },
+      { key: 'user-management', icon: '👤', name: '用户管理', desc: '全部用户、在线用户、禁用用户与操作记录' },
     ],
   },
   {
@@ -207,10 +207,11 @@ export function SuperAdminLoginPage() {
             ? { phone, captcha }
             : { email, captcha }
       );
-      if (!data?.token) {
+      const token = data?.token || (data as any)?.data?.token;
+      if (!token) {
         throw new Error('登录接口未返回 token');
       }
-      setToken(data.token);
+      setToken(token);
       nav('/admin', { replace: true });
     } catch (e: any) {
       setError(e.message || '登录失败');
@@ -255,16 +256,16 @@ export function SuperAdminLoginPage() {
           <div className="admin-form-grid">
             {tab === 'password' && (
               <>
-                <input className="admin-login-input" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="账号 / 手机号 / 邮箱" />
-                <input className="admin-login-input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="密码" type="password" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+                <input className="admin-login-input" name="platform-admin-identity" autoComplete="off" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="账号 / 手机号 / 邮箱" />
+                <input className="admin-login-input" name="platform-admin-passcode" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="密码" type="password" onKeyDown={(e) => e.key === 'Enter' && submit()} />
               </>
             )}
 
             {tab === 'sms' && (
               <>
-                <input className="admin-login-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="手机号" />
+                <input className="admin-login-input" name="platform-admin-phone" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="手机号" />
                 <div className="admin-login-code-row">
-                  <input className="admin-login-input" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="短信验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+                  <input className="admin-login-input" name="platform-admin-sms-code" autoComplete="one-time-code" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="短信验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
                   <button onClick={sendSms}>{smsCountdown > 0 ? `${smsCountdown}s` : '获取验证码'}</button>
                 </div>
               </>
@@ -272,9 +273,9 @@ export function SuperAdminLoginPage() {
 
             {tab === 'email' && (
               <>
-                <input className="admin-login-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱" />
+                <input className="admin-login-input" name="platform-admin-email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱" />
                 <div className="admin-login-code-row">
-                  <input className="admin-login-input" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="邮箱验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+                  <input className="admin-login-input" name="platform-admin-email-code" autoComplete="one-time-code" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="邮箱验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
                   <button onClick={sendEmail}>{emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码'}</button>
                 </div>
               </>
@@ -283,7 +284,7 @@ export function SuperAdminLoginPage() {
             <button className="admin-login-submit" onClick={submit} disabled={loading}>{loading ? '登录中...' : '进入超管后台'}</button>
             {error && <div className="admin-error" style={{ padding: 0 }}>{error}</div>}
           </div>
-          <div className="admin-login-note">后台接口会校验用户类型，仅 superadmin 可以进入。</div>
+          <div className="admin-login-note">后台接口会校验管理员权限，仅授权账号可以进入。</div>
         </section>
       </main>
       <footer className="admin-login-footer">智语同航 · 平台管理入口</footer>
@@ -379,8 +380,7 @@ export function SuperAdminConsole() {
               {panel === 'ai-dashboard' && <PlaceholderPanel title="AI 看板" text="当前原型先展示静态结构；后续接 AI 调用统计接口后可替换为真实数据。" />}
               {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
               {panel === 'log-dashboard' && <LogDashboardPanel />}
-              {panel === 'all-users' && <AllUsersPanel />}
-              {panel === 'online-users' && <OnlineUsersPanel />}
+              {panel === 'user-management' && <UserManagementPanel />}
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
@@ -626,6 +626,53 @@ function StructureCard({ title, items }: { title: string; items: StructureItemLi
 
 type StructureItemLike = { name?: string; type?: string; status?: string; value: number; percent?: number };
 
+const userManageTabs: Array<{ key: UserManageTabKey; icon: string; name: string; desc: string }> = [
+  { key: 'all-users', icon: '👥', name: '全部用户', desc: '查询、状态、类型与密码' },
+  { key: 'online-users', icon: '🟢', name: '在线用户', desc: '在线查询与踢出' },
+  { key: 'disabled-users', icon: '⛔', name: '禁用用户', desc: '禁用理由后续扩展' },
+  { key: 'operation-records', icon: '🧾', name: '操作记录', desc: 'AOP 行为日志后续接入' },
+];
+
+function UserManagementPanel() {
+  const [tab, setTab] = useState<UserManageTabKey>('all-users');
+  const active = userManageTabs.find((item) => item.key === tab) || userManageTabs[0];
+
+  return (
+    <div className="admin-panel">
+      <div className="admin-page-tabs">
+        {userManageTabs.map((item) => (
+          <button
+            key={item.key}
+            className={tab === item.key ? 'active' : ''}
+            onClick={() => setTab(item.key)}
+          >
+            <span>{item.icon}</span>
+            <b>{item.name}</b>
+            <em>{item.desc}</em>
+          </button>
+        ))}
+      </div>
+
+      <div className="admin-page-tab-body">
+        {tab === 'all-users' && <AllUsersPanel embedded />}
+        {tab === 'online-users' && <OnlineUsersPanel embedded />}
+        {tab === 'disabled-users' && (
+          <PlaceholderPanel
+            title={`${active.icon} ${active.name}`}
+            text="禁用用户能力已预留，后续补充禁用理由、禁用来源、解禁审批等字段后再接入。"
+          />
+        )}
+        {tab === 'operation-records' && (
+          <PlaceholderPanel
+            title={`${active.icon} ${active.name}`}
+            text="操作记录后续统一走超管行为日志/AOP 注解记录，这里只筛选用户模块相关动作。"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DataTable({ columns, rows }: { columns: string[]; rows: Array<Array<React.ReactNode>> }) {
   if (!rows.length) return <EmptyBlock />;
   return (
@@ -642,7 +689,7 @@ function DataTable({ columns, rows }: { columns: string[]; rows: Array<Array<Rea
   );
 }
 
-function AllUsersPanel() {
+function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   const [data, setData] = useState<PageResult<ManagedUser>>({ records: [], total: 0, size: 20, current: 1 });
   const [keyword, setKeyword] = useState('');
   const [userType, setUserType] = useState('');
@@ -686,7 +733,7 @@ function AllUsersPanel() {
   };
 
   return (
-    <div className="admin-panel">
+    <div className={embedded ? 'admin-panel-embedded' : 'admin-panel'}>
       <div className="admin-card">
         <h2>全部用户</h2>
         <div className="admin-toolbar">
@@ -730,7 +777,7 @@ function AllUsersPanel() {
   );
 }
 
-function OnlineUsersPanel() {
+function OnlineUsersPanel({ embedded = false }: { embedded?: boolean }) {
   const [data, setData] = useState({ pageNum: 1, pageSize: 20, total: 0, totalOnline: 0, studentOnline: 0, teacherOnline: 0, records: [] as ManagedUser[] });
   const [keyword, setKeyword] = useState('');
   const [userType, setUserType] = useState('');
@@ -760,7 +807,7 @@ function OnlineUsersPanel() {
   };
 
   return (
-    <div className="admin-panel">
+    <div className={embedded ? 'admin-panel-embedded' : 'admin-panel'}>
       <div className="admin-grid-stats" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         <div className="admin-stat"><div className="label">当前在线</div><div className="value">{data.totalOnline}</div></div>
         <div className="admin-stat"><div className="label">在线学生</div><div className="value">{data.studentOnline}</div></div>

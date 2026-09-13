@@ -132,6 +132,11 @@ export function EduSpeakingGenerate() {
   const [userPrompt, setUserPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [material, setMaterial] = useState<SpeakingMaterial | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyUseCurrentFilter, setHistoryUseCurrentFilter] = useState(false);
+  const [history, setHistory] = useState<SpeakingRecord[]>([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPages, setHistoryPages] = useState(0);
   const [toast, setToast] = useState('');
 
   const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
@@ -145,6 +150,36 @@ export function EduSpeakingGenerate() {
     setLanguage(nextLanguage);
     const firstStage = STAGES.find(s => s.language === nextLanguage);
     setStage(firstStage?.code || '');
+  };
+
+  useEffect(() => {
+    loadHistory(1);
+  }, [historyUseCurrentFilter, language, stage, difficulty, scene]);
+
+  const loadHistory = async (page = historyPage) => {
+    setHistoryLoading(true);
+    try {
+      const filter: Record<string, unknown> = {};
+      if (historyUseCurrentFilter) {
+        filter.languageCode = language || undefined;
+        filter.stageCode = stage || undefined;
+        filter.difficultyCode = difficulty || undefined;
+        filter.sceneCode = scene || undefined;
+      }
+      const data = await apiCall<PageResult<SpeakingRecord>>('/speaking/material/history/page', {
+        method: 'POST',
+        body: JSON.stringify({ page, size: 5, filter }),
+      });
+      setHistory(data.records || []);
+      setHistoryPage(data.current || page);
+      setHistoryPages(data.pages || 0);
+    } catch (e: any) {
+      setHistory([]);
+      setHistoryPages(0);
+      showToast(e?.message || '口语素材历史加载失败');
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -167,6 +202,7 @@ export function EduSpeakingGenerate() {
         }),
       });
       setMaterial(data);
+      loadHistory(1);
       showToast('口语素材生成成功');
     } catch (e: any) {
       showToast(e?.message || '口语素材生成失败');
@@ -228,6 +264,46 @@ export function EduSpeakingGenerate() {
           <MaterialDetail material={material} />
         </Card>
       )}
+
+      <Card title="生成历史">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
+            <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => setHistoryUseCurrentFilter(e.target.checked)} />
+            按当前条件筛选
+          </label>
+          <button onClick={() => loadHistory(1)} disabled={historyLoading} style={ghostBtn}>{historyLoading ? '刷新中...' : '刷新'}</button>
+        </div>
+
+        {history.length === 0 ? (
+          <div style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: 24 }}>{historyLoading ? '加载中...' : '暂无生成历史'}</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {history.map(item => (
+              <div key={item.id} style={listItemStyle}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{item.title || '未命名口语素材'}</div>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                      {labelOf(LANGUAGES, item.languageCode)} · {labelOf(STAGES, item.stageCode)} · {labelOf(DIFFICULTIES, item.difficultyCode)} · {displayScene(item.sceneCode, item.customScene)}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>{formatTime(item.createTime)}</div>
+                </div>
+                {item.sceneDescription && <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sceneDescription}</div>}
+                {item.userPrompt && <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>偏好：{item.userPrompt}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {historyPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 }}>
+            <button onClick={() => loadHistory(historyPage - 1)} disabled={historyPage <= 1 || historyLoading} style={{ ...ghostBtn, opacity: historyPage <= 1 ? .4 : 1 }}>上一页</button>
+            <span style={{ fontSize: 12, color: '#999' }}>{historyPage} / {historyPages}</span>
+            <button onClick={() => loadHistory(historyPage + 1)} disabled={historyPage >= historyPages || historyLoading} style={{ ...ghostBtn, opacity: historyPage >= historyPages ? .4 : 1 }}>下一页</button>
+          </div>
+        )}
+      </Card>
 
       {toast && (
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 1100 }}>{toast}</div>
