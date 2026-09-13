@@ -67,6 +67,7 @@ interface SpeakingMaterial {
 
 interface SpeakingRecord {
   id: number;
+  success?: boolean;
   languageCode: string;
   stageCode: string;
   difficultyCode: string;
@@ -81,6 +82,8 @@ interface SpeakingRecord {
   ttsModelName?: string;
   ttsVoice?: string;
   ttsSpeechRate?: number;
+  failureStage?: string;
+  errorMessage?: string;
   createTime?: string;
 }
 
@@ -132,6 +135,7 @@ export function EduSpeakingGenerate() {
   const [userPrompt, setUserPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [material, setMaterial] = useState<SpeakingMaterial | null>(null);
+  const [historySuccess, setHistorySuccess] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyUseCurrentFilter, setHistoryUseCurrentFilter] = useState(false);
   const [history, setHistory] = useState<SpeakingRecord[]>([]);
@@ -153,13 +157,13 @@ export function EduSpeakingGenerate() {
   };
 
   useEffect(() => {
-    loadHistory(1);
-  }, [historyUseCurrentFilter, language, stage, difficulty, scene]);
+    loadHistory(1, historySuccess);
+  }, [historySuccess, historyUseCurrentFilter, language, stage, difficulty, scene]);
 
-  const loadHistory = async (page = historyPage) => {
+  const loadHistory = async (page = historyPage, success = historySuccess) => {
     setHistoryLoading(true);
     try {
-      const filter: Record<string, unknown> = {};
+      const filter: Record<string, unknown> = { success };
       if (historyUseCurrentFilter) {
         filter.languageCode = language || undefined;
         filter.stageCode = stage || undefined;
@@ -202,10 +206,11 @@ export function EduSpeakingGenerate() {
         }),
       });
       setMaterial(data);
-      loadHistory(1);
+      loadHistory(1, true);
       showToast('口语素材生成成功');
     } catch (e: any) {
       showToast(e?.message || '口语素材生成失败');
+      loadHistory(1, false);
     } finally {
       setLoading(false);
     }
@@ -267,11 +272,15 @@ export function EduSpeakingGenerate() {
 
       <Card title="生成历史">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
-            <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => setHistoryUseCurrentFilter(e.target.checked)} />
-            按当前条件筛选
-          </label>
-          <button onClick={() => loadHistory(1)} disabled={historyLoading} style={ghostBtn}>{historyLoading ? '刷新中...' : '刷新'}</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => setHistorySuccess(true)} style={tabBtn(historySuccess)}>成功记录</button>
+            <button onClick={() => setHistorySuccess(false)} style={tabBtn(!historySuccess)}>失败记录</button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
+              <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => setHistoryUseCurrentFilter(e.target.checked)} />
+              按当前条件筛选
+            </label>
+          </div>
+          <button onClick={() => loadHistory(1, historySuccess)} disabled={historyLoading} style={ghostBtn}>{historyLoading ? '刷新中...' : '刷新'}</button>
         </div>
 
         {history.length === 0 ? (
@@ -282,15 +291,21 @@ export function EduSpeakingGenerate() {
               <div key={item.id} style={listItemStyle}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{item.title || '未命名口语素材'}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{item.success === false ? '生成失败' : item.title || '未命名口语素材'}</div>
                     <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
                       {labelOf(LANGUAGES, item.languageCode)} · {labelOf(STAGES, item.stageCode)} · {labelOf(DIFFICULTIES, item.difficultyCode)} · {displayScene(item.sceneCode, item.customScene)}
                     </div>
                   </div>
                   <div style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>{formatTime(item.createTime)}</div>
                 </div>
-                {item.sceneDescription && <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sceneDescription}</div>}
-                {item.userPrompt && <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>偏好：{item.userPrompt}</div>}
+                {item.success === false ? (
+                  <div style={{ fontSize: 13, color: '#c62828', lineHeight: 1.6, marginTop: 8 }}>{item.errorMessage || item.failureStage || '生成失败'}</div>
+                ) : (
+                  <>
+                    {item.sceneDescription && <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sceneDescription}</div>}
+                    {item.userPrompt && <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>偏好：{item.userPrompt}</div>}
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -298,9 +313,9 @@ export function EduSpeakingGenerate() {
 
         {historyPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 }}>
-            <button onClick={() => loadHistory(historyPage - 1)} disabled={historyPage <= 1 || historyLoading} style={{ ...ghostBtn, opacity: historyPage <= 1 ? .4 : 1 }}>上一页</button>
+            <button onClick={() => loadHistory(historyPage - 1, historySuccess)} disabled={historyPage <= 1 || historyLoading} style={{ ...ghostBtn, opacity: historyPage <= 1 ? .4 : 1 }}>上一页</button>
             <span style={{ fontSize: 12, color: '#999' }}>{historyPage} / {historyPages}</span>
-            <button onClick={() => loadHistory(historyPage + 1)} disabled={historyPage >= historyPages || historyLoading} style={{ ...ghostBtn, opacity: historyPage >= historyPages ? .4 : 1 }}>下一页</button>
+            <button onClick={() => loadHistory(historyPage + 1, historySuccess)} disabled={historyPage >= historyPages || historyLoading} style={{ ...ghostBtn, opacity: historyPage >= historyPages ? .4 : 1 }}>下一页</button>
           </div>
         )}
       </Card>
@@ -691,6 +706,18 @@ const primaryBtn: React.CSSProperties = {
   cursor: 'pointer',
   whiteSpace: 'nowrap',
 };
+
+function tabBtn(active: boolean): React.CSSProperties {
+  return {
+    padding: '7px 14px',
+    borderRadius: 8,
+    border: active ? '1px solid #2c2c2c' : '1px solid #e8e6e1',
+    background: active ? '#2c2c2c' : '#fff',
+    color: active ? '#fff' : '#666',
+    fontSize: 12,
+    cursor: 'pointer',
+  };
+}
 
 const ghostBtn: React.CSSProperties = {
   padding: '7px 14px',

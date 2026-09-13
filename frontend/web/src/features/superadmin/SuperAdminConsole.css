@@ -177,10 +177,388 @@
 
 .admin-sidebar-foot {
   border-top: 1px solid #e6dfd2;
-  padding: 14px 8px 0;
+  padding: 12px 4px 0;
+  position: relative;
+}
+
+.admin-profile-card {
+  width: 100%;
+  border: 1px solid #eee8dd;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #f7f5f0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.admin-profile-card:hover {
+  background: #fff;
+  border-color: rgba(35, 75, 73, .22);
+}
+
+.admin-profile-card.active {
+  background: #fff;
+  border-color: rgba(35, 75, 73, .34);
+  box-shadow: inset 3px 0 0 #234b49;
+}
+
+.admin-profile-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: #234b49;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.admin-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-profile-main {
+  min-width: 0;
+}
+
+.admin-profile-main b {
+  display: block;
+  font-size: 12px;
+  color: #1f2d2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-profile-main span {
+  display: block;
+  margin-top: 2px;
   color: #8c867c;
-  font-size: 11px;
-  line-height: 1.7;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-profile-menu-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.admin-profile-menu {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: calc(100% + 8px);
+  z-index: 41;
+  padding: 8px;
+  border: 1px solid #eee8dd;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(67, 56, 38, .13);
+}
+
+.admin-profile-menu button {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #47524e;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.admin-profile-menu button:hover {
+  background: #f7f5f0;
+}
+
+.admin-profile-menu button.danger {
+  color: #d4544b;
+  border-top: 1px solid #f1ece4;
+  border-radius: 0 0 10px 10px;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.admin-account-page {
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+  padding: 18px 18px 44px;
+}
+
+.admin-account-shell {
+  width: min(680px, 100%);
+  padding: 0;
+}
+
+.admin-account-hero {
+  text-align: center;
+  padding: 10px 0 24px;
+}
+
+.admin-account-avatar {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #234b49;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  font-weight: 800;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(35, 75, 73, .17);
+}
+
+.admin-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-account-hero h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.admin-account-hero span {
+  display: inline-block;
+  margin-top: 8px;
+  color: #8c867c;
+  font-size: 13px;
+}
+
+.admin-account-info {
+  border: 1px solid #eee8dd;
+  border-radius: 15px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(67, 56, 38, .06);
+}
+
+.admin-account-row {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 30px;
+  border-bottom: 1px solid #f1eee8;
+}
+
+.admin-account-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-account-row span {
+  color: #9a968c;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-account-row b {
+  min-width: 0;
+  color: #3c4643;
+  font-size: 15px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-account-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.admin-account-actions button {
+  height: 54px;
+  border: 1px solid #eee8dd;
+  border-radius: 14px;
+  background: #fff;
+  color: #4b5652;
+  text-align: left;
+  padding: 0 28px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(67, 56, 38, .06);
+}
+
+.admin-account-actions button:hover {
+  border-color: rgba(35, 75, 73, .24);
+  color: #1f2d2b;
+}
+
+.admin-account-edit-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(31, 45, 43, .28);
+}
+
+.admin-account-edit {
+  width: min(420px, 100%);
+  border: 1px solid #e6dfd2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(67, 56, 38, .2);
+  padding: 22px;
+}
+
+.admin-account-edit h3 {
+  margin: 0 0 18px;
+  font-size: 17px;
+}
+
+.admin-account-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.admin-account-field > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #756f66;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-account-field input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #eee8dd;
+  border-radius: 10px;
+  background: #f8f7f3;
+  color: #1f2d2b;
+  padding: 0 12px;
+  font: inherit;
+  outline: none;
+}
+
+.admin-account-field input:focus {
+  border-color: #234b49;
+  background: #fff;
+}
+
+.admin-account-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-account-upload-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #234b49;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.admin-account-upload-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-account-upload-row label {
+  height: 38px;
+  border: 1px solid #ded8cc;
+  border-radius: 10px;
+  background: #fff;
+  color: #47524e;
+  display: grid;
+  place-items: center;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-account-upload-row input[type="file"] {
+  display: none;
+}
+
+.admin-account-code-row {
+  display: grid;
+  grid-template-columns: 1fr 86px;
+  gap: 8px;
+}
+
+.admin-account-code-row button {
+  border: 0;
+  border-radius: 10px;
+  background: #e8eee9;
+  color: #234b49;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-account-edit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.admin-account-edit-actions button {
+  height: 40px;
+  border: 1px solid #ded8cc;
+  border-radius: 10px;
+  background: #fff;
+  color: #47524e;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-account-edit-actions button.primary {
+  border-color: #234b49;
+  background: #234b49;
+  color: #fff;
+}
+
+.admin-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 120;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  border-radius: 10px;
+  background: #1f2d2b;
+  color: #fff;
+  font-size: 13px;
 }
 
 .admin-main {
@@ -837,6 +1215,17 @@
   margin-bottom: 12px;
 }
 
+.admin-toolbar-label {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 2px 0 8px;
+  color: #8c867c;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .admin-input,
 .admin-select,
 .admin-textarea {
@@ -897,6 +1286,14 @@
 
 .admin-table tr:hover td {
   background: #faf8f3;
+}
+
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 250px;
 }
 
 .admin-pill {

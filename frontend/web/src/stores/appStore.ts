@@ -20,6 +20,7 @@ export interface AppState {
   activePanel: string;
   setUser: (user: UserInfo) => void;
   setToken: (token: string) => void;
+  syncToken: (token: string | null) => void;
   logout: () => void;
   setActivePanel: (panel: string) => void;
 }
@@ -42,6 +43,9 @@ async function request<T>(path: string, options?: AppRequestInit): Promise<T> {
 
   const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
   const json = await res.json();
+  if (res.status === 401) {
+    useAppStore.getState().logout();
+  }
   if (!res.ok) {
     throw new Error(json.detail || json.message || `请求失败 (HTTP ${res.status})`);
   }
@@ -112,7 +116,10 @@ export const useAppStore = create<AppState>((set) => ({
   setUser: (user) => set({ user }),
   setToken: (token) => {
     localStorage.setItem('token', token);
-    set({ token });
+    set({ token, user: null, activePanel: 'dashboard' });
+  },
+  syncToken: (token) => {
+    set({ token, user: null, activePanel: 'dashboard' });
   },
   logout: () => {
     localStorage.removeItem('token');

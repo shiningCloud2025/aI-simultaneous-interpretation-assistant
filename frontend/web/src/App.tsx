@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAppStore } from './stores/appStore';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -16,6 +17,26 @@ function ProtectedRoute({ children, redirectTo = '/login' }: { children: React.R
 }
 
 export default function App() {
+  const syncToken = useAppStore((s) => s.syncToken);
+
+  useEffect(() => {
+    const syncCurrentToken = () => {
+      syncToken(localStorage.getItem('token'));
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'token') {
+        syncToken(event.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('auth-token-invalid', syncCurrentToken);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('auth-token-invalid', syncCurrentToken);
+    };
+  }, [syncToken]);
+
   return (
     <BrowserRouter>
       <Routes>

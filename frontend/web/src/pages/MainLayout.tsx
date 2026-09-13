@@ -93,8 +93,10 @@ export function MainLayout() {
     if (token && !user) {
       setLoading(true);
       api.getUserInfo().then(u => { setUser(u); setLoading(false); }).catch(() => { logout(); nav('/login'); });
+    } else {
+      setLoading(false);
     }
-  }, []);
+  }, [token, user, theme, setUser, logout, nav]);
 
   useEffect(() => {
     const panel = searchParams.get('panel');

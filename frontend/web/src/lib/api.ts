@@ -11,6 +11,11 @@ export function getToken(): string {
   return localStorage.getItem('token') || '';
 }
 
+function clearAuthState() {
+  localStorage.removeItem('token');
+  window.dispatchEvent(new CustomEvent('auth-token-invalid'));
+}
+
 type ApiRequestInit = RequestInit & {
   skipAuth?: boolean;
 };
@@ -29,6 +34,9 @@ export async function apiCall<T = unknown>(
 
   const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    clearAuthState();
+  }
   if (!res.ok) {
     throw new Error(json?.detail || json?.message || `请求失败 (HTTP ${res.status})`);
   }
@@ -49,6 +57,9 @@ export async function uploadFile<T = unknown>(file: File): Promise<T> {
     body: formData,
   });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    clearAuthState();
+  }
   if (!res.ok) {
     throw new Error(json?.detail || json?.message || `上传失败 (HTTP ${res.status})`);
   }

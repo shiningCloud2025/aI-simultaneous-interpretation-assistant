@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../stores/appStore';
+import { api, useAppStore } from '../../stores/appStore';
+import { uploadFile } from '../../lib/api';
 import {
   adminApi,
   type DashboardOnline,
@@ -27,9 +28,11 @@ type AdminPanelKey =
   | 'user-management'
   | 'feedback'
   | 'skills'
-  | 'system';
+  | 'system'
+  | 'admin-account';
 
 type UserManageTabKey = 'all-users' | 'online-users' | 'disabled-users' | 'operation-records';
+type AdminAccountModalType = 'profile' | 'password' | 'phone' | 'email' | null;
 
 const navGroups: Array<{
   key: string;
@@ -76,7 +79,10 @@ const navGroups: Array<{
 ];
 
 const panelMeta = Object.fromEntries(
-  navGroups.flatMap((group) => group.children.map((item) => [item.key, item]))
+  [
+    ...navGroups.flatMap((group) => group.children.map((item) => [item.key, item])),
+    ['admin-account', { key: 'admin-account', icon: '👤', name: '账号中心', desc: '管理员基础信息、资料维护与安全设置' }],
+  ]
 ) as Record<AdminPanelKey, { key: AdminPanelKey; icon: string; name: string; desc: string }>;
 
 function formatNumber(value?: number | null) {
@@ -91,7 +97,10 @@ function enumText(value?: string | number) {
   const map: Record<string, string> = {
     student: '学生',
     teacher: '老师',
+    STUDENT: '学生',
+    TEACHER: '老师',
     superadmin: '超管',
+    SUPERADMIN: '超管',
     '0': '禁用',
     '1': '启用',
     NORMAL: '正常',
@@ -111,6 +120,12 @@ function enumText(value?: string | number) {
 
 function statusIsDisabled(value?: string | number) {
   return String(value) === '0' || value === 'DISABLED';
+}
+
+function userTypeIs(user: ManagedUser, type: 'student' | 'teacher') {
+  const raw = String(user.userType || '').toLowerCase();
+  const text = user.userTypeText || '';
+  return raw === type || text === (type === 'student' ? '学生' : '老师');
 }
 
 function compareText(metric?: { comparePercent?: number; compareText?: string }) {
@@ -297,9 +312,22 @@ export function SuperAdminConsole() {
   const [panel, setPanel] = useState<AdminPanelKey>('user-dashboard');
   const [activeMenu, setActiveMenu] = useState('boards');
   const [mode, setMode] = useState<'classic' | 'star'>('classic');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
   const logout = useAppStore((s) => s.logout);
   const nav = useNavigate();
   const meta = panelMeta[panel];
+
+  useEffect(() => {
+    if (user) return;
+    api.getUserInfo()
+      .then(setUser)
+      .catch(() => {
+        logout();
+        nav('/admin/login', { replace: true });
+      });
+  }, [user, setUser, logout, nav]);
 
   const changePanel = (key: AdminPanelKey) => {
     setPanel(key);
@@ -348,7 +376,35 @@ export function SuperAdminConsole() {
             );
           })}
         </div>
-        <div className="admin-sidebar-foot">一级导航展开二级，具体页面内按业务需要继续用 Tab。</div>
+        <div className="admin-sidebar-foot">
+          <button
+            className={`admin-profile-card ${panel === 'admin-account' ? 'active' : ''}`}
+            onClick={() => setShowProfileMenu((open) => !open)}
+          >
+            <div className="admin-profile-avatar">
+              {user?.avatar ? <img src={user.avatar} alt={user.username || '管理员头像'} /> : (user?.username?.[0] || '管')}
+            </div>
+            <div className="admin-profile-main">
+              <b>{user?.username || '平台管理员'}</b>
+              <span>平台管理员 · 已登录</span>
+            </div>
+          </button>
+          {showProfileMenu && (
+            <>
+              <div className="admin-profile-menu-mask" onClick={() => setShowProfileMenu(false)} />
+              <div className="admin-profile-menu">
+                <button onClick={() => { setPanel('admin-account'); setShowProfileMenu(false); }}>
+                  <span>👤</span>
+                  <b>个人中心</b>
+                </button>
+                <button className="danger" onClick={() => { logout(); nav('/admin/login'); }}>
+                  <span>🚪</span>
+                  <b>退出登录</b>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </aside>}
       <main className="admin-main">
         <header className="admin-topbar">
@@ -384,11 +440,257 @@ export function SuperAdminConsole() {
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+              {panel === 'admin-account' && <AdminAccountPanel />}
             </>
           )}
         </section>
       </main>
     </div>
+  );
+}
+
+function AdminAccountPanel() {
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
+  const [modal, setModal] = useState<AdminAccountModalType>(null);
+  const [username, setUsername] = useState(user?.username || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [smsCaptcha, setSmsCaptcha] = useState('');
+  const [emailCaptcha, setEmailCaptcha] = useState('');
+  const [smsCount, setSmsCount] = useState(0);
+  const [emailCount, setEmailCount] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState('');
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(''), 1800);
+  };
+
+  const openModal = (type: AdminAccountModalType) => {
+    setUsername(user?.username || '');
+    setAvatar(user?.avatar || '');
+    setPassword('');
+    setConfirmPassword('');
+    setPhone('');
+    setEmail('');
+    setSmsCaptcha('');
+    setEmailCaptcha('');
+    setModal(type);
+  };
+
+  const save = async () => {
+    try {
+      const body: Record<string, string> = {};
+      if (modal === 'profile') {
+        if (username && username !== user?.username) body.username = username;
+        if (avatar && avatar !== user?.avatar) body.avatar = avatar;
+      }
+      if (modal === 'password') {
+        if (!password) return showToast('请输入新密码');
+        if (password !== confirmPassword) return showToast('两次密码不一致');
+        body.password = password;
+      }
+      if (modal === 'phone') {
+        if (!phone) return showToast('请输入新手机号');
+        if (!smsCaptcha) return showToast('请输入短信验证码');
+        body.phone = phone;
+        body.smsCaptcha = smsCaptcha;
+      }
+      if (modal === 'email') {
+        if (!email) return showToast('请输入新邮箱');
+        if (!emailCaptcha) return showToast('请输入邮箱验证码');
+        body.email = email;
+        body.emailCaptcha = emailCaptcha;
+      }
+      await api.updateProfile(body);
+      const latest = await api.getUserInfo();
+      setUser(latest);
+      setModal(null);
+      showToast('保存成功');
+    } catch (e: any) {
+      showToast(e.message || '保存失败');
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setUploading(true);
+      const uploaded = await uploadFile<{ url: string }>(file);
+      if (!uploaded.url) return showToast('头像上传失败');
+      setAvatar(uploaded.url);
+      showToast('头像上传成功');
+    } catch (e: any) {
+      showToast(e.message || '头像上传失败');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const sendSms = async () => {
+    if (smsCount > 0 || !phone) return;
+    try {
+      await api.sendSmsCode(phone);
+      showToast('验证码已发送');
+      setSmsCount(60);
+      const timer = window.setInterval(() => {
+        setSmsCount((prev) => {
+          if (prev <= 1) {
+            window.clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (e: any) {
+      showToast(e.message || '发送失败');
+    }
+  };
+
+  const sendEmailCode = async () => {
+    if (emailCount > 0 || !email) return;
+    try {
+      await api.sendEmailCode(email);
+      showToast('验证码已发送');
+      setEmailCount(60);
+      const timer = window.setInterval(() => {
+        setEmailCount((prev) => {
+          if (prev <= 1) {
+            window.clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (e: any) {
+      showToast(e.message || '发送失败');
+    }
+  };
+
+  return (
+    <div className="admin-panel admin-account-page">
+      <div className="admin-account-shell">
+        <div className="admin-account-hero">
+          <div className="admin-account-avatar">
+            {user?.avatar ? <img src={user.avatar} alt={user.username || '管理员头像'} /> : (user?.username?.[0] || '管')}
+          </div>
+          <h2>{user?.username || '超级管理员'}</h2>
+          <span>超级管理员</span>
+        </div>
+
+        <div className="admin-account-info">
+          <AdminAccountRow label="账号" value={user?.account || '-'} />
+          <AdminAccountRow label="邮箱" value={user?.email || '未绑定'} />
+          <AdminAccountRow label="手机号" value={user?.phone || '未绑定'} />
+          <AdminAccountRow label="最后登录" value={formatDate(user?.lastLoginTime)} />
+          <AdminAccountRow label="注册时间" value={formatDate(user?.createTime)} />
+        </div>
+
+        <div className="admin-account-actions">
+          <button onClick={() => openModal('profile')}>✏️ 编辑资料</button>
+          <button onClick={() => openModal('password')}>🔒 修改密码</button>
+          <button onClick={() => openModal('phone')}>📱 换绑手机</button>
+          <button onClick={() => openModal('email')}>📧 换绑邮箱</button>
+        </div>
+      </div>
+
+      {modal && (
+        <div className="admin-account-edit-mask" onClick={() => setModal(null)}>
+          <div className="admin-account-edit" onClick={(e) => e.stopPropagation()}>
+            <h3>{modal === 'profile' ? '编辑资料' : modal === 'password' ? '修改密码' : modal === 'phone' ? '换绑手机' : '换绑邮箱'}</h3>
+            {modal === 'profile' && (
+              <>
+                <AdminAccountField label="用户名">
+                  <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="请输入用户名" />
+                </AdminAccountField>
+                <AdminAccountField label="头像">
+                  <div className="admin-account-upload-row">
+                    <div className="admin-account-upload-avatar">
+                      {avatar ? <img src={avatar} alt="头像预览" /> : (username?.[0] || '管')}
+                    </div>
+                    <label>
+                      {uploading ? '上传中...' : '上传头像'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleAvatarUpload(file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                </AdminAccountField>
+              </>
+            )}
+            {modal === 'password' && (
+              <>
+                <AdminAccountField label="新密码">
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6-26 位新密码" />
+                </AdminAccountField>
+                <AdminAccountField label="确认新密码">
+                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" />
+                </AdminAccountField>
+              </>
+            )}
+            {modal === 'phone' && (
+              <>
+                <AdminAccountField label="新手机号">
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="请输入新手机号" />
+                </AdminAccountField>
+                <AdminAccountField label="短信验证码">
+                  <div className="admin-account-code-row">
+                    <input value={smsCaptcha} onChange={(e) => setSmsCaptcha(e.target.value)} placeholder="请输入验证码" />
+                    <button onClick={sendSms}>{smsCount > 0 ? `${smsCount}s` : '获取'}</button>
+                  </div>
+                </AdminAccountField>
+              </>
+            )}
+            {modal === 'email' && (
+              <>
+                <AdminAccountField label="新邮箱">
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="请输入新邮箱" />
+                </AdminAccountField>
+                <AdminAccountField label="邮箱验证码">
+                  <div className="admin-account-code-row">
+                    <input value={emailCaptcha} onChange={(e) => setEmailCaptcha(e.target.value)} placeholder="请输入验证码" />
+                    <button onClick={sendEmailCode}>{emailCount > 0 ? `${emailCount}s` : '获取'}</button>
+                  </div>
+                </AdminAccountField>
+              </>
+            )}
+            <div className="admin-account-edit-actions">
+              <button className="primary" onClick={save}>保存</button>
+              <button onClick={() => setModal(null)}>取消</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {toast && <div className="admin-toast">{toast}</div>}
+    </div>
+  );
+}
+
+function AdminAccountRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="admin-account-row">
+      <span>{label}</span>
+      <b>{value}</b>
+    </div>
+  );
+}
+
+function AdminAccountField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="admin-account-field">
+      <span>{label}</span>
+      {children}
+    </label>
   );
 }
 
@@ -694,6 +996,8 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   const [keyword, setKeyword] = useState('');
   const [userType, setUserType] = useState('');
   const [status, setStatus] = useState('');
+  const [batchStatus, setBatchStatus] = useState('1');
+  const [batchUserType, setBatchUserType] = useState('student');
   const [selected, setSelected] = useState<number[]>([]);
   const [error, setError] = useState('');
 
@@ -710,15 +1014,20 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
 
   useEffect(() => { load(1); }, []);
 
-  const batch = async (kind: 'status' | 'type', value: string | number) => {
-    if (!selected.length) return setError('请先选择用户');
+  const updateUsers = async (ids: number[], kind: 'status' | 'type', value: string | number) => {
+    if (!ids.length) return setError('请先选择用户');
     try {
-      if (kind === 'status') await adminApi.batchUpdateStatus(selected, Number(value));
-      else await adminApi.batchUpdateType(selected, String(value));
+      if (kind === 'status') await adminApi.batchUpdateStatus(ids, Number(value));
+      else await adminApi.batchUpdateType(ids, String(value));
       await load();
     } catch (e: any) {
       setError(e.message || '操作失败');
     }
+  };
+
+  const batch = async (kind: 'status' | 'type', value: string | number) => {
+    if (!selected.length) return setError('请先选择用户');
+    await updateUsers(selected, kind, value);
   };
 
   const resetPassword = async (userId: number) => {
@@ -745,10 +1054,20 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
             <option value="">全部状态</option><option value="1">启用</option><option value="0">禁用</option>
           </select>
           <button className="admin-btn primary" onClick={() => load(1)}>查询</button>
-          <button className="admin-btn" onClick={() => batch('status', 1)}>启用</button>
-          <button className="admin-btn danger" onClick={() => batch('status', 0)}>禁用</button>
-          <button className="admin-btn" onClick={() => batch('type', 'student')}>设为学生</button>
-          <button className="admin-btn" onClick={() => batch('type', 'teacher')}>设为老师</button>
+          <span className="admin-toolbar-label">批量修改账号状态</span>
+          <select className="admin-select compact" value={batchStatus} onChange={(e) => setBatchStatus(e.target.value)}>
+            <option value="1">启用</option>
+            <option value="0">禁用</option>
+          </select>
+          <button className={`admin-btn ${batchStatus === '0' ? 'danger' : ''}`} onClick={() => batch('status', batchStatus)}>
+            确认修改状态
+          </button>
+          <span className="admin-toolbar-label">批量修改角色</span>
+          <select className="admin-select compact" value={batchUserType} onChange={(e) => setBatchUserType(e.target.value)}>
+            <option value="student">学生</option>
+            <option value="teacher">老师</option>
+          </select>
+          <button className="admin-btn" onClick={() => batch('type', batchUserType)}>确认修改角色</button>
         </div>
         <ErrorBlock error={error} />
         <div className="admin-table-wrap">
@@ -765,7 +1084,21 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
                   <td>{user.online ? <span className="admin-pill ok">在线</span> : <span className="admin-muted">离线</span>}</td>
                   <td>{formatDate(user.lastLoginTime)}</td>
                   <td>{formatDate(user.createTime)}</td>
-                  <td><button className="admin-btn" onClick={() => resetPassword(user.id)}>重置密码</button></td>
+                  <td>
+                    <div className="admin-row-actions">
+                      <button className="admin-btn" onClick={() => resetPassword(user.id)}>重置密码</button>
+                      {statusIsDisabled(user.status) ? (
+                        <button className="admin-btn" onClick={() => updateUsers([user.id], 'status', 1)}>启用</button>
+                      ) : (
+                        <button className="admin-btn danger" onClick={() => updateUsers([user.id], 'status', 0)}>禁用</button>
+                      )}
+                      {userTypeIs(user, 'teacher') ? (
+                        <button className="admin-btn" onClick={() => updateUsers([user.id], 'type', 'student')}>设为学生</button>
+                      ) : (
+                        <button className="admin-btn" onClick={() => updateUsers([user.id], 'type', 'teacher')}>设为老师</button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
