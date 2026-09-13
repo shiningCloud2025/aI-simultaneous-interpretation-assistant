@@ -122,7 +122,7 @@ interface SpeakingWordEvaluation {
   endTime?: number;
 }
 
-export function EduSpeaking() {
+export function EduSpeakingGenerate() {
   const [language, setLanguage] = useState(LANGUAGES[0].code);
   const [stage, setStage] = useState(STAGES[2].code);
   const [difficulty, setDifficulty] = useState(DIFFICULTIES[1].code);
@@ -130,6 +130,104 @@ export function EduSpeaking() {
   const [userPrompt, setUserPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [material, setMaterial] = useState<SpeakingMaterial | null>(null);
+  const [toast, setToast] = useState('');
+
+  const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(''), 2200);
+  };
+
+  const changeLanguage = (nextLanguage: string) => {
+    setLanguage(nextLanguage);
+    const firstStage = STAGES.find(s => s.language === nextLanguage);
+    setStage(firstStage?.code || '');
+  };
+
+  const handleGenerate = async () => {
+    if (!stage || !difficulty || !scene) {
+      showToast('请选择完整的口语素材生成条件');
+      return;
+    }
+    setLoading(true);
+    setMaterial(null);
+    try {
+      const data = await apiCall<SpeakingMaterial>('/speaking/material/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          languageCode: language,
+          stageCode: stage,
+          difficultyCode: difficulty,
+          sceneCode: scene,
+          userPrompt: userPrompt.trim() || undefined,
+        }),
+      });
+      setMaterial(data);
+      showToast('口语素材生成成功');
+    } catch (e: any) {
+      showToast(e?.message || '口语素材生成失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <PageBanner icon="🎙️" title="口语素材生成" desc="选择学段、难度与场景，一键生成跟读句子、译文、标准音频和练习建议" />
+
+      <Card title="素材生成">
+        <LlmModelPreference label="口语素材生成模型" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
+          <Field label="语言">
+            <Select options={LANGUAGES.map(s => s.desc)} value={labelOf(LANGUAGES, language)} onChange={d => changeLanguage(codeOf(LANGUAGES, d))} />
+          </Field>
+          <Field label="学习阶段">
+            <Select options={currentStages.map(s => s.desc)} value={labelOf(STAGES, stage)} onChange={d => setStage(codeOf(STAGES, d))} />
+          </Field>
+          <Field label="难度">
+            <Select options={DIFFICULTIES.map(s => s.desc)} value={labelOf(DIFFICULTIES, difficulty)} onChange={d => setDifficulty(codeOf(DIFFICULTIES, d))} />
+          </Field>
+          <Field label="练习场景">
+            <Select options={SCENES.map(s => s.desc)} value={labelOf(SCENES, scene)} onChange={d => setScene(codeOf(SCENES, d))} />
+          </Field>
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <Field label="偏好说明">
+            <textarea
+              value={userPrompt}
+              onChange={e => setUserPrompt(e.target.value)}
+              placeholder="例如：更偏商务面试场景，句子短一些，适合课堂跟读"
+              rows={3}
+              style={textareaStyle}
+            />
+          </Field>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+          <button onClick={handleGenerate} disabled={loading || !stage} style={{ ...primaryBtn, opacity: loading || !stage ? .6 : 1 }}>
+            {loading ? '生成中...' : '生成口语素材'}
+          </button>
+        </div>
+      </Card>
+
+      {material && (
+        <Card title="生成结果">
+          <MaterialDetail material={material} />
+        </Card>
+      )}
+
+      {toast && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 1100 }}>{toast}</div>
+      )}
+    </>
+  );
+}
+
+export function EduSpeakingPractice() {
+  const [language, setLanguage] = useState(LANGUAGES[0].code);
+  const [stage, setStage] = useState(STAGES[2].code);
+  const [difficulty, setDifficulty] = useState(DIFFICULTIES[1].code);
+  const [scene, setScene] = useState(SCENES[0].code);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyUseCurrentFilter, setHistoryUseCurrentFilter] = useState(false);
   const [history, setHistory] = useState<SpeakingRecord[]>([]);
@@ -184,40 +282,10 @@ export function EduSpeaking() {
     }
   };
 
-  const handleGenerate = async () => {
-    if (!stage || !difficulty || !scene) {
-      showToast('请选择完整的口语素材生成条件');
-      return;
-    }
-    setLoading(true);
-    setMaterial(null);
+  const openPracticeDetail = async (record: SpeakingRecord) => {
+    setDetailLoadingId(record.id);
     try {
-      const data = await apiCall<SpeakingMaterial>('/speaking/material/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          languageCode: language,
-          stageCode: stage,
-          difficultyCode: difficulty,
-          sceneCode: scene,
-          userPrompt: userPrompt.trim() || undefined,
-        }),
-      });
-      setMaterial(data);
-      loadHistory(1);
-      showToast('口语素材生成成功');
-    } catch (e: any) {
-      showToast(e?.message || '口语素材生成失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openPracticeDetail = async (record: SpeakingRecord | SpeakingMaterial) => {
-    const materialId = 'id' in record ? record.id : 0;
-    if (!materialId) return;
-    setDetailLoadingId(materialId);
-    try {
-      const data = await apiCall<SpeakingPracticeDetail>(`/speaking/material/${materialId}/practice-detail`);
+      const data = await apiCall<SpeakingPracticeDetail>(`/speaking/material/${record.id}/practice-detail`);
       setDetail(data);
     } catch (e: any) {
       showToast(e?.message || '练习详情加载失败');
@@ -259,10 +327,9 @@ export function EduSpeaking() {
 
   return (
     <>
-      <PageBanner icon="🎙️" title="口语跟读训练" desc="生成跟读素材，查看历史练习，并基于学生音频进行发音评测" />
+      <PageBanner icon="🗣️" title="口语练习" desc="从已生成的口语素材中选择练习，查看句子回显、标准音频和最新评测记录" />
 
-      <Card title="素材生成">
-        <LlmModelPreference label="口语素材生成模型" />
+      <Card title="练习筛选">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
           <Field label="语言">
             <Select options={LANGUAGES.map(s => s.desc)} value={labelOf(LANGUAGES, language)} onChange={d => changeLanguage(codeOf(LANGUAGES, d))} />
@@ -277,29 +344,7 @@ export function EduSpeaking() {
             <Select options={SCENES.map(s => s.desc)} value={labelOf(SCENES, scene)} onChange={d => setScene(codeOf(SCENES, d))} />
           </Field>
         </div>
-        <div style={{ marginTop: 14 }}>
-          <Field label="偏好说明">
-            <textarea
-              value={userPrompt}
-              onChange={e => setUserPrompt(e.target.value)}
-              placeholder="例如：更偏商务面试场景，句子短一些，适合课堂跟读"
-              rows={3}
-              style={textareaStyle}
-            />
-          </Field>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
-          <button onClick={handleGenerate} disabled={loading || !stage} style={{ ...primaryBtn, opacity: loading || !stage ? .6 : 1 }}>
-            {loading ? '生成中...' : '生成口语素材'}
-          </button>
-        </div>
       </Card>
-
-      {material && (
-        <Card title="生成结果">
-          <MaterialDetail material={material} onPractice={() => openPracticeDetail(material)} loading={detailLoadingId === material.id} />
-        </Card>
-      )}
 
       <Card title="我的口语素材">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -382,7 +427,7 @@ export function EduSpeaking() {
   );
 }
 
-function MaterialDetail({ material, onPractice, loading }: { material: SpeakingMaterial; onPractice: () => void; loading: boolean }) {
+function MaterialDetail({ material, onPractice, loading }: { material: SpeakingMaterial; onPractice?: () => void; loading?: boolean }) {
   return (
     <div style={panelStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
@@ -390,7 +435,7 @@ function MaterialDetail({ material, onPractice, loading }: { material: SpeakingM
           <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{material.title}</div>
           {material.sceneDescription && <div style={{ fontSize: 13, color: '#666', lineHeight: 1.8, marginTop: 8, whiteSpace: 'pre-wrap' }}>{material.sceneDescription}</div>}
         </div>
-        <button onClick={onPractice} disabled={loading} style={primaryBtn}>{loading ? '加载中...' : '进入练习'}</button>
+        {onPractice && <button onClick={onPractice} disabled={loading} style={primaryBtn}>{loading ? '加载中...' : '进入练习'}</button>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {material.sentences?.map(sentence => (

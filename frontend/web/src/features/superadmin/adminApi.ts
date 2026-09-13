@@ -172,8 +172,12 @@ function qs(params: Record<string, string | number | boolean | undefined | null>
 }
 
 export const adminApi = {
-  login: (data: { keyword: string; password: string }) =>
+  login: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
     apiCall<{ token: string }>('/sys/superadmin/login', { method: 'POST', body: JSON.stringify(data) }),
+  sendSmsCode: (phone: string) =>
+    apiCall<void>(`/sys/user/sms/send?phone=${encodeURIComponent(phone)}`, { method: 'POST' }),
+  sendEmailCode: (email: string) =>
+    apiCall<void>(`/sys/user/email/send?email=${encodeURIComponent(email)}`, { method: 'POST' }),
 
   userSummary: () => apiCall<UserDashboardSummary>('/superadmin/dashboard/users/summary'),
   userTrend: (startDate?: string, endDate?: string) =>

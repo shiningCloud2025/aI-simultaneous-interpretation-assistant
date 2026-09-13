@@ -9,7 +9,7 @@ import { EduPPT } from '../components/EduPPT';
 import { EduWord } from '../components/EduWord';
 import { EduExcel } from '../components/EduExcel';
 import { EduVocab } from '../components/EduVocab';
-import { EduSpeaking } from '../components/EduSpeaking';
+import { EduSpeakingGenerate, EduSpeakingPractice } from '../components/EduSpeaking';
 import { EduWriting } from '../components/EduWriting';
 import { EduWritingReview } from '../components/EduWritingReview';
 import { AccountPage } from '../components/AccountPage';
@@ -33,11 +33,12 @@ const navItems = [
   { group: '智语同航-听力', items: [
     { id: 'translate', icon: '🎧', label: '实时转译' },
   ]},
+  { group: '智语同航-口语', items: [
+    { id: 'speaking-generate', icon: '🎙️', label: '口语素材生成' },
+    { id: 'speaking-practice', icon: '🗣️', label: '口语练习' },
+  ]},
   { group: '智语同航-阅读', items: [
     { id: 'vocab', icon: '📖', label: '单词记忆' },
-  ]},
-  { group: '智语同航-口语', items: [
-    { id: 'speaking', icon: '🎙️', label: '口语跟读' },
   ]},
   { group: '智语同航-写作', items: [
     { id: 'writing', icon: '✍️', label: '生成写作题目' },
@@ -58,7 +59,7 @@ const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'translate': RealTimeTrans,
   'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'api-key': ApiKeyConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
-  'vocab': EduVocab, 'speaking': EduSpeaking, 'writing': EduWriting, 'writing-review': EduWritingReview,
+  'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
   'teacher-classrooms': TeacherClassrooms,
 };
@@ -67,7 +68,7 @@ const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
-  'vocab': '单词记忆', 'speaking': '口语跟读训练', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
+  'vocab': '单词记忆', 'speaking-generate': '口语素材生成', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
   'teacher-classrooms': '我的课堂',
 };

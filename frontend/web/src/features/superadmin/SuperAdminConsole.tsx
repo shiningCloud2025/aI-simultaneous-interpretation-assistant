@@ -122,20 +122,84 @@ function EmptyBlock({ text = '暂无数据' }: { text?: string }) {
 }
 
 export function SuperAdminLoginPage() {
+  const [tab, setTab] = useState<'password' | 'sms' | 'email'>('password');
   const [keyword, setKeyword] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [captcha, setCaptcha] = useState('');
+  const [smsCountdown, setSmsCountdown] = useState(0);
+  const [emailCountdown, setEmailCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const setToken = useAppStore((s) => s.setToken);
   const nav = useNavigate();
 
+  const sendSms = async () => {
+    if (smsCountdown > 0) return;
+    if (!phone.trim()) return setError('请先输入手机号');
+    try {
+      await adminApi.sendSmsCode(phone);
+      setError('');
+      setSmsCountdown(60);
+      const timer = window.setInterval(() => {
+        setSmsCountdown((prev) => {
+          if (prev <= 1) {
+            window.clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (e: any) {
+      setError(e.message || '验证码发送失败');
+    }
+  };
+
+  const sendEmail = async () => {
+    if (emailCountdown > 0) return;
+    if (!email.trim()) return setError('请先输入邮箱');
+    try {
+      await adminApi.sendEmailCode(email);
+      setError('');
+      setEmailCountdown(60);
+      const timer = window.setInterval(() => {
+        setEmailCountdown((prev) => {
+          if (prev <= 1) {
+            window.clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (e: any) {
+      setError(e.message || '验证码发送失败');
+    }
+  };
+
   const submit = async () => {
-    if (!keyword.trim()) return setError('请输入超管账号');
-    if (!password.trim()) return setError('请输入密码');
+    if (tab === 'password') {
+      if (!keyword.trim()) return setError('请输入账号、手机号或邮箱');
+      if (!password.trim()) return setError('请输入密码');
+    }
+    if (tab === 'sms') {
+      if (!phone.trim()) return setError('请输入手机号');
+      if (!captcha.trim()) return setError('请输入短信验证码');
+    }
+    if (tab === 'email') {
+      if (!email.trim()) return setError('请输入邮箱');
+      if (!captcha.trim()) return setError('请输入邮箱验证码');
+    }
     setLoading(true);
     setError('');
     try {
-      const data = await adminApi.login({ keyword, password });
+      const data = await adminApi.login(
+        tab === 'password'
+          ? { keyword, password }
+          : tab === 'sms'
+            ? { phone, captcha }
+            : { email, captcha }
+      );
       setToken(data.token);
       nav('/admin', { replace: true });
     } catch (e: any) {
@@ -147,16 +211,83 @@ export function SuperAdminLoginPage() {
 
   return (
     <div className="admin-login">
-      <div className="admin-login-card">
-        <h1>智语同航 · 超管后台</h1>
-        <p>平台看板、用户管理、日志、反馈与 Skill 配置</p>
-        <div className="admin-form-grid">
-          <input className="admin-input" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="账号 / 手机号 / 邮箱" />
-          <input className="admin-input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="密码" type="password" onKeyDown={(e) => e.key === 'Enter' && submit()} />
-          <button className="admin-btn primary" onClick={submit} disabled={loading}>{loading ? '登录中...' : '进入超管后台'}</button>
-          {error && <div className="admin-error" style={{ padding: 0 }}>{error}</div>}
+      <header className="admin-login-header">
+        <button className="admin-login-brand" onClick={() => nav('/')}>
+          <span>语</span>
+          智语同航
+        </button>
+        <div className="admin-login-nav">
+          <button onClick={() => nav('/')}>官网</button>
+          <button onClick={() => nav('/login')}>学生/老师登录</button>
         </div>
-      </div>
+      </header>
+      <main className="admin-login-main">
+        <section className="admin-login-copy">
+          <div className="admin-login-kicker">Super Admin Center</div>
+          <h1>平台运营与安全控制台</h1>
+          <p>面向平台管理员的独立管理入口，用于查看用户看板、在线状态、日志、反馈工单和 Skill 配置。</p>
+          <div className="admin-login-actions">
+            <a href="#admin-login-form" className="admin-login-primary">进入登录</a>
+            <button onClick={() => nav('/')} className="admin-login-secondary">返回官网</button>
+          </div>
+          <div className="admin-login-metrics" aria-hidden="true">
+            <div><strong>Users</strong><span>在线与账号管理</span></div>
+            <div><strong>Logs</strong><span>日志检索与排障</span></div>
+            <div><strong>Ops</strong><span>反馈与 Skill 配置</span></div>
+          </div>
+        </section>
+
+        <section className="admin-login-card" id="admin-login-form">
+          <div className="admin-login-card-head">
+            <div className="admin-login-mark">语</div>
+            <div>
+              <h2>超管登录</h2>
+              <p>仅限平台管理员访问</p>
+            </div>
+          </div>
+
+          <div className="admin-login-tabs">
+            <button className={tab === 'password' ? 'active' : ''} onClick={() => setTab('password')}>密码登录</button>
+            <button className={tab === 'sms' ? 'active' : ''} onClick={() => setTab('sms')}>短信登录</button>
+            <button className={tab === 'email' ? 'active' : ''} onClick={() => setTab('email')}>邮箱登录</button>
+          </div>
+
+          <div className="admin-form-grid">
+            {tab === 'password' && (
+              <>
+                <input className="admin-login-input" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="账号 / 手机号 / 邮箱" />
+                <input className="admin-login-input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="密码" type="password" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              </>
+            )}
+
+            {tab === 'sms' && (
+              <>
+                <input className="admin-login-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="手机号" />
+                <div className="admin-login-code-row">
+                  <input className="admin-login-input" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="短信验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+                  <button onClick={sendSms}>{smsCountdown > 0 ? `${smsCountdown}s` : '获取验证码'}</button>
+                </div>
+              </>
+            )}
+
+            {tab === 'email' && (
+              <>
+                <input className="admin-login-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱" />
+                <div className="admin-login-code-row">
+                  <input className="admin-login-input" value={captcha} onChange={(e) => setCaptcha(e.target.value)} placeholder="邮箱验证码" onKeyDown={(e) => e.key === 'Enter' && submit()} />
+                  <button onClick={sendEmail}>{emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码'}</button>
+                </div>
+              </>
+            )}
+
+            <button className="admin-login-submit" onClick={submit} disabled={loading}>{loading ? '登录中...' : '进入超管后台'}</button>
+            {error && <div className="admin-error" style={{ padding: 0 }}>{error}</div>}
+          </div>
+          <div className="admin-login-note">后台接口会校验用户类型，仅 superadmin 可以进入。</div>
+        </section>
+      </main>
+      <footer className="admin-login-footer">智语同航 · 平台管理入口</footer>
+      <div className="admin-login-grid" />
     </div>
   );
 }
