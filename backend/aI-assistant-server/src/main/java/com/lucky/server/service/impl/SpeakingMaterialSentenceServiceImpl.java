@@ -46,11 +46,8 @@ public class SpeakingMaterialSentenceServiceImpl extends ServiceImpl<SpeakingMat
 
     @Override
     public Long saveSentence(SpeakingMaterialSentence entity) {
-        SysUser currentUser = sysUserService.getCurrentUser();
-
         LocalDateTime now = LocalDateTime.now();
-        entity.setCreatedById(currentUser.getId());
-        entity.setUpdatedById(currentUser.getId());
+        entity.setUpdatedById(entity.getCreatedById());
         entity.setCreateTime(now);
         entity.setUpdateTime(now);
         entity.setDeleted(DeletedStatusEnum.NORMAL);

@@ -352,6 +352,7 @@ public class SpeakingMaterialGenerateAgent {
         generation.setSceneCode(dto.sceneCode());
         generation.setCustomScene(dto.customScene());
         generation.setUserPrompt(dto.userPrompt());
+        generation.setCreatedById(userId);
         generation.setTitle(result.title());
         generation.setSceneDescription(result.sceneDescription());
         generation.setProvider(llmPreference.provider());
@@ -378,6 +379,7 @@ public class SpeakingMaterialGenerateAgent {
                 sentence.setStandardAudioUrl(audioUrl);
                 sentence.setKeyPoints(toJson(item.keyPoints()));
                 sentence.setPracticeTips(toJson(item.practiceTips()));
+                sentence.setCreatedById(userId);
 
                 Long sentenceId = speakingMaterialSentenceService.saveSentence(sentence);
                 sentenceVOList.add(new SpeakingMaterialGenerateSentenceVO(
