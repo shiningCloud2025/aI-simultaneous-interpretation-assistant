@@ -36,13 +36,20 @@ export interface UserTrendItem {
 
 export interface StructureItem {
   name?: string;
+  userType?: string;
+  userTypeName?: string;
   type?: string;
+  statusName?: string;
   status?: string;
-  value: number;
+  value?: number;
+  count?: number;
   percent?: number;
 }
 
 export interface UserDashboardStructure {
+  totalUsers?: number;
+  typeDistribution?: StructureItem[];
+  statusDistribution?: StructureItem[];
   userTypes?: StructureItem[];
   statuses?: StructureItem[];
   typeItems?: StructureItem[];
@@ -70,8 +77,12 @@ export interface RecentRegisterUser {
   account?: string;
   username?: string;
   userType?: string;
+  userTypeName?: string;
   userTypeText?: string;
+  status?: string | number;
+  statusName?: string;
   statusText?: string;
+  lastLoginTime?: string;
   createTime?: string;
 }
 

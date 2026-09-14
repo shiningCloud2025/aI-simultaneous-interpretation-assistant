@@ -16,11 +16,10 @@ import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
-import { TeacherClassrooms } from '../features/teacher-classroom/TeacherClassrooms';
 import { useState, useEffect } from 'react';
 
 const teacherNavGroup = { group: '教学工作', items: [
-  { id: 'teacher-classrooms', icon: '🏫', label: '我的课堂' },
+  { id: 'teacher-console', icon: '🏫', label: '返回教师工作台' },
 ]};
 
 const navItems = [
@@ -34,7 +33,7 @@ const navItems = [
     { id: 'translate', icon: '🎧', label: '实时转译' },
   ]},
   { group: '智语同航-口语', items: [
-    { id: 'speaking-generate', icon: '🎙️', label: '口语素材生成' },
+    { id: 'speaking-generate', icon: '🎙️', label: '生成口语素材' },
     { id: 'speaking-practice', icon: '🗣️', label: '口语练习' },
   ]},
   { group: '智语同航-阅读', items: [
@@ -61,16 +60,14 @@ const panelComponents: Record<string, React.FC> = {
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
-  'teacher-classrooms': TeacherClassrooms,
 };
 
 const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
-  'vocab': '单词记忆', 'speaking-generate': '口语素材生成', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
+  'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
-  'teacher-classrooms': '我的课堂',
 };
 
 export function MainLayout() {
@@ -84,6 +81,10 @@ export function MainLayout() {
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   const changePanel = (panel: string) => {
+    if (panel === 'teacher-console') {
+      nav('/teacher');
+      return;
+    }
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
   };
@@ -110,7 +111,7 @@ export function MainLayout() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#999' }}>加载中...</div>;
 
   const PanelComponent = panelComponents[activePanel] || Dashboard;
-  const availableNavItems = user?.userType === 'teacher' ? [teacherNavGroup, ...navItems] : navItems;
+  const availableNavItems = String(user?.userType).toLowerCase() === 'teacher' ? [teacherNavGroup, ...navItems] : navItems;
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>

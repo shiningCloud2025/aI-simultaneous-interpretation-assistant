@@ -32,7 +32,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
+      nav(String(user.userType).toLowerCase() === 'teacher' ? '/teacher' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -51,7 +51,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
+      nav(String(user.userType).toLowerCase() === 'teacher' ? '/teacher' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -70,7 +70,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
+      nav(String(user.userType).toLowerCase() === 'teacher' ? '/teacher' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {

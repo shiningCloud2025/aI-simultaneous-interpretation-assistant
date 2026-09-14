@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智语同航 · 官网布局提案</title>
+  <style>
+    :root {
+      --canvas: #f7f5f0;
+      --paper: #fffefb;
+      --paper-soft: #f1eee7;
+      --ink: #182725;
+      --text: #34423f;
+      --muted: #717a76;
+      --brand: #1f4643;
+      --brand-dark: #153431;
+      --brand-soft: #dfeae6;
+      --gold: #bd8b45;
+      --gold-soft: #f2e4cd;
+      --line: #e4ded3;
+      --shadow: 0 24px 70px rgba(31, 50, 46, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 88% 5%, rgba(189, 139, 69, .09), transparent 25%),
+        var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 24px 0;
+    }
+    .header-inner {
+      width: min(1220px, 100%);
+      min-height: 66px;
+      margin: 0 auto;
+      padding: 0 14px 0 18px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      border: 1px solid rgba(222, 215, 203, .82);
+      border-radius: 20px;
+      background: rgba(250, 248, 243, .87);
+      box-shadow: 0 10px 36px rgba(35, 50, 46, .06);
+      backdrop-filter: blur(18px);
+    }
+    .brand {
+      width: max-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      border-radius: 12px 12px 12px 4px;
+      background: var(--brand);
+      font-family: Georgia, serif;
+      font-size: 19px;
+      font-weight: 800;
+      box-shadow: 0 7px 18px rgba(31, 70, 67, .20);
+    }
+    .brand-copy strong,
+    .brand-copy small { display: block; }
+    .brand-copy strong { font-size: 16px; letter-spacing: .05em; }
+    .brand-copy small { margin-top: 2px; color: var(--muted); font-size: 9px; letter-spacing: .12em; }
+
+    .main-nav { display: flex; align-items: center; gap: 4px; }
+    .main-nav a {
+      position: relative;
+      padding: 11px 15px;
+      color: #5f6966;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .2s ease;
+    }
+    .main-nav a:hover { color: var(--brand); background: rgba(225, 234, 230, .62); }
+    .main-nav a::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--gold);
+      transform: translateX(-50%);
+      transition: width .2s ease;
+    }
+    .main-nav a:hover::after { width: 18px; }
+
+    .header-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+    .text-action,
+    .primary-action {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+    .text-action { color: var(--brand); }
+    .text-action:hover { background: var(--brand-soft); }
+    .primary-action { color: #fff; background: var(--brand); box-shadow: 0 8px 20px rgba(31, 70, 67, .18); }
+    .primary-action:hover { background: var(--brand-dark); transform: translateY(-1px); }
+    .menu-button {
+      width: 42px;
+      height: 42px;
+      display: none;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--brand);
+      background: var(--paper);
+      font-size: 20px;
+    }
+
+    main { overflow: hidden; }
+    .hero {
+      width: min(1180px, calc(100% - 48px));
+      min-height: 670px;
+      margin: 0 auto;
+      padding: 92px 0 84px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.16fr) minmax(420px, .84fr);
+      align-items: center;
+      gap: 72px;
+    }
+    .eyebrow {
+      width: max-content;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 11px;
+      border: 1px solid #dfd2bc;
+      border-radius: 999px;
+      color: #88632e;
+      background: rgba(255, 253, 248, .72);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .08em;
+    }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(189,139,69,.12); }
+    .hero h1 {
+      max-width: 680px;
+      margin: 24px 0 0;
+      font-size: clamp(44px, 5vw, 68px);
+      line-height: 1.12;
+      letter-spacing: -.045em;
+    }
+    .hero h1 em { color: var(--brand); font-style: normal; position: relative; white-space: nowrap; }
+    .hero h1 em::after {
+      content: "";
+      position: absolute;
+      left: 2%;
+      right: 1%;
+      bottom: 2px;
+      height: 9px;
+      z-index: -1;
+      border-radius: 99px;
+      background: var(--gold-soft);
+      transform: rotate(-1.2deg);
+    }
+    .hero-description {
+      max-width: 620px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.85;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 12px; margin-top: 34px; }
+    .hero-actions a,
+    .hero-actions button {
+      min-height: 50px;
+      padding: 0 22px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 750;
+    }
+    .hero-main { color: #fff; border: 1px solid var(--brand); background: var(--brand); text-decoration: none; box-shadow: 0 12px 26px rgba(31,70,67,.2); }
+    .hero-main:hover { background: var(--brand-dark); transform: translateY(-2px); }
+    .hero-sub { color: var(--brand); border: 1px solid var(--line); background: rgba(255,254,251,.8); }
+    .hero-sub:hover { border-color: #c9bda9; background: #fff; }
+    .hero-points { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 32px; color: #67726e; font-size: 12px; }
+    .hero-points span { display: inline-flex; align-items: center; gap: 7px; }
+    .hero-points i { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #60827b; font-size: 10px; font-style: normal; }
+
+    .classroom-visual { position: relative; min-height: 500px; }
+    .visual-aura {
+      position: absolute;
+      inset: 4% -10% 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(189,139,69,.16), rgba(31,70,67,.05) 46%, transparent 70%);
+      filter: blur(4px);
+    }
+    .lesson-window {
+      position: absolute;
+      inset: 32px 0 28px;
+      padding: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 30px;
+      color: #fff;
+      background: linear-gradient(145deg, #244e49, #173733 74%);
+      box-shadow: 0 34px 80px rgba(20, 51, 47, .24);
+      transform: rotate(1deg);
+    }
+    .lesson-window::before {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      right: -90px;
+      top: -100px;
+      border: 42px solid rgba(255,255,255,.035);
+      border-radius: 50%;
+    }
+    .window-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 3px 15px; }
+    .live { display: inline-flex; align-items: center; gap: 7px; color: rgba(255,255,255,.8); font-size: 12px; }
+    .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #e5a45c; box-shadow: 0 0 0 5px rgba(229,164,92,.13); }
+    .window-time { color: rgba(255,255,255,.5); font-size: 11px; letter-spacing: .08em; }
+    .teacher-panel {
+      min-height: 165px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 19px;
+      background:
+        linear-gradient(0deg, rgba(10,28,26,.7), transparent 75%),
+        repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(255,255,255,.035) 30px),
+        #2b5751;
+    }
+    .sound-wave { height: 36px; display: flex; align-items: center; gap: 4px; margin-bottom: 18px; }
+    .sound-wave i { width: 3px; border-radius: 4px; background: #d7b172; animation: wave 1.15s ease-in-out infinite alternate; }
+    .sound-wave i:nth-child(1) { height: 12px; }
+    .sound-wave i:nth-child(2) { height: 25px; animation-delay: -.4s; }
+    .sound-wave i:nth-child(3) { height: 18px; animation-delay: -.8s; }
+    .sound-wave i:nth-child(4) { height: 32px; animation-delay: -.2s; }
+    .sound-wave i:nth-child(5) { height: 21px; animation-delay: -.6s; }
+    @keyframes wave { to { transform: scaleY(.45); opacity: .65; } }
+    .teacher-panel strong { font-family: Georgia, serif; font-size: 19px; font-weight: 500; }
+    .teacher-panel span { margin-top: 7px; color: rgba(255,255,255,.58); font-size: 12px; }
+    .translation-card {
+      margin-top: 12px;
+      padding: 18px 18px 17px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      background: rgba(255,255,255,.075);
+      backdrop-filter: blur(10px);
+    }
+    .translation-card small { color: #d8b474; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+    .translation-card p { margin: 9px 0 0; color: rgba(255,255,255,.88); font-size: 14px; line-height: 1.6; }
+    .student-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 14px 15px; border-radius: 16px; background: rgba(7,24,22,.27); }
+    .avatars { display: flex; }
+    .avatar { width: 31px; height: 31px; margin-left: -7px; display: grid; place-items: center; border: 2px solid #214640; border-radius: 50%; color: #173733; background: #e6d1ad; font-size: 10px; font-weight: 800; }
+    .avatar:first-child { margin-left: 0; }
+    .student-row span { color: rgba(255,255,255,.56); font-size: 11px; }
+    .float-card {
+      position: absolute;
+      z-index: 3;
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(219,211,197,.85);
+      border-radius: 15px;
+      background: rgba(255,254,251,.93);
+      box-shadow: 0 15px 36px rgba(37,49,45,.13);
+      backdrop-filter: blur(12px);
+    }
+    .float-card i { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 10px; color: var(--brand); background: var(--brand-soft); font-style: normal; }
+    .float-card b { display: block; font-size: 12px; }
+    .float-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .float-card.one { top: 4px; right: -30px; }
+    .float-card.two { left: -42px; bottom: 68px; }
+
+    .section { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 104px 0; }
+    .section-head { max-width: 680px; margin-bottom: 38px; }
+    .section-index { color: var(--gold); font-family: Georgia, serif; font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+    .section-head h2 { margin: 12px 0 0; font-size: clamp(31px, 3.5vw, 46px); line-height: 1.2; letter-spacing: -.035em; }
+    .section-head p { margin: 15px 0 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
+
+    .capability-grid { display: grid; grid-template-columns: 1.35fr .85fr; grid-template-rows: 1fr 1fr; gap: 16px; }
+    .capability-card {
+      position: relative;
+      min-height: 230px;
+      padding: 30px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255,254,251,.86);
+      transition: .25s ease;
+      cursor: pointer;
+    }
+    .capability-card:hover { transform: translateY(-4px); border-color: #cfc3af; box-shadow: var(--shadow); }
+    .capability-card.large { grid-row: 1 / 3; min-height: 476px; color: #fff; border-color: transparent; background: var(--brand); }
+    .capability-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 15px; color: var(--brand); background: var(--brand-soft); font-size: 21px; }
+    .large .capability-icon { color: #f1d5a8; background: rgba(255,255,255,.09); }
+    .capability-card h3 { margin: 25px 0 0; font-size: 23px; }
+    .capability-card p { max-width: 520px; margin: 12px 0 0; color: var(--muted); line-height: 1.75; }
+    .large p { color: rgba(255,255,255,.66); }
+    .capability-link { position: absolute; left: 30px; bottom: 29px; color: var(--brand); font-size: 13px; font-weight: 750; }
+    .large .capability-link { color: #edcc97; }
+    .caption-stream { position: absolute; left: 30px; right: 30px; bottom: 84px; display: grid; gap: 10px; }
+    .caption-line { padding: 13px 15px; border-radius: 14px; background: rgba(255,255,255,.075); color: rgba(255,255,255,.86); font-size: 12px; }
+    .caption-line:nth-child(2) { margin-left: 36px; color: #ebc98f; background: rgba(236,202,145,.09); }
+
+    .role-shell {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 18px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255,254,251,.72);
+      box-shadow: 0 18px 55px rgba(38,52,48,.06);
+    }
+    .role-select { padding: 18px; }
+    .role-select h3 { margin: 4px 0 9px; font-size: 24px; }
+    .role-select > p { margin: 0 0 24px; color: var(--muted); line-height: 1.7; }
+    .role-tabs { display: grid; gap: 10px; }
+    .role-tab {
+      padding: 17px;
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      color: var(--text);
+      background: transparent;
+      text-align: left;
+      transition: .2s ease;
+    }
+    .role-tab:hover { background: #f3f0e9; }
+    .role-tab.active { color: #fff; background: var(--brand); box-shadow: 0 12px 28px rgba(31,70,67,.18); }
+    .role-tab-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; color: var(--brand); background: var(--brand-soft); font-size: 18px; }
+    .role-tab.active .role-tab-icon { color: #f4d6a7; background: rgba(255,255,255,.1); }
+    .role-tab strong, .role-tab small { display: block; }
+    .role-tab small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .role-tab.active small { color: rgba(255,255,255,.57); }
+    .role-tab-arrow { opacity: .55; }
+    .role-stage { min-height: 430px; padding: 30px; border-radius: 21px; background: #eeeae1; }
+    .role-view { display: none; animation: reveal .25s ease; }
+    .role-view.active { display: block; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .role-view-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; }
+    .role-view-head small { color: var(--gold); font-weight: 800; letter-spacing: .08em; }
+    .role-view-head h4 { margin: 7px 0 0; font-size: 25px; }
+    .role-view-head span { color: var(--muted); font-size: 12px; }
+    .role-board { margin-top: 25px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 13px; }
+    .role-card { min-height: 130px; padding: 19px; border: 1px solid #ded8cd; border-radius: 18px; background: var(--paper); }
+    .role-card.tall { grid-row: span 2; color: #fff; border: none; background: linear-gradient(145deg, #28504b, #1b3c38); }
+    .role-card span { color: var(--muted); font-size: 11px; }
+    .role-card.tall span { color: rgba(255,255,255,.55); }
+    .role-card b { display: block; margin-top: 9px; font-size: 19px; }
+    .role-card p { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .role-card.tall p { color: rgba(255,255,255,.65); }
+    .mini-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 28px; }
+    .mini-stat { padding: 13px; border-radius: 13px; background: rgba(255,255,255,.07); }
+    .mini-stat strong { display: block; color: #f1d39e; font-size: 22px; }
+    .mini-stat small { color: rgba(255,255,255,.45); }
+
+    .workflow-wrap { position: relative; }
+    .workflow-line { position: absolute; left: 7%; right: 7%; top: 37px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), var(--gold), transparent); }
+    .workflow { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .step { padding: 0 9px; text-align: center; cursor: pointer; }
+    .step-number { width: 74px; height: 74px; margin: 0 auto; display: grid; place-items: center; border: 8px solid var(--canvas); border-radius: 50%; color: var(--brand); background: var(--paper); box-shadow: 0 0 0 1px var(--line); font-family: Georgia, serif; font-size: 17px; font-weight: 700; transition: .2s ease; }
+    .step:hover .step-number { color: #fff; background: var(--brand); transform: translateY(-4px); }
+    .step h3 { margin: 17px 0 7px; font-size: 15px; }
+    .step p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+
+    .final-cta {
+      width: min(1180px, calc(100% - 48px));
+      margin: 40px auto 100px;
+      padding: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+      overflow: hidden;
+      position: relative;
+      border-radius: 30px;
+      color: #fff;
+      background: var(--brand);
+      box-shadow: 0 26px 70px rgba(31,70,67,.18);
+    }
+    .final-cta::after { content: "语"; position: absolute; right: 19%; top: -90px; color: rgba(255,255,255,.035); font-family: Georgia, serif; font-size: 260px; font-weight: 900; }
+    .final-cta-copy { position: relative; z-index: 1; }
+    .final-cta h2 { margin: 0; font-size: 34px; }
+    .final-cta p { margin: 12px 0 0; color: rgba(255,255,255,.62); line-height: 1.7; }
+    .final-cta a { position: relative; z-index: 1; min-height: 50px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 14px; color: var(--brand); background: #fff; text-decoration: none; font-weight: 800; white-space: nowrap; }
+
+    .site-footer { border-top: 1px solid var(--line); background: rgba(239,235,227,.55); }
+    .footer-inner { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 50px 0 26px; }
+    .footer-main { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 34px; padding-bottom: 38px; }
+    .footer-brand p { max-width: 300px; margin: 15px 0 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .footer-column strong { display: block; margin-bottom: 15px; font-size: 13px; }
+    .footer-column a { display: block; width: max-content; margin-top: 10px; color: var(--muted); text-decoration: none; font-size: 12px; }
+    .footer-column a:hover { color: var(--brand); }
+    .admin-link { display: inline-flex !important; align-items: center; gap: 6px; }
+    .footer-bottom { padding-top: 22px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); color: #858c89; font-size: 11px; }
+    .footer-bottom a { text-decoration: none; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 30px;
+      z-index: 90;
+      padding: 12px 17px;
+      border-radius: 12px;
+      color: #fff;
+      background: #172e2b;
+      box-shadow: 0 14px 35px rgba(20,40,37,.24);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 16px);
+      transition: .22s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 980px) {
+      .header-inner { grid-template-columns: 1fr auto; }
+      .main-nav { display: none; position: absolute; top: 86px; left: 24px; right: 24px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: rgba(250,248,243,.97); box-shadow: var(--shadow); }
+      .main-nav.open { display: grid; }
+      .header-actions .text-action { display: none; }
+      .menu-button { display: grid; }
+      .hero { grid-template-columns: 1fr; padding-top: 72px; }
+      .hero-copy { max-width: 760px; }
+      .classroom-visual { width: min(540px, 100%); margin: 0 auto; }
+      .role-shell { grid-template-columns: 1fr; }
+      .role-select { padding-bottom: 4px; }
+      .role-tabs { grid-template-columns: 1fr 1fr; }
+      .workflow-line { display: none; }
+      .workflow { grid-template-columns: repeat(3, 1fr); row-gap: 32px; }
+    }
+
+    @media (max-width: 680px) {
+      .site-header { padding: 10px 12px 0; }
+      .header-inner { min-height: 60px; padding-left: 12px; border-radius: 16px; }
+      .brand-copy small { display: none; }
+      .header-actions .primary-action { display: none; }
+      .main-nav { left: 12px; right: 12px; top: 76px; }
+      .hero, .section, .final-cta, .footer-inner { width: min(100% - 30px, 1180px); }
+      .hero { min-height: 0; padding: 68px 0 62px; gap: 45px; }
+      .hero h1 { font-size: 42px; }
+      .hero-description { font-size: 15px; }
+      .hero-actions { align-items: stretch; flex-direction: column; }
+      .hero-actions a, .hero-actions button { width: 100%; text-align: center; justify-content: center; }
+      .hero-points { gap: 10px 15px; }
+      .classroom-visual { min-height: 440px; }
+      .lesson-window { inset: 20px 0; }
+      .float-card.one { right: -5px; }
+      .float-card.two { left: -5px; bottom: 35px; }
+      .section { padding: 76px 0; }
+      .capability-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .capability-card.large { grid-row: auto; min-height: 430px; }
+      .role-shell { padding: 10px; }
+      .role-select { padding: 15px; }
+      .role-stage { min-height: auto; padding: 19px; }
+      .role-board { grid-template-columns: 1fr; }
+      .role-card.tall { grid-row: auto; }
+      .workflow { grid-template-columns: 1fr 1fr; }
+      .final-cta { margin-bottom: 70px; padding: 38px 25px; align-items: flex-start; flex-direction: column; }
+      .final-cta h2 { font-size: 28px; }
+      .footer-main { grid-template-columns: 1fr 1fr; }
+      .footer-brand { grid-column: 1 / -1; }
+      .footer-bottom { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="返回首页">
+        <span class="brand-mark">语</span>
+        <span class="brand-copy"><strong>智语同航</strong><small>SMART LANGUAGE CLASSROOM</small></span>
+      </a>
+      <nav class="main-nav" id="mainNav">
+        <a href="#capabilities">产品能力</a>
+        <a href="#roles">教学场景</a>
+        <a href="#workflow">课堂流程</a>
+        <a href="#about">关于我们</a>
+      </nav>
+      <div class="header-actions">
+        <a class="text-action" href="/login">登录</a>
+        <a class="primary-action" href="/login">进入平台</a>
+        <button class="menu-button" id="menuButton" type="button" aria-label="展开导航">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-dot"></span>AI 驱动的智慧外语课堂</div>
+        <h1>让每一堂外语课，<br><em>听得懂，也学得会</em></h1>
+        <p class="hero-description">围绕真实课堂构建听、写、读一体化学习体验。实时转译降低理解门槛，智能反馈延伸课堂价值，让老师更专注教学，让学生跟得上每一次表达。</p>
+        <div class="hero-actions">
+          <a class="hero-main" href="/login">进入智慧课堂&nbsp; →</a>
+          <button class="hero-sub" type="button" data-scroll="workflow">了解课堂流程</button>
+        </div>
+        <div class="hero-points">
+          <span><i>✓</i>实时课堂转译</span>
+          <span><i>✓</i>AI 写作反馈</span>
+          <span><i>✓</i>语境化词汇学习</span>
+        </div>
+      </div>
+
+      <div class="classroom-visual" aria-label="智慧课堂实时转译示意">
+        <div class="visual-aura"></div>
+        <div class="lesson-window">
+          <div class="window-head"><span class="live">高一英语 · 正在上课</span><span class="window-time">42:16</span></div>
+          <div class="teacher-panel">
+            <div class="sound-wave"><i></i><i></i><i></i><i></i><i></i></div>
+            <strong>Language is the road map of a culture.</strong>
+            <span>课堂语音正在实时识别</span>
+          </div>
+          <div class="translation-card">
+            <small>REAL-TIME TRANSLATION</small>
+            <p>语言是一种文化的路线图，它告诉你人们从哪里来，又将走向何方。</p>
+          </div>
+          <div class="student-row">
+            <div class="avatars"><i class="avatar">林</i><i class="avatar">陈</i><i class="avatar">周</i><i class="avatar">+25</i></div>
+            <span>28 名学生已进入课堂</span>
+          </div>
+        </div>
+        <button class="float-card one" type="button" data-toast="打开写作智能反馈示意">
+          <i>✦</i><span><b>写作智能反馈</b><small>逐句分析与修改建议</small></span>
+        </button>
+        <button class="float-card two" type="button" data-toast="打开课堂词汇卡片示意">
+          <i>Aa</i><span><b>课堂词汇卡片</b><small>结合语境即时积累</small></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="section" id="capabilities">
+      <div class="section-head">
+        <span class="section-index">01 · CORE CAPABILITIES</span>
+        <h2>一套围绕课堂真实任务构建的学习能力</h2>
+        <p>从听懂老师讲授，到完成写作和阅读训练，每一项能力都进入同一条学习链路。</p>
+      </div>
+      <div class="capability-grid">
+        <article class="capability-card large" data-toast="查看实时课堂转译能力">
+          <div class="capability-icon">◖</div>
+          <h3>实时听力与课堂转译</h3>
+          <p>同步识别课堂语音，生成双语内容与表达纠错，让学生在真实语速下保持理解连续性。</p>
+          <div class="caption-stream">
+            <div class="caption-line">Teacher · What makes a language truly alive?</div>
+            <div class="caption-line">是什么让一种语言真正拥有生命力？</div>
+          </div>
+          <span class="capability-link">探索课堂能力&nbsp; →</span>
+        </article>
+        <article class="capability-card" data-toast="查看AI写作训练能力">
+          <div class="capability-icon">✎</div>
+          <h3>AI 写作训练</h3>
+          <p>从题目生成、作文批阅到逐句修改，帮助学生理解每一次表达选择。</p>
+          <span class="capability-link">了解写作训练&nbsp; →</span>
+        </article>
+        <article class="capability-card" data-toast="查看语境阅读能力">
+          <div class="capability-icon">文</div>
+          <h3>语境阅读与词汇</h3>
+          <p>用例句、图像和上下文建立单词理解，减少孤立记忆带来的遗忘。</p>
+          <span class="capability-link">了解阅读学习&nbsp; →</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="roles">
+      <div class="section-head">
+        <span class="section-index">02 · FOR EVERY ROLE</span>
+        <h2>老师与学生，共享同一堂智慧课堂</h2>
+        <p>围绕不同角色提供恰到好处的信息和操作，让技术自然地进入教学过程。</p>
+      </div>
+      <div class="role-shell">
+        <div class="role-select">
+          <h3>选择你的课堂视角</h3>
+          <p>点击角色查看对应的核心能力与课堂信息。</p>
+          <div class="role-tabs">
+            <button class="role-tab active" type="button" data-role="teacher">
+              <span class="role-tab-icon">师</span><span><strong>老师端</strong><small>组织课堂与掌握学习情况</small></span><span class="role-tab-arrow">→</span>
+            </button>
+            <button class="role-tab" type="button" data-role="student">
+              <span class="role-tab-icon">生</span><span><strong>学生端</strong><small>进入课堂并完成学习任务</small></span><span class="role-tab-arrow">→</span>
+            </button>
+          </div>
+        </div>
+        <div class="role-stage">
+          <div class="role-view active" data-role-view="teacher">
+            <div class="role-view-head"><div><small>TEACHER WORKSPACE</small><h4>今天的课堂，一目了然</h4></div><span>教师工作台示意</span></div>
+            <div class="role-board">
+              <article class="role-card tall"><span>正在进行</span><b>高一英语 · Unit 3</b><p>28 名学生已进入课堂，24 人完成签到。实时字幕和课堂材料均已就绪。</p><div class="mini-stats"><div class="mini-stat"><strong>24</strong><small>已签到</small></div><div class="mini-stat"><strong>86%</strong><small>到课率</small></div></div></article>
+              <article class="role-card"><span>课堂组织</span><b>创建与邀请</b><p>通过课堂码、邀请链接或主动添加快速组建课堂。</p></article>
+              <article class="role-card"><span>学习洞察</span><b>查看课堂反馈</b><p>集中查看签到、训练完成情况和学生学习记录。</p></article>
+            </div>
+          </div>
+          <div class="role-view" data-role-view="student">
+            <div class="role-view-head"><div><small>STUDENT CLASSROOM</small><h4>跟上课堂，也看见自己的进步</h4></div><span>学生课堂示意</span></div>
+            <div class="role-board">
+              <article class="role-card tall"><span>当前课堂</span><b>高一英语 · Unit 3</b><p>课堂实时字幕已开启。点击签到后进入本节课的实时学习空间。</p><div class="mini-stats"><div class="mini-stat"><strong>12</strong><small>本周新词</small></div><div class="mini-stat"><strong>4</strong><small>待完成训练</small></div></div></article>
+              <article class="role-card"><span>实时辅助</span><b>听力与转译</b><p>在自然语速下同步查看双语内容和重点表达。</p></article>
+              <article class="role-card"><span>课后巩固</span><b>继续本节训练</b><p>课堂词汇、写作反馈和学习材料自动汇集。</p></article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="section-head">
+        <span class="section-index">03 · CLASSROOM FLOW</span>
+        <h2>从创建课堂，到沉淀每一次学习</h2>
+        <p>清晰的课堂链路让老师容易组织，也让学生知道下一步该做什么。</p>
+      </div>
+      <div class="workflow-wrap">
+        <div class="workflow-line"></div>
+        <div class="workflow">
+          <article class="step" data-toast="创建课堂：设置语言、学段与学期"><div class="step-number">01</div><h3>创建课堂</h3><p>设置课堂基本信息</p></article>
+          <article class="step" data-toast="邀请成员：课堂码、邀请链接或主动添加"><div class="step-number">02</div><h3>邀请成员</h3><p>快速建立课堂名单</p></article>
+          <article class="step" data-toast="开始上课：开启本次课堂记录"><div class="step-number">03</div><h3>开始上课</h3><p>开启实时课堂能力</p></article>
+          <article class="step" data-toast="完成训练：听、写、读任务自然衔接"><div class="step-number">04</div><h3>完成训练</h3><p>听写读一体化学习</p></article>
+          <article class="step" data-toast="沉淀记录：保存签到与学习反馈"><div class="step-number">05</div><h3>沉淀记录</h3><p>回顾每一次成长</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="final-cta-copy"><h2>准备好进入你的智慧课堂了吗？</h2><p>登录智语同航，让课堂理解与学习反馈发生在每一个需要的时刻。</p></div>
+      <a href="/login">立即进入平台&nbsp; →</a>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="about">
+    <div class="footer-inner">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <a class="brand" href="#top"><span class="brand-mark">语</span><span class="brand-copy"><strong>智语同航</strong><small>SMART LANGUAGE CLASSROOM</small></span></a>
+          <p>以智能技术连接老师、学生与真实课堂，让外语学习更自然、更连续。</p>
+        </div>
+        <div class="footer-column"><strong>产品</strong><a href="#capabilities">实时转译</a><a href="#capabilities">写作训练</a><a href="#capabilities">阅读学习</a></div>
+        <div class="footer-column"><strong>课堂</strong><a href="#roles">老师端</a><a href="#roles">学生端</a><a href="#workflow">课堂流程</a></div>
+        <div class="footer-column"><strong>支持</strong><a href="/login">登录平台</a><a href="/register">注册账号</a><a class="admin-link" href="/admin/login">♢ 管理后台</a></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 智语同航 · 智慧外语课堂</span><a href="https://beian.miit.gov.cn" target="_blank" rel="noreferrer">辽ICP备2026007778号-1</a></div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const menuButton = document.querySelector('#menuButton');
+    const mainNav = document.querySelector('#mainNav');
+    const toast = document.querySelector('#toast');
+    let toastTimer;
+
+    menuButton.addEventListener('click', () => mainNav.classList.toggle('open'));
+    mainNav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => mainNav.classList.remove('open')));
+
+    document.querySelectorAll('[data-scroll]').forEach(button => {
+      button.addEventListener('click', () => document.querySelector(`#${button.dataset.scroll}`).scrollIntoView({ behavior: 'smooth' }));
+    });
+
+    document.querySelectorAll('[data-role]').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-role]').forEach(item => item.classList.toggle('active', item === button));
+        document.querySelectorAll('[data-role-view]').forEach(view => view.classList.toggle('active', view.dataset.roleView === button.dataset.role));
+      });
+    });
+
+    document.querySelectorAll('[data-toast]').forEach(element => {
+      element.addEventListener('click', () => {
+        clearTimeout(toastTimer);
+        toast.textContent = element.dataset.toast;
+        toast.classList.add('show');
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+      });
+    });
+  </script>
+</body>
+</html>

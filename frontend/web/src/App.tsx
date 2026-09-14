@@ -8,6 +8,7 @@ import { MainLayout } from './pages/MainLayout';
 import { ChangePwdPage } from './pages/ChangePwdPage';
 import { OfficialSitePage } from './pages/OfficialSitePage';
 import { SuperAdminConsole, SuperAdminLoginPage } from './features/superadmin/SuperAdminConsole';
+import { TeacherConsole } from './features/teacher/TeacherConsole';
 import './App.css';
 
 function ProtectedRoute({ children, redirectTo = '/login' }: { children: React.ReactNode; redirectTo?: string }) {
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/admin/login" element={<SuperAdminLoginPage />} />
         <Route path="/admin" element={<ProtectedRoute redirectTo="/admin/login"><SuperAdminConsole /></ProtectedRoute>} />
+        <Route path="/teacher/*" element={<ProtectedRoute><TeacherConsole /></ProtectedRoute>} />
         <Route path="/change-pwd" element={<ProtectedRoute><ChangePwdPage /></ProtectedRoute>} />
         <Route path="/*" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
       </Routes>

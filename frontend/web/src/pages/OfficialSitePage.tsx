@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAppStore } from '../stores/appStore';
 
 export function OfficialSitePage() {
   const token = useAppStore((s) => s.token);
   const nav = useNavigate();
+  const [navOpen, setNavOpen] = useState(false);
 
   return (
     <div className="official-page">
@@ -12,12 +14,20 @@ export function OfficialSitePage() {
           <span className="official-brand-mark">语</span>
           <span>智语同航</span>
         </button>
-        <nav className="official-nav">
-          <a href="#features">核心场景</a>
-          <a href="#workflow">课堂流程</a>
-          <Link to="/admin/login" className="official-admin-link">管理入口</Link>
-          {token ? <button onClick={() => nav('/dashboard')} className="official-primary">进入平台</button> : <Link to="/login" className="official-primary">登录</Link>}
+        <nav className={`official-nav${navOpen ? ' open' : ''}`}>
+          <a href="#features" onClick={() => setNavOpen(false)}>核心场景</a>
+          <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
+          <Link to="/admin/login" onClick={() => setNavOpen(false)}>管理平台</Link>
         </nav>
+        <button
+          type="button"
+          className="official-menu-button"
+          aria-label="展开导航"
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen((open) => !open)}
+        >
+          {navOpen ? '×' : '☰'}
+        </button>
       </header>
 
       <main>
@@ -98,11 +108,17 @@ export function OfficialSitePage() {
           max-width: 1180px;
           margin: 0 auto;
           padding: 0 28px;
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
           align-items: center;
-          justify-content: space-between;
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          background: rgba(247,245,240,.88);
+          backdrop-filter: blur(16px);
         }
         .official-brand {
+          justify-self: start;
           display: inline-flex;
           align-items: center;
           gap: 10px;
@@ -125,23 +141,51 @@ export function OfficialSitePage() {
           font-weight: 800;
         }
         .official-nav {
+          grid-column: 2;
           display: flex;
           align-items: center;
-          gap: 22px;
+          gap: 8px;
           font-size: 14px;
         }
         .official-nav a {
-          color: #555;
+          position: relative;
+          padding: 10px 13px;
+          color: #5f6763;
           text-decoration: none;
+          font-weight: 650;
+          transition: color .18s ease;
         }
-        .official-admin-link {
-          color: #6d746f !important;
-          font-weight: 600;
+        .official-nav a:hover {
+          color: #223f3d;
         }
-        .official-admin-link:hover {
-          color: #223f3d !important;
+        .official-nav a::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          bottom: 4px;
+          width: 0;
+          height: 2px;
+          border-radius: 2px;
+          background: #b58a48;
+          transform: translateX(-50%);
+          transition: width .18s ease;
         }
-        .official-primary,
+        .official-nav a:hover::after {
+          width: 17px;
+        }
+        .official-menu-button {
+          display: none;
+          justify-self: end;
+          width: 42px;
+          height: 42px;
+          padding: 0;
+          border: 1px solid #e6dfd2;
+          border-radius: 11px;
+          color: #223f3d;
+          background: #fffefb;
+          font-size: 20px;
+          line-height: 1;
+        }
         .official-action-main,
         .official-action-sub {
           border-radius: 999px;
@@ -149,11 +193,6 @@ export function OfficialSitePage() {
           cursor: pointer;
           border: none;
           font-weight: 700;
-        }
-        .official-primary {
-          padding: 10px 18px;
-          background: #223f3d;
-          color: #fff !important;
         }
         .official-hero {
           max-width: 1180px;
@@ -364,6 +403,28 @@ export function OfficialSitePage() {
           text-decoration: underline;
         }
         @media (max-width: 920px) {
+          .official-header {
+            grid-template-columns: 1fr auto;
+          }
+          .official-nav {
+            position: absolute;
+            top: 68px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            padding: 10px;
+            border: 1px solid #e6dfd2;
+            border-radius: 14px;
+            background: rgba(255,254,251,.98);
+            box-shadow: 0 18px 45px rgba(45,54,49,.12);
+          }
+          .official-nav.open {
+            display: grid;
+          }
+          .official-menu-button {
+            display: grid;
+            place-items: center;
+          }
           .official-hero,
           .official-feature-grid,
           .official-flow {

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, PageBanner, Select } from './ui';
-import { apiCall } from '../lib/api';
+import { apiCall, uploadFile } from '../lib/api';
 import { LlmModelPreference } from './LlmModelPreference';
 
 const LANGUAGES = [
@@ -38,6 +39,8 @@ const SCENES = [
   { code: 'social', desc: '社会话题' },
   { code: 'custom', desc: '自定义' },
 ];
+
+const SPEAKING_EVALUATION_SAMPLE_RATE = 16000;
 
 interface PageResult<T> {
   records: T[];
@@ -126,6 +129,15 @@ interface SpeakingWordEvaluation {
   endTime?: number;
 }
 
+interface SysFileUploadResult {
+  id: number;
+  url: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  fileType: string;
+}
+
 export function EduSpeakingGenerate() {
   const [language, setLanguage] = useState(LANGUAGES[0].code);
   const [stage, setStage] = useState(STAGES[2].code);
@@ -141,6 +153,8 @@ export function EduSpeakingGenerate() {
   const [history, setHistory] = useState<SpeakingRecord[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(0);
+  const [readonlyDetail, setReadonlyDetail] = useState<SpeakingPracticeDetail | null>(null);
+  const [readonlyLoadingId, setReadonlyLoadingId] = useState<number | null>(null);
   const [toast, setToast] = useState('');
 
   const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
@@ -188,7 +202,7 @@ export function EduSpeakingGenerate() {
 
   const handleGenerate = async () => {
     if (!stage || !difficulty || !scene) {
-      showToast('请选择完整的口语素材生成条件');
+      showToast('请选择完整的生成口语素材条件');
       return;
     }
     setLoading(true);
@@ -207,21 +221,33 @@ export function EduSpeakingGenerate() {
       });
       setMaterial(data);
       loadHistory(1, true);
-      showToast('口语素材生成成功');
+      showToast('生成口语素材成功');
     } catch (e: any) {
-      showToast(e?.message || '口语素材生成失败');
+      showToast(e?.message || '生成口语素材失败');
       loadHistory(1, false);
     } finally {
       setLoading(false);
     }
   };
 
+  const openReadonlyDetail = async (materialId: number) => {
+    setReadonlyLoadingId(materialId);
+    try {
+      const data = await apiCall<SpeakingPracticeDetail>(`/speaking/material/${materialId}/practice-detail`);
+      setReadonlyDetail(data);
+    } catch (e: any) {
+      showToast(e?.message || '素材详情加载失败');
+    } finally {
+      setReadonlyLoadingId(null);
+    }
+  };
+
   return (
     <>
-      <PageBanner icon="🎙️" title="口语素材生成" desc="选择学段、难度与场景，一键生成跟读句子、译文、标准音频和练习建议" />
+      <PageBanner icon="🎙️" title="生成口语素材" desc="选择学段、难度与场景，一键生成跟读句子、译文、标准音频和练习建议" />
 
       <Card title="素材生成">
-        <LlmModelPreference label="口语素材生成模型" />
+        <LlmModelPreference label="生成口语素材模型" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
           <Field label="语言">
             <Select options={LANGUAGES.map(s => s.desc)} value={labelOf(LANGUAGES, language)} onChange={d => changeLanguage(codeOf(LANGUAGES, d))} />
@@ -304,6 +330,11 @@ export function EduSpeakingGenerate() {
                   <>
                     {item.sceneDescription && <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sceneDescription}</div>}
                     {item.userPrompt && <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>偏好：{item.userPrompt}</div>}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                      <button onClick={() => openReadonlyDetail(item.id)} disabled={readonlyLoadingId === item.id} style={ghostBtn}>
+                        {readonlyLoadingId === item.id ? '加载中...' : '查看素材'}
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -320,6 +351,10 @@ export function EduSpeakingGenerate() {
         )}
       </Card>
 
+      {readonlyDetail && (
+        <ReadonlyPracticeDetailModal detail={readonlyDetail} onClose={() => setReadonlyDetail(null)} />
+      )}
+
       {toast && (
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 1100 }}>{toast}</div>
       )}
@@ -328,6 +363,7 @@ export function EduSpeakingGenerate() {
 }
 
 export function EduSpeakingPractice() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [language, setLanguage] = useState(LANGUAGES[0].code);
   const [stage, setStage] = useState(STAGES[2].code);
   const [difficulty, setDifficulty] = useState(DIFFICULTIES[1].code);
@@ -339,8 +375,7 @@ export function EduSpeakingPractice() {
   const [historyPages, setHistoryPages] = useState(0);
   const [detail, setDetail] = useState<SpeakingPracticeDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
-  const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
-  const [evaluatingId, setEvaluatingId] = useState<number | null>(null);
+  const [autoOpenedMaterialId, setAutoOpenedMaterialId] = useState<number | null>(null);
   const [toast, setToast] = useState('');
 
   const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
@@ -359,6 +394,15 @@ export function EduSpeakingPractice() {
   useEffect(() => {
     loadHistory(1);
   }, [historyUseCurrentFilter, language, stage, difficulty, scene]);
+
+  useEffect(() => {
+    const materialId = Number(searchParams.get('materialId'));
+    if (!materialId || materialId === autoOpenedMaterialId) {
+      return;
+    }
+    setAutoOpenedMaterialId(materialId);
+    openPracticeDetailById(materialId);
+  }, [searchParams, autoOpenedMaterialId]);
 
   const loadHistory = async (page = historyPage) => {
     setHistoryLoading(true);
@@ -387,9 +431,13 @@ export function EduSpeakingPractice() {
   };
 
   const openPracticeDetail = async (record: SpeakingRecord) => {
-    setDetailLoadingId(record.id);
+    openPracticeDetailById(record.id);
+  };
+
+  const openPracticeDetailById = async (materialId: number) => {
+    setDetailLoadingId(materialId);
     try {
-      const data = await apiCall<SpeakingPracticeDetail>(`/speaking/material/${record.id}/practice-detail`);
+      const data = await apiCall<SpeakingPracticeDetail>(`/speaking/material/${materialId}/practice-detail`);
       setDetail(data);
     } catch (e: any) {
       showToast(e?.message || '练习详情加载失败');
@@ -398,35 +446,9 @@ export function EduSpeakingPractice() {
     }
   };
 
-  const evaluateSentence = async (sentenceId: number) => {
-    const studentAudioUrl = audioUrls[sentenceId]?.trim();
-    if (!studentAudioUrl) {
-      showToast('请先填写学生跟读音频 URL');
-      return;
-    }
-    setEvaluatingId(sentenceId);
-    try {
-      const result = await apiCall<SpeakingEvaluationResult>('/speaking/evaluation/evaluate', {
-        method: 'POST',
-        body: JSON.stringify({ sentenceId, studentAudioUrl }),
-      });
-      setDetail(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          sentences: prev.sentences.map(sentence =>
-            sentence.sentenceId === sentenceId
-              ? { ...sentence, latestEvaluation: result }
-              : sentence
-          ),
-        };
-      });
-      showToast('评测完成');
-    } catch (e: any) {
-      showToast(e?.message || '评测失败');
-    } finally {
-      setEvaluatingId(null);
-    }
+  const closePracticeDetail = () => {
+    setDetail(null);
+    setSearchParams({ panel: 'speaking-practice' });
   };
 
   return (
@@ -496,16 +518,16 @@ export function EduSpeakingPractice() {
       </Card>
 
       {detail && (
-        <div onClick={() => setDetail(null)} style={overlay}>
+        <div onClick={closePracticeDetail} style={overlay}>
           <div onClick={e => e.stopPropagation()} style={modal}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{detail.title}</div>
                 <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>
-                  {labelOf(LANGUAGES, detail.languageCode)} · {labelOf(STAGES, detail.stageCode)} · {labelOf(DIFFICULTIES, detail.difficultyCode)} · {labelOf(SCENES, detail.sceneCode)}
+                  {labelOf(LANGUAGES, detail.languageCode)} · {labelOf(STAGES, detail.stageCode)} · {labelOf(DIFFICULTIES, detail.difficultyCode)} · {displayScene(detail.sceneCode)}
                 </div>
               </div>
-              <button onClick={() => setDetail(null)} style={closeBtn}>×</button>
+              <button onClick={closePracticeDetail} style={closeBtn}>×</button>
             </div>
             {detail.sceneDescription && <div style={{ ...noteStyle, marginBottom: 16 }}>{detail.sceneDescription}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -513,10 +535,19 @@ export function EduSpeakingPractice() {
                 <PracticeSentenceCard
                   key={sentence.sentenceId}
                   sentence={sentence}
-                  audioUrl={audioUrls[sentence.sentenceId] || ''}
-                  evaluating={evaluatingId === sentence.sentenceId}
-                  onAudioUrlChange={value => setAudioUrls(prev => ({ ...prev, [sentence.sentenceId]: value }))}
-                  onEvaluate={() => evaluateSentence(sentence.sentenceId)}
+                  onEvaluated={result => {
+                    setDetail(prev => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        sentences: prev.sentences.map(item =>
+                          item.sentenceId === sentence.sentenceId
+                            ? { ...item, latestEvaluation: result }
+                            : item
+                        ),
+                      };
+                    });
+                  }}
                 />
               ))}
             </div>
@@ -528,6 +559,30 @@ export function EduSpeakingPractice() {
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 1100 }}>{toast}</div>
       )}
     </>
+  );
+}
+
+function ReadonlyPracticeDetailModal({ detail, onClose }: { detail: SpeakingPracticeDetail; onClose: () => void }) {
+  return (
+    <div onClick={onClose} style={overlay}>
+      <div onClick={e => e.stopPropagation()} style={modal}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{detail.title}</div>
+            <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>
+              {labelOf(LANGUAGES, detail.languageCode)} · {labelOf(STAGES, detail.stageCode)} · {labelOf(DIFFICULTIES, detail.difficultyCode)} · {displayScene(detail.sceneCode)}
+            </div>
+          </div>
+          <button onClick={onClose} style={closeBtn}>×</button>
+        </div>
+        {detail.sceneDescription && <div style={{ ...noteStyle, marginBottom: 16 }}>{detail.sceneDescription}</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {detail.sentences?.map(sentence => (
+            <SentenceBlock key={sentence.sentenceId} sentence={sentence} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -552,30 +607,154 @@ function MaterialDetail({ material, onPractice, loading }: { material: SpeakingM
 
 function PracticeSentenceCard({
   sentence,
-  audioUrl,
-  evaluating,
-  onAudioUrlChange,
-  onEvaluate,
+  onEvaluated,
 }: {
   sentence: SpeakingSentence;
-  audioUrl: string;
-  evaluating: boolean;
-  onAudioUrlChange: (value: string) => void;
-  onEvaluate: () => void;
+  onEvaluated: (evaluation: SpeakingEvaluationResult) => void;
 }) {
+  const [recording, setRecording] = useState(false);
+  const [studentAudioUrl, setStudentAudioUrl] = useState('');
+  const [studentAudioFile, setStudentAudioFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [recordError, setRecordError] = useState('');
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const chunksRef = useRef<Float32Array[]>([]);
+  const sampleRateRef = useRef(16000);
+  const evaluated = Boolean(sentence.latestEvaluation);
+
+  useEffect(() => {
+    return () => {
+      processorRef.current?.disconnect();
+      sourceRef.current?.disconnect();
+      audioContextRef.current?.close();
+      streamRef.current?.getTracks().forEach(track => track.stop());
+      if (studentAudioUrl) {
+        URL.revokeObjectURL(studentAudioUrl);
+      }
+    };
+  }, [studentAudioUrl]);
+
+  const startRecording = async () => {
+    if (evaluated) {
+      setRecordError('当前句子已完成评测');
+      return;
+    }
+    const AudioContextCtor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!navigator.mediaDevices?.getUserMedia || !AudioContextCtor) {
+      setRecordError('当前浏览器不支持录音能力');
+      return;
+    }
+    try {
+      setRecordError('');
+      if (studentAudioUrl) {
+        URL.revokeObjectURL(studentAudioUrl);
+        setStudentAudioUrl('');
+      }
+      setStudentAudioFile(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioContext = new AudioContextCtor();
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+      streamRef.current = stream;
+      audioContextRef.current = audioContext;
+      sourceRef.current = source;
+      processorRef.current = processor;
+      chunksRef.current = [];
+      sampleRateRef.current = audioContext.sampleRate;
+
+      processor.onaudioprocess = event => {
+        chunksRef.current.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+      };
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      setRecording(true);
+    } catch (e: any) {
+      setRecordError(e?.message || '录音启动失败，请检查麦克风权限');
+      setRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    processorRef.current?.disconnect();
+    sourceRef.current?.disconnect();
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    audioContextRef.current?.close();
+
+    processorRef.current = null;
+    sourceRef.current = null;
+    streamRef.current = null;
+    audioContextRef.current = null;
+
+    const samples = mergeFloat32Chunks(chunksRef.current);
+    const wavSamples = downsampleFloat32(samples, sampleRateRef.current, SPEAKING_EVALUATION_SAMPLE_RATE);
+    const wavBlob = encodeWav(wavSamples, SPEAKING_EVALUATION_SAMPLE_RATE);
+    const audioFile = new File([wavBlob], `speaking-practice-${sentence.sentenceId}-${Date.now()}.wav`, { type: 'audio/wav' });
+    const objectUrl = URL.createObjectURL(audioFile);
+    setStudentAudioFile(audioFile);
+    setStudentAudioUrl(objectUrl);
+    setRecording(false);
+  };
+
+  const submitEvaluation = async () => {
+    if (evaluated) {
+      setRecordError('当前句子已完成评测');
+      return;
+    }
+    if (!studentAudioFile) {
+      setRecordError('请先完成跟读录音');
+      return;
+    }
+    setSubmitting(true);
+    setRecordError('');
+    try {
+      const uploaded = await uploadFile<SysFileUploadResult>(studentAudioFile);
+      if (!uploaded.url) {
+        throw new Error('音频上传失败');
+      }
+      const result = await apiCall<SpeakingEvaluationResult>('/speaking/evaluation/evaluate', {
+        method: 'POST',
+        body: JSON.stringify({
+          sentenceId: sentence.sentenceId,
+          studentAudioUrl: uploaded.url,
+        }),
+      });
+      onEvaluated(result);
+      setStudentAudioFile(null);
+    } catch (e: any) {
+      setRecordError(e?.message || '提交评测失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div style={panelStyle}>
       <SentenceBlock sentence={sentence} />
-      <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
-        <input
-          value={audioUrl}
-          onChange={e => onAudioUrlChange(e.target.value)}
-          placeholder="粘贴学生跟读音频 URL 后进行评测"
-          style={inputStyle}
-        />
-        <button onClick={onEvaluate} disabled={evaluating} style={{ ...primaryBtn, opacity: evaluating ? .6 : 1 }}>{evaluating ? '评测中...' : '评测'}</button>
+      <div style={{ marginTop: 12, borderTop: '1px solid #f0efec', paddingTop: 12 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={recording ? stopRecording : startRecording}
+            disabled={evaluated}
+            style={{ ...(recording ? dangerBtn : primaryBtn), opacity: evaluated ? .45 : 1, cursor: evaluated ? 'not-allowed' : 'pointer' }}
+          >
+            {evaluated ? '已评测' : recording ? '停止录音' : '开始跟读录音'}
+          </button>
+          <button
+            onClick={submitEvaluation}
+            disabled={evaluated || !studentAudioFile || recording || submitting}
+            style={{ ...ghostBtn, opacity: evaluated || !studentAudioFile || recording || submitting ? .45 : 1, cursor: evaluated || !studentAudioFile || recording || submitting ? 'not-allowed' : 'pointer' }}
+          >
+            {evaluated ? '已提交' : submitting ? '评测中...' : '提交评测'}
+          </button>
+        </div>
+        {studentAudioUrl && <audio controls src={studentAudioUrl} style={{ width: '100%', marginTop: 10 }} />}
+        {recordError && <div style={{ fontSize: 12, color: '#c62828', marginTop: 8 }}>{recordError}</div>}
+        <div style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>录音会以 16k WAV 格式上传并提交评测。</div>
       </div>
-      <div style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>当前后端评测接口接收音频 URL；本项目通用上传接口目前仅支持图片，音频上传需后端扩展后再接入。</div>
       {sentence.latestEvaluation && <EvaluationView evaluation={sentence.latestEvaluation} />}
     </div>
   );
@@ -635,6 +814,78 @@ function ScoreItem({ label, value }: { label: string; value?: number }) {
       <div style={{ fontSize: 16, fontWeight: 700, color: '#234b49', marginTop: 4 }}>{formatScore(value)}</div>
     </div>
   );
+}
+
+function mergeFloat32Chunks(chunks: Float32Array[]) {
+  const length = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const result = new Float32Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
+}
+
+function downsampleFloat32(samples: Float32Array, inputSampleRate: number, outputSampleRate: number) {
+  if (inputSampleRate === outputSampleRate) {
+    return samples;
+  }
+  if (inputSampleRate < outputSampleRate) {
+    return samples;
+  }
+
+  const ratio = inputSampleRate / outputSampleRate;
+  const outputLength = Math.floor(samples.length / ratio);
+  const result = new Float32Array(outputLength);
+
+  for (let i = 0; i < outputLength; i += 1) {
+    const start = Math.floor(i * ratio);
+    const end = Math.min(Math.floor((i + 1) * ratio), samples.length);
+    let sum = 0;
+    for (let j = start; j < end; j += 1) {
+      sum += samples[j];
+    }
+    result[i] = sum / Math.max(1, end - start);
+  }
+
+  return result;
+}
+
+function encodeWav(samples: Float32Array, sampleRate: number) {
+  const bytesPerSample = 2;
+  const blockAlign = bytesPerSample;
+  const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
+  const view = new DataView(buffer);
+
+  writeAscii(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * bytesPerSample, true);
+  writeAscii(view, 8, 'WAVE');
+  writeAscii(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, 'data');
+  view.setUint32(40, samples.length * bytesPerSample, true);
+
+  let offset = 44;
+  for (const sample of samples) {
+    const clamped = Math.max(-1, Math.min(1, sample));
+    view.setInt16(offset, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+    offset += bytesPerSample;
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function writeAscii(view: DataView, offset: number, value: string) {
+  for (let i = 0; i < value.length; i += 1) {
+    view.setUint8(offset + i, value.charCodeAt(i));
+  }
 }
 
 function ChipSection({ title, items }: { title: string; items?: string[] }) {
@@ -705,6 +956,11 @@ const primaryBtn: React.CSSProperties = {
   fontSize: 12,
   cursor: 'pointer',
   whiteSpace: 'nowrap',
+};
+
+const dangerBtn: React.CSSProperties = {
+  ...primaryBtn,
+  background: '#c62828',
 };
 
 function tabBtn(active: boolean): React.CSSProperties {

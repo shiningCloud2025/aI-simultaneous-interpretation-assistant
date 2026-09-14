@@ -33,6 +33,9 @@ type AdminPanelKey =
 
 type UserManageTabKey = 'all-users' | 'online-users' | 'disabled-users' | 'operation-records';
 type AdminAccountModalType = 'profile' | 'password' | 'phone' | 'email' | null;
+type AllUsersBatchModalType = 'status' | 'type' | null;
+type AdminMode = 'classic' | 'star' | 'star-content';
+type StarNavigationLevel = 'primary' | 'secondary';
 
 const navGroups: Array<{
   key: string;
@@ -84,6 +87,10 @@ const panelMeta = Object.fromEntries(
     ['admin-account', { key: 'admin-account', icon: '👤', name: '账号中心', desc: '管理员基础信息、资料维护与安全设置' }],
   ]
 ) as Record<AdminPanelKey, { key: AdminPanelKey; icon: string; name: string; desc: string }>;
+
+function findPanelGroup(key: AdminPanelKey) {
+  return navGroups.find((group) => group.children.some((child) => child.key === key));
+}
 
 function formatNumber(value?: number | null) {
   return typeof value === 'number' ? value.toLocaleString() : '-';
@@ -155,6 +162,8 @@ export function SuperAdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const setToken = useAppStore((s) => s.setToken);
+  const setUser = useAppStore((s) => s.setUser);
+  const logout = useAppStore((s) => s.logout);
   const nav = useNavigate();
 
   const sendSms = async () => {
@@ -227,8 +236,15 @@ export function SuperAdminLoginPage() {
         throw new Error('登录接口未返回 token');
       }
       setToken(token);
+      const user = await api.getUserInfo();
+      if (String(user.userType || '').toLowerCase() !== 'superadmin') {
+        logout();
+        throw new Error('当前账号不是平台管理员');
+      }
+      setUser(user);
       nav('/admin', { replace: true });
     } catch (e: any) {
+      logout();
       setError(e.message || '登录失败');
     } finally {
       setLoading(false);
@@ -311,13 +327,16 @@ export function SuperAdminLoginPage() {
 export function SuperAdminConsole() {
   const [panel, setPanel] = useState<AdminPanelKey>('user-dashboard');
   const [activeMenu, setActiveMenu] = useState('boards');
-  const [mode, setMode] = useState<'classic' | 'star'>('classic');
+  const [mode, setMode] = useState<AdminMode>('classic');
+  const [starGroupKey, setStarGroupKey] = useState('boards');
+  const [starLevel, setStarLevel] = useState<StarNavigationLevel>('primary');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
   const logout = useAppStore((s) => s.logout);
   const nav = useNavigate();
   const meta = panelMeta[panel];
+  const currentGroup = findPanelGroup(panel);
 
   useEffect(() => {
     if (user) return;
@@ -331,12 +350,24 @@ export function SuperAdminConsole() {
 
   const changePanel = (key: AdminPanelKey) => {
     setPanel(key);
-    const group = navGroups.find((item) => item.children.some((child) => child.key === key));
+    const group = findPanelGroup(key);
     if (group) setActiveMenu(group.key);
   };
 
+  const openStarHome = () => {
+    setStarLevel('primary');
+    setStarGroupKey(currentGroup?.key || 'boards');
+    setMode('star');
+  };
+
+  const openStarGroup = (groupKey = currentGroup?.key || 'boards') => {
+    setStarGroupKey(groupKey);
+    setStarLevel('secondary');
+    setMode('star');
+  };
+
   return (
-    <div className="admin-shell" data-mode={mode}>
+    <div className="admin-shell" data-mode={mode} data-star-group={currentGroup?.key || ''}>
       <div className="admin-bg" />
       {mode === 'classic' && <aside className="admin-sidebar">
         <div className="admin-brand">
@@ -409,13 +440,33 @@ export function SuperAdminConsole() {
       <main className="admin-main">
         <header className="admin-topbar">
           <div>
-            <h1>{mode === 'star' ? '✦ 星空模式' : `${meta.icon} ${meta.name}`}</h1>
-            <p>{mode === 'star' ? '一级星球展开二级星球，点击二级进入对应业务页面。' : meta.desc}</p>
+            <h1>
+              {mode === 'star'
+                ? '✦ 星空模式'
+                : mode === 'star-content'
+                  ? `${currentGroup?.icon || '✦'} ${currentGroup?.name || '星空'} / ${meta.icon} ${meta.name}`
+                  : `${meta.icon} ${meta.name}`}
+            </h1>
+            <p>
+              {mode === 'star'
+                ? '一级星球展开二级星球，点击二级进入对应业务页面。'
+                : mode === 'star-content'
+                  ? '星空内容态：只保留当前一级与二级上下文，具体能力在页面内使用 Tab。'
+                  : meta.desc}
+            </p>
           </div>
           <div className="admin-top-actions">
-            <button className={`admin-btn ${mode === 'star' ? 'primary' : ''}`} onClick={() => setMode(mode === 'star' ? 'classic' : 'star')}>
-              {mode === 'star' ? '☰ 经典' : '✨ 星空'}
+            <button
+              className={`admin-btn ${mode === 'star' || mode === 'star-content' ? 'primary' : ''}`}
+              onClick={() => {
+                if (mode === 'star') setMode('classic');
+                else if (mode === 'star-content') openStarGroup();
+                else openStarHome();
+              }}
+            >
+              {mode === 'star' ? '☰ 经典' : mode === 'star-content' ? '✨ 返回星空' : '✨ 星空'}
             </button>
+            {mode === 'star-content' && <button className="admin-btn" onClick={() => setMode('classic')}>经典模式</button>}
             <button className="admin-btn" onClick={() => nav('/dashboard')}>返回工作台</button>
             <button className="admin-btn danger" onClick={() => { logout(); nav('/admin/login'); }}>退出</button>
           </div>
@@ -424,15 +475,26 @@ export function SuperAdminConsole() {
           {mode === 'star' ? (
             <StarModePanel
               activePanel={panel}
+              initialGroupKey={starGroupKey}
+              initialLevel={starLevel}
               onClassic={() => setMode('classic')}
               onSelect={(key) => {
                 changePanel(key);
-                setMode('classic');
+                setMode('star-content');
               }}
             />
           ) : (
             <>
-              {panel === 'user-dashboard' && <UserDashboardPanel />}
+              {mode === 'star-content' && (
+                <div className="admin-star-content-crumb">
+                  <button onClick={openStarHome}>星空首页</button>
+                  <span>›</span>
+                  <button onClick={() => openStarGroup(currentGroup?.key)}>{currentGroup?.icon} {currentGroup?.name}</button>
+                  <span>›</span>
+                  <strong>{meta.icon} {meta.name}</strong>
+                </div>
+              )}
+              {panel === 'user-dashboard' && <UserDashboardPanel star={mode === 'star-content' && currentGroup?.key === 'boards'} />}
               {panel === 'ai-dashboard' && <PlaceholderPanel title="AI 看板" text="当前原型先展示静态结构；后续接 AI 调用统计接口后可替换为真实数据。" />}
               {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
               {panel === 'log-dashboard' && <LogDashboardPanel />}
@@ -696,21 +758,34 @@ function AdminAccountField({ label, children }: { label: string; children: React
 
 function StarModePanel({
   activePanel,
+  initialGroupKey,
+  initialLevel,
   onClassic,
   onSelect,
 }: {
   activePanel: AdminPanelKey;
+  initialGroupKey: string;
+  initialLevel: StarNavigationLevel;
   onClassic: () => void;
   onSelect: (key: AdminPanelKey) => void;
 }) {
   const [activeGroupKey, setActiveGroupKey] = useState(() => {
-    return navGroups.find((group) => group.children.some((child) => child.key === activePanel))?.key || navGroups[0].key;
+    return initialGroupKey || navGroups.find((group) => group.children.some((child) => child.key === activePanel))?.key || navGroups[0].key;
   });
+  const [level, setLevel] = useState<StarNavigationLevel>(initialLevel);
   const activeGroup = navGroups.find((group) => group.key === activeGroupKey) || navGroups[0];
-  const primaryGroups = navGroups.filter((group) => group.key !== 'boards');
+
+  const openGroup = (groupKey: string) => {
+    setActiveGroupKey(groupKey);
+    setLevel('secondary');
+  };
+
+  const openPanel = (key: AdminPanelKey) => {
+    onSelect(key);
+  };
 
   return (
-    <div className="admin-star-panel">
+    <div className={`admin-star-panel admin-star-${level}`}>
       <div className="admin-star-nebula one" />
       <div className="admin-star-nebula two" />
       <div className="admin-star-milkyway" />
@@ -718,60 +793,69 @@ function StarModePanel({
       <div className="admin-star-top">
         <div>
           <b>智语同航 · 控制台</b>
-          <span>{activeGroup ? `${activeGroup.name} · 点击二级星球进入页面` : '选择一颗星球进入'}</span>
+          <span>{level === 'primary' ? '一级星球 · 选择导航分组' : `${activeGroup.name} · 点击二级星球进入页面`}</span>
         </div>
         <button className="admin-star-switch" onClick={onClassic}>☰ 经典模式</button>
       </div>
 
-      <div className="admin-galaxy">
-        <button
-          className={`admin-star-sun ${activeGroupKey === 'boards' ? 'active' : ''}`}
-          onClick={() => setActiveGroupKey('boards')}
-        >
-          <span>📊</span>
-          <b>看板</b>
-          <em>Dashboard</em>
-        </button>
-        <div className="admin-star-orbit-ring ring-one" />
-        <div className="admin-star-orbit-ring ring-two" />
-        {primaryGroups.map((group, index) => (
-          <button
-            key={group.key}
-            className={`admin-star-planet admin-star-planet-${index + 1} ${activeGroupKey === group.key ? 'active' : ''}`}
-            onClick={() => setActiveGroupKey(group.key)}
-          >
-            <span>{group.icon}</span>
-            <b>{group.name}</b>
-            <em>{group.children.length} 个入口</em>
-          </button>
-        ))}
-      </div>
-
-      <div className="admin-satellite-layer">
-        <div className="admin-satellite-core">
-          <span>{activeGroup.icon}</span>
-          <b>{activeGroup.name}</b>
-        </div>
-        <div className="admin-satellite-ring" />
-        <div className="admin-satellite-grid">
-          {activeGroup.children.map((item, index) => (
+      {level === 'primary' && (
+        <div className="admin-galaxy">
+          <div className="admin-star-core">
+            <span>语</span>
+            <b>智语同航</b>
+            <em>Super Admin</em>
+          </div>
+          <div className="admin-star-orbit-ring ring-one" />
+          <div className="admin-star-orbit-ring ring-two" />
+          {navGroups.map((group, index) => (
             <button
-              className={`admin-satellite admin-satellite-${index + 1} ${activePanel === item.key ? 'active' : ''}`}
-              key={item.key}
-              onClick={() => onSelect(item.key)}
+              key={group.key}
+              className={`admin-star-planet admin-star-planet-${index + 1} ${activeGroupKey === group.key ? 'active' : ''}`}
+              onClick={() => openGroup(group.key)}
             >
-              <span>{item.icon}</span>
-              <b>{item.name}</b>
-              <em>{item.desc}</em>
+              <span className="admin-orbit-label">
+                <span>{group.icon}</span>
+                <b>{group.name}</b>
+                <em>{group.children.length} 个入口</em>
+              </span>
             </button>
           ))}
         </div>
-        <div className="admin-star-path">
-          <button onClick={() => setActiveGroupKey('boards')}>一级星球</button>
-          <span>/</span>
-          <b>{activeGroup.name}</b>
+      )}
+
+      {level === 'secondary' && (
+        <div className="admin-satellite-layer">
+          <div className="admin-satellite-core">
+            <span>{activeGroup.icon}</span>
+            <b>{activeGroup.name}</b>
+            <em>{activeGroup.children.length} 个入口</em>
+          </div>
+          <div className="admin-satellite-ring ring-main" />
+          <div className="admin-satellite-ring ring-far" />
+          <div className="admin-star-orbit-ring ring-one" />
+          <div className="admin-star-orbit-ring ring-two" />
+          <div className="admin-satellite-grid">
+            {activeGroup.children.map((item, index) => (
+              <button
+                className={`admin-satellite admin-satellite-${index + 1} ${activePanel === item.key ? 'active' : ''}`}
+                key={item.key}
+                onClick={() => openPanel(item.key)}
+              >
+                <span className="admin-orbit-label">
+                  <span>{item.icon}</span>
+                  <b>{item.name}</b>
+                  <em>{item.desc}</em>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="admin-star-path">
+            <button onClick={() => setLevel('primary')}>星空首页</button>
+            <span>›</span>
+            <b>{activeGroup.icon} {activeGroup.name}</b>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -787,7 +871,7 @@ function PlaceholderPanel({ title, text }: { title: string; text: string }) {
   );
 }
 
-function UserDashboardPanel() {
+function UserDashboardPanel({ star = false }: { star?: boolean }) {
   const [summary, setSummary] = useState<UserDashboardSummary>({});
   const [trend, setTrend] = useState<UserTrendItem[]>([]);
   const [structure, setStructure] = useState<UserDashboardStructure>({});
@@ -828,11 +912,11 @@ function UserDashboardPanel() {
     ['MAU', summary.mau?.value, `活跃率 ${summary.mau?.activeRate ?? '-'}%`],
   ];
   const maxTrend = Math.max(1, ...trend.map((item) => item.newUsers || 0));
-  const typeItems = structure.userTypes || structure.typeItems || [];
-  const statusItems = structure.statuses || structure.statusItems || [];
+  const typeItems = normalizeStructureItems(structure.typeDistribution || structure.userTypes || structure.typeItems || []);
+  const statusItems = normalizeStructureItems(structure.statusDistribution || structure.statuses || structure.statusItems || []);
 
   return (
-    <div className="admin-panel">
+    <div className={`admin-panel ${star ? 'admin-star-dashboard' : ''}`}>
       <ErrorBlock error={error} />
       <div className="admin-grid-stats">
         {stats.map(([label, value, delta]) => (
@@ -889,12 +973,13 @@ function UserDashboardPanel() {
       <div className="admin-card">
         <h2>最近注册</h2>
         <DataTable
-          columns={['用户', '账号', '类型', '状态', '注册时间']}
+          columns={['用户', '账号', '类型', '状态', '最近登录', '注册时间']}
           rows={recent.map((user) => [
             user.username || '-',
             user.account || '-',
-            enumText(user.userTypeText || user.userType),
-            enumText(user.statusText),
+            enumText(user.userTypeName || user.userTypeText || user.userType),
+            enumText(user.statusName || user.statusText || user.status),
+            formatDate(user.lastLoginTime),
             formatDate(user.createTime),
           ])}
         />
@@ -904,29 +989,59 @@ function UserDashboardPanel() {
 }
 
 function StructureCard({ title, items }: { title: string; items: StructureItemLike[] }) {
+  const colors = ['#3ddc97', '#7b8cff', '#ffb454', '#ff6b8a', '#616d8a'];
+  const segments = items.length
+    ? items.reduce<{ start: number; parts: string[] }>((acc, item, index) => {
+      const percent = Math.max(0, Number(item.percent || 0));
+      const end = acc.start + percent;
+      acc.parts.push(`${colors[index % colors.length]} ${acc.start}% ${end}%`);
+      acc.start = end;
+      return acc;
+    }, { start: 0, parts: [] }).parts
+    : [];
+  const pieBackground = segments.length ? `conic-gradient(${segments.join(', ')})` : undefined;
+
   return (
     <div className="admin-card">
       <h2>{title}</h2>
       {items.length ? (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={`${item.name || item.type || item.status}-${index}`}>
-                  <td>{item.name || enumText(item.type || item.status)}</td>
-                  <td>{formatNumber(item.value)}</td>
-                  <td><span className="admin-pill">{item.percent ?? '-'}%</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="admin-structure-chart">
+          <div className="admin-pie" style={{ background: pieBackground }} />
+          <div className="admin-pie-legend">
+            {items.map((item, index) => (
+              <div className="admin-pie-row" key={`${item.name || item.type || item.status}-${index}`}>
+                <span className="admin-pie-dot" style={{ background: colors[index % colors.length] }} />
+                <span className="admin-pie-name">{item.name || item.userTypeName || item.statusName || enumText(item.userType || item.type || item.status)}</span>
+                <b>{formatNumber(item.value ?? item.count ?? 0)}</b>
+                <em>{item.percent ?? '-'}%</em>
+              </div>
+            ))}
+          </div>
         </div>
       ) : <EmptyBlock />}
     </div>
   );
 }
 
-type StructureItemLike = { name?: string; type?: string; status?: string; value: number; percent?: number };
+function normalizeStructureItems(items: StructureItemLike[]) {
+  return items.map((item) => ({
+    ...item,
+    name: item.name || item.userTypeName || item.statusName || enumText(item.userType || item.type || item.status),
+    value: item.value ?? item.count ?? 0,
+  }));
+}
+
+type StructureItemLike = {
+  name?: string;
+  userType?: string;
+  userTypeName?: string;
+  type?: string;
+  status?: string;
+  statusName?: string;
+  value?: number;
+  count?: number;
+  percent?: number;
+};
 
 const userManageTabs: Array<{ key: UserManageTabKey; icon: string; name: string; desc: string }> = [
   { key: 'all-users', icon: '👥', name: '全部用户', desc: '查询、状态、类型与密码' },
@@ -998,6 +1113,7 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   const [status, setStatus] = useState('');
   const [batchStatus, setBatchStatus] = useState('1');
   const [batchUserType, setBatchUserType] = useState('student');
+  const [batchModal, setBatchModal] = useState<AllUsersBatchModalType>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [error, setError] = useState('');
 
@@ -1015,19 +1131,39 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   useEffect(() => { load(1); }, []);
 
   const updateUsers = async (ids: number[], kind: 'status' | 'type', value: string | number) => {
-    if (!ids.length) return setError('请先选择用户');
+    if (!ids.length) {
+      setError('请先选择用户');
+      return false;
+    }
     try {
       if (kind === 'status') await adminApi.batchUpdateStatus(ids, Number(value));
       else await adminApi.batchUpdateType(ids, String(value));
       await load();
+      return true;
     } catch (e: any) {
       setError(e.message || '操作失败');
+      return false;
     }
   };
 
   const batch = async (kind: 'status' | 'type', value: string | number) => {
-    if (!selected.length) return setError('请先选择用户');
-    await updateUsers(selected, kind, value);
+    return updateUsers(selected, kind, value);
+  };
+
+  const openBatchModal = (kind: Exclude<AllUsersBatchModalType, null>) => {
+    if (!selected.length) {
+      setError('请先选择用户');
+      return;
+    }
+    setError('');
+    setBatchModal(kind);
+  };
+
+  const confirmBatch = async () => {
+    if (!batchModal) return;
+    const value = batchModal === 'status' ? batchStatus : batchUserType;
+    const success = await batch(batchModal, value);
+    if (success) setBatchModal(null);
   };
 
   const resetPassword = async (userId: number) => {
@@ -1054,20 +1190,8 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
             <option value="">全部状态</option><option value="1">启用</option><option value="0">禁用</option>
           </select>
           <button className="admin-btn primary" onClick={() => load(1)}>查询</button>
-          <span className="admin-toolbar-label">批量修改账号状态</span>
-          <select className="admin-select compact" value={batchStatus} onChange={(e) => setBatchStatus(e.target.value)}>
-            <option value="1">启用</option>
-            <option value="0">禁用</option>
-          </select>
-          <button className={`admin-btn ${batchStatus === '0' ? 'danger' : ''}`} onClick={() => batch('status', batchStatus)}>
-            确认修改状态
-          </button>
-          <span className="admin-toolbar-label">批量修改角色</span>
-          <select className="admin-select compact" value={batchUserType} onChange={(e) => setBatchUserType(e.target.value)}>
-            <option value="student">学生</option>
-            <option value="teacher">老师</option>
-          </select>
-          <button className="admin-btn" onClick={() => batch('type', batchUserType)}>确认修改角色</button>
+          <button className="admin-btn" onClick={() => openBatchModal('status')}>批量修改账号状态</button>
+          <button className="admin-btn" onClick={() => openBatchModal('type')}>批量修改角色</button>
         </div>
         <ErrorBlock error={error} />
         <div className="admin-table-wrap">
@@ -1106,6 +1230,30 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
           {!data.records.length && <EmptyBlock />}
         </div>
       </div>
+      {batchModal && (
+        <div className="admin-account-edit-mask">
+          <div className="admin-account-edit">
+            <h3>{batchModal === 'status' ? '批量修改账号状态' : '批量修改角色'}</h3>
+            <AdminAccountField label={`已选择 ${selected.length} 个用户`}>
+              {batchModal === 'status' ? (
+                <select value={batchStatus} onChange={(e) => setBatchStatus(e.target.value)}>
+                  <option value="1">启用</option>
+                  <option value="0">禁用</option>
+                </select>
+              ) : (
+                <select value={batchUserType} onChange={(e) => setBatchUserType(e.target.value)}>
+                  <option value="student">学生</option>
+                  <option value="teacher">老师</option>
+                </select>
+              )}
+            </AdminAccountField>
+            <div className="admin-account-edit-actions">
+              <button className="primary" onClick={confirmBatch}>确认修改</button>
+              <button onClick={() => setBatchModal(null)}>取消</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1275,6 +1423,8 @@ function FeedbackPanel() {
   const [data, setData] = useState<PageResult<FeedbackItem>>({ records: [], total: 0, size: 20, current: 1 });
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
+  const [activeFeedback, setActiveFeedback] = useState<FeedbackItem | null>(null);
+  const [replyContent, setReplyContent] = useState('');
   const [error, setError] = useState('');
 
   const load = async () => {
@@ -1288,9 +1438,30 @@ function FeedbackPanel() {
   useEffect(() => { load(); }, []);
 
   const process = async (item: FeedbackItem) => {
-    const reply = item.status === 'PROCESSING' ? window.prompt('请输入回复内容，可以为空') || '' : undefined;
+    if (item.status === 'PROCESSING') {
+      setActiveFeedback(item);
+      setReplyContent('');
+      return;
+    }
+    if (item.status !== 'PENDING') {
+      setActiveFeedback(item);
+      setReplyContent(item.replyContent || '');
+      return;
+    }
     try {
-      await adminApi.processFeedback(item.id, reply);
+      await adminApi.processFeedback(item.id);
+      await load();
+    } catch (e: any) {
+      setError(e.message || '处理失败');
+    }
+  };
+
+  const resolveFeedback = async () => {
+    if (!activeFeedback || activeFeedback.status !== 'PROCESSING') return;
+    try {
+      await adminApi.processFeedback(activeFeedback.id, replyContent);
+      setActiveFeedback(null);
+      setReplyContent('');
       await load();
     } catch (e: any) {
       setError(e.message || '处理失败');
@@ -1323,6 +1494,45 @@ function FeedbackPanel() {
           ])}
         />
       </div>
+      {activeFeedback && (
+        <div className="admin-account-edit-mask">
+          <div className="admin-feedback-modal">
+            <div className="admin-feedback-modal-head">
+              <div>
+                <h3>{activeFeedback.status === 'PROCESSING' ? '解决反馈' : '反馈详情'}</h3>
+                <span>{activeFeedback.feedbackNo || '-'}</span>
+              </div>
+              <button onClick={() => setActiveFeedback(null)}>×</button>
+            </div>
+            <div className="admin-feedback-detail">
+              <div><span>标题</span><b>{activeFeedback.title || '-'}</b></div>
+              <div><span>用户</span><b>{activeFeedback.username || activeFeedback.account || '-'}</b></div>
+              <div><span>类型</span><b>{activeFeedback.typeText || enumText(activeFeedback.type)}</b></div>
+              <div><span>状态</span><b>{activeFeedback.statusText || enumText(activeFeedback.status)}</b></div>
+              <div><span>时间</span><b>{formatDate(activeFeedback.createTime)}</b></div>
+            </div>
+            <label className="admin-account-field">
+              <span>反馈内容</span>
+              <textarea className="admin-textarea" value={activeFeedback.content || ''} readOnly />
+            </label>
+            {activeFeedback.status === 'PROCESSING' ? (
+              <label className="admin-account-field">
+                <span>回复内容（可以为空）</span>
+                <textarea className="admin-textarea" value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="请输入给用户的处理说明" />
+              </label>
+            ) : (
+              <label className="admin-account-field">
+                <span>回复内容</span>
+                <textarea className="admin-textarea" value={activeFeedback.replyContent || '暂无回复'} readOnly />
+              </label>
+            )}
+            <div className="admin-account-edit-actions">
+              {activeFeedback.status === 'PROCESSING' && <button className="primary" onClick={resolveFeedback}>确认解决</button>}
+              <button onClick={() => setActiveFeedback(null)}>{activeFeedback.status === 'PROCESSING' ? '取消' : '关闭'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
