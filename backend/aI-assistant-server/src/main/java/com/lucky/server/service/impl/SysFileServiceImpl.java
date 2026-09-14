@@ -38,7 +38,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
             "audio/x-m4a"
     );
 
-    private static final long MAX_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final long MAX_SIZE = 500 * 1024 * 1024; // 500MB
 
     private final FileStorageService fileStorageService;
 
@@ -53,7 +53,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         }
 
         if (file.getSize() > MAX_SIZE) {
-            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "文件大小不能超过 20MB");
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "文件大小不能超过 500MB");
         }
 
         String fileName = file.getOriginalFilename();

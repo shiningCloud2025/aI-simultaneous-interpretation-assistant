@@ -1,3 +1,4 @@
+com/lucky/server/common/enums/WritingCompositionTutorMessageRoleEnum.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardOnlineVO.class
 com/lucky/server/service/impl/SysUserApiKeyServiceImpl.class
 com/lucky/server/asr/stream/impl/AlibabaAsrService.class
@@ -35,6 +36,7 @@ com/lucky/server/controller/api/SysUserAiModelController.class
 com/lucky/server/common/enums/UserTypeEnum.class
 com/lucky/server/common/enums/ReadingStageEnum.class
 com/lucky/server/controller/superadmin/SuperAdminUserDashboardController.class
+com/lucky/server/service/impl/WritingCompositionTutorMessageServiceImpl.class
 com/lucky/server/filter/JwtAuthFilter.class
 com/lucky/server/service/ReadingWordImageGenerateService.class
 com/lucky/server/agent/listen/TranslateAgent.class
@@ -102,6 +104,7 @@ com/lucky/server/domain/dto/SysUserShortcutConfigSaveDTO$ShortcutItem.class
 com/lucky/server/domain/vo/SuperAdminLogFileVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardTrendVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardRecentRegisterVO.class
+com/lucky/server/mapper/WritingCompositionTutorMessageMapper.class
 com/lucky/server/mapper/SysUserShortcutConfigMapper.class
 com/lucky/server/agent/write/WritingCompositionTutorAgent$1.class
 com/lucky/server/domain/dto/SysUserTermEntrySaveDTO.class
@@ -122,6 +125,7 @@ com/lucky/server/domain/vo/SuperAdminSkillDetailVO.class
 com/lucky/server/service/SysFileService.class
 com/lucky/server/service/WritingCompositionGenerationService.class
 com/lucky/server/domain/entity/ReadingWordMaterialFailure.class
+com/lucky/server/service/impl/WritingCompositionTutorMessageServiceImpl$1.class
 com/lucky/server/asr/stream/AsrService.class
 com/lucky/server/service/impl/FeishuFeedbackNotifyServiceImpl.class
 com/lucky/server/domain/vo/WritingCompositionEvaluateResultVO.class
@@ -152,6 +156,7 @@ com/lucky/server/domain/dto/SpeakingEvaluationDTO.class
 com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl$1.class
 com/lucky/server/domain/vo/WritingCompositionTutorAnswerVO.class
 com/lucky/server/config/CosProperties.class
+com/lucky/server/domain/vo/WritingCompositionTutorMessageVO.class
 com/lucky/server/service/impl/WritingCompositionGenerationServiceImpl$1.class
 com/lucky/server/service/impl/ReadingWordMaterialServiceImpl.class
 com/lucky/server/common/email/EmailVerifyCodeUtil.class
@@ -185,6 +190,7 @@ com/lucky/server/domain/entity/SysUserShortcutConfig.class
 com/lucky/server/common/enums/SpeakingTtsVoiceEnum.class
 com/lucky/server/domain/dto/SuperAdminFeedbackPageQueryDTO.class
 com/lucky/server/common/jwt/JwtUtil.class
+com/lucky/server/domain/entity/WritingCompositionTutorMessage.class
 com/lucky/server/service/impl/SysAttachmentServiceImpl.class
 com/lucky/server/domain/dto/SysUserTermLibrarySaveDTO.class
 com/lucky/server/config/SuperAdminLogProperties.class
@@ -211,6 +217,7 @@ com/lucky/server/service/impl/SpeakingMaterialGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermLibraryService.class
 com/lucky/server/mapper/SpeakingMaterialGenerationFailureMapper.class
 com/lucky/server/domain/dto/SysUserResetPasswordDTO.class
+com/lucky/server/service/WritingCompositionTutorMessageService.class
 com/lucky/server/domain/dto/SuperAdminOnlineUserKickOutDTO.class
 com/lucky/server/service/SysUserApiKeyService.class
 com/lucky/server/service/ReadingWordMaterialService.class

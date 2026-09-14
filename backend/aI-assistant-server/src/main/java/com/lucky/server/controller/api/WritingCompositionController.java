@@ -9,12 +9,15 @@ import com.lucky.server.domain.dto.*;
 import com.lucky.server.domain.vo.*;
 import com.lucky.server.service.WritingCompositionEvaluationService;
 import com.lucky.server.service.WritingCompositionGenerationService;
+import com.lucky.server.service.WritingCompositionTutorMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 /**
  * 写作作文控制器
@@ -31,6 +34,7 @@ public class WritingCompositionController {
     private final WritingCompositionTutorAgent writingCompositionTutorAgent;
     private final WritingCompositionGenerationService writingCompositionGenerationService;
     private final WritingCompositionEvaluationService writingCompositionEvaluationService;
+    private final WritingCompositionTutorMessageService writingCompositionTutorMessageService;
 
     @PostMapping("/generate")
     @Operation(summary = "生成作文题目")
@@ -54,6 +58,12 @@ public class WritingCompositionController {
             @Valid @RequestBody WritingCompositionTutorChatDTO dto) {
         return writingCompositionTutorAgent.chat(dto)
                 .map(BaseResult::ok);
+    }
+
+    @GetMapping("/tutor/messages")
+    @Operation(summary = "查询写作作文AI辅导对话消息")
+    public BaseResult<List<WritingCompositionTutorMessageVO>> listTutorMessages(@RequestParam Long evaluationId) {
+        return BaseResult.ok(writingCompositionTutorMessageService.listMessages(evaluationId));
     }
 
     @PostMapping("/generation/history/page")

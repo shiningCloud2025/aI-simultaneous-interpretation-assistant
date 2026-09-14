@@ -148,6 +148,12 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
                 if (response == null) {
                     return;
                 }
+
+                log.info("腾讯云口语评测响应：code={}, message={}, voiceId={}",
+                        response.getCode(),
+                        response.getMessage(),
+                        response.getVoiceId());
+
                 if (response.getResult() != null) {
                     lastResponseRef.set(response);
                 }
