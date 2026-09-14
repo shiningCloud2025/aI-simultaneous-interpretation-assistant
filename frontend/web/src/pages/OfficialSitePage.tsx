@@ -15,6 +15,7 @@ export function OfficialSitePage() {
           <span>智语同航</span>
         </button>
         <nav className={`official-nav${navOpen ? ' open' : ''}`}>
+          <a href="#home" onClick={() => setNavOpen(false)}>首页</a>
           <a href="#features" onClick={() => setNavOpen(false)}>核心场景</a>
           <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
           <Link to="/api-key-guide" onClick={() => setNavOpen(false)}>模型支持</Link>
@@ -32,7 +33,7 @@ export function OfficialSitePage() {
       </header>
 
       <main>
-        <section className="official-hero">
+        <section id="home" className="official-hero">
           <div className="official-hero-copy">
             <div className="official-kicker">Multi-Harness Agent Language Classroom</div>
             <h1>智语同航</h1>
