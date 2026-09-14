@@ -62,6 +62,16 @@ interface TutorMessage {
   imageUrls?: string[];
 }
 
+interface TutorHistoryMessage {
+  id: number;
+  evaluationId: number;
+  role: 'user' | 'assistant' | string;
+  roleName?: string;
+  content: string;
+  imageUrls?: string[];
+  createTime?: string;
+}
+
 export function EduWritingTutor() {
   const [records, setRecords] = useState<EvaluationRecord[]>([]);
   const [selected, setSelected] = useState<EvaluationRecord | null>(null);
@@ -71,6 +81,7 @@ export function EduWritingTutor() {
   const [question, setQuestion] = useState('');
   const [questionImages, setQuestionImages] = useState<string[]>([]);
   const [messages, setMessages] = useState<TutorMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState('');
@@ -90,6 +101,12 @@ export function EduWritingTutor() {
   useEffect(() => {
     chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, chatLoading, selected?.id]);
+
+  useEffect(() => {
+    if (selected) {
+      loadTutorMessages(selected.id);
+    }
+  }, [selected?.id]);
 
   const loadRecords = async (nextPage = page) => {
     setLoadingRecords(true);
@@ -119,6 +136,19 @@ export function EduWritingTutor() {
     setQuestion('');
     setQuestionImages([]);
     setMessages([]);
+  };
+
+  const loadTutorMessages = async (evaluationId: number) => {
+    setLoadingMessages(true);
+    try {
+      const data = await apiCall<TutorHistoryMessage[]>(`/writing/composition/tutor/messages?evaluationId=${encodeURIComponent(evaluationId)}`);
+      setMessages((data || []).map(toTutorMessage));
+    } catch (e: any) {
+      setMessages([]);
+      showToast(e?.message || '答疑历史加载失败');
+    } finally {
+      setLoadingMessages(false);
+    }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,7 +285,12 @@ export function EduWritingTutor() {
             </div>
 
             <div ref={chatBodyRef} style={chatBody}>
-              {messages.length === 0 ? (
+              {loadingMessages ? (
+                <div style={emptyChat}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#283430' }}>正在载入这次评阅的答疑记录...</div>
+                  <div style={{ fontSize: 12, color: '#9a9f9b', marginTop: 8 }}>历史消息会按时间顺序回显在这里。</div>
+                </div>
+              ) : messages.length === 0 ? (
                 <div style={emptyChat}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#283430' }}>可以从这些问题开始</div>
                   <div style={quickGrid}>
@@ -269,7 +304,12 @@ export function EduWritingTutor() {
                   {messages.map((message, index) => (
                     <ChatBubble key={index} message={message} onPreview={setPreviewUrl} />
                   ))}
-                  {chatLoading && <div style={thinkingBubble}>AI 正在结合这次批阅整理回答...</div>}
+                  {chatLoading && (
+                    <div style={thinkingBubble}>
+                      <div style={{ fontWeight: 800, color: '#65706b', marginBottom: 6 }}>AI 正在整理回答</div>
+                      <div>读取本次评阅记录 → 分析你的问题 → 组织可执行建议</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -301,7 +341,7 @@ export function EduWritingTutor() {
                   <button onClick={sendQuestion} disabled={chatLoading || !question.trim()} style={{ ...primaryBtn, opacity: chatLoading || !question.trim() ? .5 : 1, cursor: chatLoading || !question.trim() ? 'not-allowed' : 'pointer' }}>发送</button>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: '#aaa', marginTop: 8 }}>当前版本会展示本页对话；后续接入答疑消息表后，可刷新回显完整历史。</div>
+              <div style={{ fontSize: 11, color: '#aaa', marginTop: 8 }}>会先实时展示本次问答；重新进入该评阅时，会从历史消息接口回显已保存记录。</div>
             </div>
           </main>
         </div>
@@ -370,6 +410,14 @@ function ChatBubble({ message, onPreview }: { message: TutorMessage; onPreview: 
 
 function labelOf(options: { code: string; desc: string }[], code?: string) {
   return options.find(o => o.code === code)?.desc || code || '—';
+}
+
+function toTutorMessage(message: TutorHistoryMessage): TutorMessage {
+  return {
+    role: String(message.role).toLowerCase() === 'assistant' ? 'assistant' : 'user',
+    text: message.content || '',
+    imageUrls: message.imageUrls || [],
+  };
 }
 
 function submitTypeLabel(type?: string) {

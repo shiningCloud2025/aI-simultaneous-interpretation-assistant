@@ -17,6 +17,7 @@ export function OfficialSitePage() {
         <nav className={`official-nav${navOpen ? ' open' : ''}`}>
           <a href="#home" onClick={() => setNavOpen(false)}>首页</a>
           <a href="#features" onClick={() => setNavOpen(false)}>核心场景</a>
+          <a href="#audience" onClick={() => setNavOpen(false)}>适用人群</a>
           <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
           <Link to="/api-key-guide" onClick={() => setNavOpen(false)}>模型支持</Link>
           <Link to="/admin/login" onClick={() => setNavOpen(false)}>管理平台</Link>
@@ -75,6 +76,23 @@ export function OfficialSitePage() {
               { title: '阅读词汇积累', text: '根据语言和学习阶段生成固定例句与图像素材，让单词学习从释义走向语境理解。' },
             ].map(item => (
               <div key={item.title} className="official-feature">
+                <h2>{item.title}</h2>
+                <p>{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="audience" className="official-section official-audience">
+          <div className="official-section-title">适用人群</div>
+          <div className="official-audience-grid">
+            {[
+              { title: '外语教师', text: '适合课堂听说读写训练、作文批阅、口语跟读反馈与课后学习记录沉淀。' },
+              { title: '语言学习者', text: '面向英语、日语、韩语、法语、西班牙语等多语种学习场景，辅助自主练习。' },
+              { title: '不同学段学生', text: '覆盖小学、初中、高中、大学与成人学习者，支持按阶段调整材料难度。' },
+              { title: '班级与机构', text: '适合学校课堂、培训机构和自习场景，帮助老师统一组织学习任务。' },
+            ].map(item => (
+              <div key={item.title} className="official-audience-card">
                 <h2>{item.title}</h2>
                 <p>{item.text}</p>
               </div>
@@ -363,6 +381,46 @@ export function OfficialSitePage() {
           font-size: 14px;
           line-height: 1.8;
         }
+        .official-audience {
+          padding-bottom: 54px;
+        }
+        .official-audience-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+        }
+        .official-audience-card {
+          position: relative;
+          min-height: 158px;
+          padding: 24px;
+          overflow: hidden;
+          border: 1px solid #e8e2d8;
+          border-radius: 16px;
+          background:
+            linear-gradient(135deg, rgba(35,75,73,.06), rgba(181,138,72,.06)),
+            #fff;
+        }
+        .official-audience-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #234b49, #b58a48);
+          opacity: .82;
+        }
+        .official-audience-card h2 {
+          margin: 0 0 12px;
+          color: #1f2a2a;
+          font-size: 18px;
+        }
+        .official-audience-card p {
+          margin: 0;
+          color: #66706d;
+          font-size: 14px;
+          line-height: 1.8;
+        }
         .official-workflow {
           padding-bottom: 54px;
         }
@@ -431,6 +489,7 @@ export function OfficialSitePage() {
           }
           .official-hero,
           .official-feature-grid,
+          .official-audience-grid,
           .official-flow {
             grid-template-columns: 1fr;
           }
