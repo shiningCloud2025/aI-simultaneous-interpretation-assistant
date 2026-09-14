@@ -427,6 +427,7 @@ export function EduWritingReview() {
           <span onClick={() => setPreviewUrl(null)} style={previewClose}>×</span>
         </div>
       )}
+
     </>
   );
 }

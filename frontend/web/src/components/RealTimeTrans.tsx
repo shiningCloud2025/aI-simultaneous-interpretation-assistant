@@ -22,6 +22,9 @@ interface SegItem {
   source: string;      // 原文（完整）
   target: string;      // 译文（流式追加中）
   corrected?: boolean; // 是否被纠错过
+  correcting?: boolean; // 是否正在展示纠错过渡态
+  previousSource?: string;
+  previousTarget?: string;
 }
 
 const LANGS = [
@@ -91,6 +94,7 @@ export function RealTimeTrans() {
   const [segs, setSegs] = useState<SegItem[]>([]);
   const segIdRef = useRef(0);
   const currentTargetRef = useRef<{ id: number; startedAt: number } | null>(null);
+  const correctionTimersRef = useRef<number[]>([]);
 
   // —— 底层资源 ——
   const wsRef = useRef<WebSocket | null>(null);
@@ -103,6 +107,11 @@ export function RealTimeTrans() {
   const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
   const lastSourceTextRef = useRef('');   // 服务端最近一次推过来的原文（用来判断是否进入新句）
   const finishedSourceIdRef = useRef<number | null>(null); // 上一句结束时的 segId（收到 correction 时定位）
+
+  const clearCorrectionTimers = useCallback(() => {
+    correctionTimersRef.current.forEach(timer => window.clearTimeout(timer));
+    correctionTimersRef.current = [];
+  }, []);
 
   // ============== 模型加载 ==============
   useEffect(() => {
@@ -258,6 +267,7 @@ export function RealTimeTrans() {
 
   // ============== WebSocket ==============
   const stopAll = useCallback(() => {
+    clearCorrectionTimers();
     try { wsRef.current?.close(); } catch {}
     try { processorRef.current?.disconnect(); } catch {}
     try { muteRef.current?.disconnect(); } catch {}
@@ -282,7 +292,7 @@ export function RealTimeTrans() {
     setRecording(false);
     setStatus('idle');
     setStatusText('● 空闲');
-  }, []);
+  }, [clearCorrectionTimers]);
 
   useEffect(() => () => stopAll(), [stopAll]);
 
@@ -297,6 +307,7 @@ export function RealTimeTrans() {
     }
     setStatus('connecting');
     setStatusText('● 连接中...');
+    clearCorrectionTimers();
     setSegs([]);
     lastSourceTextRef.current = '';
     currentTargetRef.current = null;
@@ -456,19 +467,36 @@ export function RealTimeTrans() {
         break;
       }
       case 'correction': {
-        // 合并展示模式下，纠错结果通常只覆盖后端的一批句子。
-        // 这里不再用它替换整段转写稿，避免把当前会话的完整记录截断。
+        const correctedSource = msg.source || '';
+        const correctedTarget = msg.target || '';
+        const targetId = finishedSourceIdRef.current || segIdRef.current;
         setSegs(prev => {
           if (prev.length === 0) return prev;
           const next = prev.slice();
-          const idx = finishedSourceIdRef.current
-            ? next.findIndex(s => s.id === finishedSourceIdRef.current)
+          const idx = targetId
+            ? next.findIndex(s => s.id === targetId)
             : next.length - 1;
           if (idx >= 0) {
-            next[idx] = { ...next[idx], corrected: true };
+            const current = next[idx];
+            next[idx] = {
+              ...current,
+              source: correctedSource || current.source,
+              target: correctedTarget || current.target,
+              corrected: true,
+              correcting: true,
+              previousSource: current.source,
+              previousTarget: current.target,
+            };
           }
           return next;
         });
+        const timer = window.setTimeout(() => {
+          setSegs(prev => prev.map(seg => seg.id === targetId
+            ? { ...seg, correcting: false, previousSource: undefined, previousTarget: undefined }
+            : seg
+          ));
+        }, 3500);
+        correctionTimersRef.current.push(timer);
         break;
       }
       case 'correction_error':
@@ -495,12 +523,12 @@ export function RealTimeTrans() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, height: 'calc(100vh - 360px)' }}>
         <TransBox label={`源语言 · ${LANGS.find(l => l.code === srcLang)?.label}`} dotColor="#999" empty={segs.length === 0}>
           {segs.map(s => (
-            <Seg key={s.id} time={s.time} text={s.source} corrected={s.corrected} />
+            <Seg key={s.id} time={s.time} text={s.source} corrected={s.corrected} correcting={s.correcting} previousText={s.previousSource} />
           ))}
         </TransBox>
         <TransBox label={`译文 · ${LANGS.find(l => l.code === tgtLang)?.label}`} dotColor="#4caf50" empty={segs.length === 0}>
           {segs.map(s => (
-            <Seg key={s.id} time={s.time} text={s.target || (recording ? '…' : '')} corrected={s.corrected} />
+            <Seg key={s.id} time={s.time} text={s.target || (recording ? '…' : '')} corrected={s.corrected} correcting={s.correcting} previousText={s.previousTarget} />
           ))}
         </TransBox>
       </div>
@@ -632,14 +660,39 @@ function TransBox({ label, dotColor, children, empty }: { label: string; dotColo
   );
 }
 
-function Seg({ time, text, corrected }: { time: string; text: string; corrected?: boolean }) {
+function Seg({
+  time,
+  text,
+  corrected,
+  correcting,
+  previousText,
+}: {
+  time: string;
+  text: string;
+  corrected?: boolean;
+  correcting?: boolean;
+  previousText?: string;
+}) {
+  const showCorrection = correcting && previousText && previousText !== text;
   return (
     <div style={{ padding: '8px 0', borderBottom: '1px solid #fafaf9' }}>
       <div style={{ fontSize: 10, color: '#ccc', marginBottom: 3, display: 'flex', gap: 6, alignItems: 'center' }}>
         <span>{time}</span>
-        {corrected && <span style={{ background: '#fff8e1', color: '#f59e0b', padding: '0 6px', borderRadius: 4, fontSize: 9 }}>已纠错</span>}
+        {showCorrection && <span style={{ background: '#fff3f0', color: '#d84a2b', padding: '0 6px', borderRadius: 4, fontSize: 9 }}>纠正中</span>}
+        {!showCorrection && corrected && <span style={{ background: '#fff8e1', color: '#f59e0b', padding: '0 6px', borderRadius: 4, fontSize: 9 }}>已纠错</span>}
       </div>
-      <div style={{ color: '#555', whiteSpace: 'pre-wrap' }}>{text}</div>
+      {showCorrection ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ color: '#a8a29e', whiteSpace: 'pre-wrap', textDecoration: 'line-through', textDecorationColor: '#ef4444', textDecorationThickness: 2 }}>
+            {previousText}
+          </div>
+          <div style={{ color: '#234b49', whiteSpace: 'pre-wrap', background: '#f4faf8', borderLeft: '3px solid #4f8f89', padding: '4px 8px', borderRadius: 6 }}>
+            {text}
+          </div>
+        </div>
+      ) : (
+        <div style={{ color: '#555', whiteSpace: 'pre-wrap' }}>{text}</div>
+      )}
     </div>
   );
 }

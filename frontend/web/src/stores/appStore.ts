@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { clearRememberedUserRole, rememberUserRole } from '../lib/authRole';
 
 export interface UserInfo {
   id: number;
@@ -113,16 +114,22 @@ export const useAppStore = create<AppState>((set) => ({
   user: null,
   token: localStorage.getItem('token'),
   activePanel: 'dashboard',
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    rememberUserRole(user.userType);
+    set({ user });
+  },
   setToken: (token) => {
     localStorage.setItem('token', token);
+    clearRememberedUserRole();
     set({ token, user: null, activePanel: 'dashboard' });
   },
   syncToken: (token) => {
+    if (!token) clearRememberedUserRole();
     set({ token, user: null, activePanel: 'dashboard' });
   },
   logout: () => {
     localStorage.removeItem('token');
+    clearRememberedUserRole();
     set({ user: null, token: null, activePanel: 'dashboard' });
   },
   setActivePanel: (panel) => set({ activePanel: panel }),

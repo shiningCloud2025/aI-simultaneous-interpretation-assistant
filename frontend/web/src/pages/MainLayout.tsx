@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
 import { Dashboard } from '../components/Dashboard';
 import { RealTimeTrans } from '../components/RealTimeTrans';
@@ -12,15 +12,13 @@ import { EduVocab } from '../components/EduVocab';
 import { EduSpeakingGenerate, EduSpeakingPractice } from '../components/EduSpeaking';
 import { EduWriting } from '../components/EduWriting';
 import { EduWritingReview } from '../components/EduWritingReview';
+import { EduWritingTutor } from '../components/EduWritingTutor';
 import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
 import { useState, useEffect } from 'react';
-
-const teacherNavGroup = { group: '教学工作', items: [
-  { id: 'teacher-console', icon: '🏫', label: '返回教师工作台' },
-]};
+import { isTeacherUser } from '../lib/authRole';
 
 const navItems = [
   { group: '通用', items: [
@@ -42,6 +40,7 @@ const navItems = [
   { group: '智语同航-写作', items: [
     { id: 'writing', icon: '✍️', label: '生成写作题目' },
     { id: 'writing-review', icon: '📝', label: '批阅作文' },
+    { id: 'writing-tutor', icon: '💬', label: '已批阅作文答疑' },
   ]},
   { group: '设置与个人', items: [
     { id: 'account', icon: '👤', label: '个人中心' },
@@ -58,7 +57,7 @@ const panelComponents: Record<string, React.FC> = {
   'dashboard': Dashboard, 'translate': RealTimeTrans,
   'audio': AudioSettings, 'shortcuts': ShortcutSettings, 'api-key': ApiKeyConfig,
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
-  'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview,
+  'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview, 'writing-tutor': EduWritingTutor,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
 };
 
@@ -66,7 +65,7 @@ const panelTitles: Record<string, string> = {
   'dashboard': '仪表盘', 'translate': '实时转译',
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
-  'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅',
+  'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅', 'writing-tutor': '已批阅作文答疑',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
 };
 
@@ -81,10 +80,6 @@ export function MainLayout() {
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   const changePanel = (panel: string) => {
-    if (panel === 'teacher-console') {
-      nav('/teacher');
-      return;
-    }
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
   };
@@ -109,9 +104,10 @@ export function MainLayout() {
   const handleLogout = () => { logout(); nav('/login'); };
 
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#999' }}>加载中...</div>;
+  if (isTeacherUser(user)) return <Navigate to="/teacher" replace />;
 
   const PanelComponent = panelComponents[activePanel] || Dashboard;
-  const availableNavItems = String(user?.userType).toLowerCase() === 'teacher' ? [teacherNavGroup, ...navItems] : navItems;
+  const availableNavItems = navItems;
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>

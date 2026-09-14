@@ -4,9 +4,15 @@ import {
   Archive, ArrowLeft, BookOpen, CalendarDays, Check, ChevronRight, CirclePause,
   ClipboardCheck, Clock3, Copy, GraduationCap, HelpCircle, History, Home,
   Languages, LayoutGrid, Link2, LogOut, Menu, MessageSquareText, MoreHorizontal,
-  Play, Plus, RefreshCw, Search, Settings, Square, UserPlus, Users, X,
+  Play, Plus, RefreshCw, Search, Square, UserPlus, Users, X,
 } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
+import { AccountPage } from '../../components/AccountPage';
+import { RealTimeTrans } from '../../components/RealTimeTrans';
+import { EduWritingReview } from '../../components/EduWritingReview';
+import { EduVocab } from '../../components/EduVocab';
+import { HelpPage } from '../../components/HelpPage';
+import { isTeacherUser } from '../../lib/authRole';
 import {
   teacherRepository,
   type ClassroomSession,
@@ -39,6 +45,7 @@ export function TeacherConsole() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>('overview');
   const [mobileNav, setMobileNav] = useState(false);
+  const [accountMenu, setAccountMenu] = useState<'top' | 'side' | null>(null);
   const [toast, setToast] = useState('');
   const [classroomForm, setClassroomForm] = useState(emptyClassroom);
   const [memberForm, setMemberForm] = useState({ studentId: '', studentName: '' });
@@ -53,6 +60,10 @@ export function TeacherConsole() {
       });
     }
   }, [user, token, setUser, logout, navigate]);
+
+  useEffect(() => {
+    if (user && !isTeacherUser(user)) navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
 
   const segments = location.pathname.split('/').filter(Boolean);
   const page = segments[1] || 'dashboard';
@@ -70,6 +81,7 @@ export function TeacherConsole() {
   const go = (path: string) => {
     navigate(path);
     setMobileNav(false);
+    setAccountMenu(null);
   };
 
   const refresh = (next: TeacherClassroom[]) => setClassrooms([...next]);
@@ -133,19 +145,20 @@ export function TeacherConsole() {
             <NavItem icon={<History />} label="上课记录" active={page === 'sessions'} onClick={() => go('/teacher/sessions')} />
           </NavGroup>
           <NavGroup label="智能教学">
-            <NavItem icon={<MessageSquareText />} label="实时转译" onClick={() => go('/dashboard?panel=translate')} />
-            <NavItem icon={<ClipboardCheck />} label="作文批阅" onClick={() => go('/dashboard?panel=writing-review')} />
-            <NavItem icon={<BookOpen />} label="教学素材" onClick={() => go('/dashboard?panel=vocab')} />
+            <NavItem icon={<MessageSquareText />} label="实时转译" active={page === 'tools' && entityId === 'translate'} onClick={() => go('/teacher/tools/translate')} />
+            <NavItem icon={<ClipboardCheck />} label="作文批阅" active={page === 'tools' && entityId === 'writing-review'} onClick={() => go('/teacher/tools/writing-review')} />
+            <NavItem icon={<BookOpen />} label="教学素材" active={page === 'tools' && entityId === 'materials'} onClick={() => go('/teacher/tools/materials')} />
           </NavGroup>
-          <NavGroup label="个人与设置">
-            <NavItem icon={<Settings />} label="个人中心" onClick={() => go('/dashboard?panel=account')} />
-            <NavItem icon={<HelpCircle />} label="帮助反馈" onClick={() => go('/dashboard?panel=help')} />
+          <NavGroup label="支持">
+            <NavItem icon={<HelpCircle />} label="帮助反馈" active={page === 'help'} onClick={() => go('/teacher/help')} />
           </NavGroup>
         </nav>
         <div className="teacher-profile">
-          <span className="teacher-avatar">{(user?.username || '老').slice(0, 1)}</span>
-          <span><strong>{user?.username || '老师'}</strong><small>{user?.account || '教师账号'}</small></span>
-          <button title="退出登录" onClick={handleLogout}><LogOut size={17} /></button>
+          <button className="teacher-profile-trigger" onClick={() => setAccountMenu(accountMenu === 'side' ? null : 'side')}>
+            <span className="teacher-avatar">{user?.avatar ? <img src={user.avatar} alt="教师头像" /> : (user?.username || '老').slice(0, 1)}</span>
+            <strong>{user?.username || '老师'}</strong>
+          </button>
+          {accountMenu === 'side' && <AccountMenu onProfile={() => go('/teacher/profile')} onLogout={handleLogout} />}
         </div>
       </aside>
 
@@ -156,7 +169,10 @@ export function TeacherConsole() {
           <div className="teacher-top-actions">
             {activeSessions.length > 0 && <button className="teacher-live-chip" onClick={() => go(`/teacher/sessions/${activeSessions[0].session.id}`)}><i />正在授课</button>}
             <button className="teacher-icon-button" onClick={() => showToast('今天没有新的系统通知')}><CalendarDays size={18} /></button>
-            <button className="teacher-user-button" onClick={() => go('/dashboard?panel=account')}>{(user?.username || '老师').slice(0, 1)}</button>
+            <div className="teacher-account-anchor">
+              <button className="teacher-user-button" onClick={() => setAccountMenu(accountMenu === 'top' ? null : 'top')}>{user?.avatar ? <img src={user.avatar} alt="教师头像" /> : (user?.username || '老师').slice(0, 1)}</button>
+              {accountMenu === 'top' && <AccountMenu onProfile={() => go('/teacher/profile')} onLogout={handleLogout} />}
+            </div>
           </div>
         </header>
         <div className="teacher-content">
@@ -167,6 +183,11 @@ export function TeacherConsole() {
           {page === 'sessions' && !entityId && <SessionHistory classrooms={classrooms} go={go} />}
           {page === 'sessions' && entityId && sessionContext && <SessionRoom context={sessionContext} go={go} onState={status => { refresh(teacherRepository.setSessionState(ownerKey, sessionContext.classroom.id, sessionContext.session.id, status)); showToast(status === 'RUNNING' ? '已继续上课' : status === 'PAUSED' ? '课堂已暂停' : '本次课堂已结束'); }} onAttendance={studentId => refresh(teacherRepository.toggleAttendance(ownerKey, sessionContext.classroom.id, sessionContext.session.id, studentId))} />}
           {page === 'sessions' && entityId && !sessionContext && <NotFound onBack={() => go('/teacher/sessions')} />}
+          {page === 'profile' && <TeacherEmbeddedPage eyebrow="PROFILE" title="个人中心" subtitle="管理个人资料、绑定方式和账号安全。"><AccountPage /></TeacherEmbeddedPage>}
+          {page === 'help' && <TeacherEmbeddedPage eyebrow="SUPPORT" title="帮助与反馈" subtitle="获取使用帮助，或者把问题告诉我们。"><HelpPage /></TeacherEmbeddedPage>}
+          {page === 'tools' && entityId === 'translate' && <TeacherEmbeddedPage eyebrow="LISTENING" title="实时转译" subtitle="在教师工作台中使用课堂音频实时识别与翻译。"><RealTimeTrans /></TeacherEmbeddedPage>}
+          {page === 'tools' && entityId === 'writing-review' && <TeacherEmbeddedPage eyebrow="WRITING" title="作文批阅" subtitle="批阅学生作文并生成评分与逐句建议。"><EduWritingReview /></TeacherEmbeddedPage>}
+          {page === 'tools' && entityId === 'materials' && <TeacherEmbeddedPage eyebrow="MATERIALS" title="教学素材" subtitle="为课堂生成单词、例句和图像素材。"><EduVocab /></TeacherEmbeddedPage>}
         </div>
       </main>
 
@@ -267,7 +288,7 @@ function SessionRoom({ context, go, onState, onAttendance }: { context: { classr
   return <div className="teacher-page"><button className="teacher-back" onClick={() => go(`/teacher/classrooms/${classroom.id}`)}><ArrowLeft size={16} />返回课堂详情</button>
     <section className={`teacher-session-hero ${session.status.toLowerCase()}`}><div><span><i />{session.status === 'RUNNING' ? '课堂进行中' : session.status === 'PAUSED' ? '课堂已暂停' : '本次课堂已结束'}</span><h1>{session.sessionName}</h1><p>{classroom.name} · 开始于 {formatFullDate(session.startTime)}</p></div><div className="teacher-session-controls">{session.status === 'RUNNING' && <button onClick={() => onState('PAUSED')}><CirclePause size={17} />暂停</button>}{session.status === 'PAUSED' && <button onClick={() => onState('RUNNING')}><Play size={17} />继续</button>}{session.status !== 'ENDED' && <button className="end" onClick={() => onState('ENDED')}><Square size={15} />结束课堂</button>}</div></section>
     <section className="teacher-session-stats"><span><small>应到学生</small><strong>{session.students.length}</strong></span><span><small>已签到</small><strong>{present}</strong></span><span><small>缺席</small><strong>{session.students.length - present}</strong></span><span><small>到课率</small><strong>{session.students.length ? Math.round(present / session.students.length * 100) : 0}%</strong></span></section>
-    <div className="teacher-live-grid"><section className="teacher-card"><CardHead title="学生签到" subtitle="学生完成签到后即记为到课" /><div className="teacher-attendance-list">{session.students.map(student => <div key={student.id}><span className="teacher-person"><i>{student.studentName.slice(0, 1)}</i><span><b>{student.studentName}</b><small>{student.studentId}</small></span></span><span className={student.attendanceStatus ? 'present' : 'absent'}>{student.attendanceStatus ? <><Check size={14} />已到课</> : '未签到'}</span><time>{student.checkInTime ? formatTime(student.checkInTime) : '--:--'}</time>{session.status !== 'ENDED' && <button onClick={() => onAttendance(student.id)}>{student.attendanceStatus ? '取消签到' : '代为签到'}</button>}</div>)}</div>{!session.students.length && <EmptyInline text="课堂中还没有学生" action="返回添加成员" onClick={() => go(`/teacher/classrooms/${classroom.id}`)} />}</section><aside className="teacher-card teacher-live-tools"><CardHead title="课堂工具" subtitle="授课过程中的快捷入口" /><Quick icon={<MessageSquareText />} title="实时转译" text="打开课堂语音转译" onClick={() => go('/dashboard?panel=translate')} /><Quick icon={<ClipboardCheck />} title="课堂签到" text={`${present} 人已完成签到`} onClick={() => undefined} /><Quick icon={<MoreHorizontal />} title="更多能力" text="课堂互动能力即将接入" onClick={() => undefined} /></aside></div>
+    <div className="teacher-live-grid"><section className="teacher-card"><CardHead title="学生签到" subtitle="学生完成签到后即记为到课" /><div className="teacher-attendance-list">{session.students.map(student => <div key={student.id}><span className="teacher-person"><i>{student.studentName.slice(0, 1)}</i><span><b>{student.studentName}</b><small>{student.studentId}</small></span></span><span className={student.attendanceStatus ? 'present' : 'absent'}>{student.attendanceStatus ? <><Check size={14} />已到课</> : '未签到'}</span><time>{student.checkInTime ? formatTime(student.checkInTime) : '--:--'}</time>{session.status !== 'ENDED' && <button onClick={() => onAttendance(student.id)}>{student.attendanceStatus ? '取消签到' : '代为签到'}</button>}</div>)}</div>{!session.students.length && <EmptyInline text="课堂中还没有学生" action="返回添加成员" onClick={() => go(`/teacher/classrooms/${classroom.id}`)} />}</section><aside className="teacher-card teacher-live-tools"><CardHead title="课堂工具" subtitle="授课过程中的快捷入口" /><Quick icon={<MessageSquareText />} title="实时转译" text="打开课堂语音转译" onClick={() => go('/teacher/tools/translate')} /><Quick icon={<ClipboardCheck />} title="课堂签到" text={`${present} 人已完成签到`} onClick={() => undefined} /><Quick icon={<MoreHorizontal />} title="更多能力" text="课堂互动能力即将接入" onClick={() => undefined} /></aside></div>
   </div>;
 }
 
@@ -297,8 +318,16 @@ function ShareCode({ classroom, onRefresh, showToast }: { classroom: TeacherClas
   return <div className="teacher-share"><span><GraduationCap size={25} /></span><h3>让学生输入课堂码</h3><strong>{classroom.inviteCode}</strong><p>刷新后原课堂码立即失效，已经加入的学生不受影响。</p><div className="teacher-code-buttons"><button className="teacher-primary" onClick={() => navigator.clipboard.writeText(classroom.inviteCode).then(() => showToast('课堂码已复制')).catch(() => showToast('请手动复制课堂码'))}><Copy size={15} />复制课堂码</button><button className="teacher-secondary" onClick={onRefresh}><RefreshCw size={15} />刷新</button></div></div>;
 }
 
-function pageTitle(page: string, classroom?: TeacherClassroom, session?: ClassroomSession) { if (classroom) return classroom.name; if (session) return session.sessionName; return page === 'classrooms' ? '我的课堂' : page === 'sessions' ? '上课记录' : '教师工作台'; }
-function pageSubtitle(page: string) { return page === 'classrooms' ? '课堂与成员管理' : page === 'sessions' ? '课次与学生出勤' : '教学概览'; }
+function TeacherEmbeddedPage({ eyebrow, title, subtitle, children }: { eyebrow: string; title: string; subtitle: string; children: React.ReactNode }) {
+  return <div className="teacher-page"><PageHead eyebrow={eyebrow} title={title} subtitle={subtitle} /><div className="teacher-embedded-content">{children}</div></div>;
+}
+
+function AccountMenu({ onProfile, onLogout }: { onProfile: () => void; onLogout: () => void }) {
+  return <div className="teacher-account-menu"><button onClick={onProfile}><UserPlus size={15} />个人中心</button><button onClick={onLogout}><LogOut size={15} />退出登录</button></div>;
+}
+
+function pageTitle(page: string, classroom?: TeacherClassroom, session?: ClassroomSession) { if (classroom) return classroom.name; if (session) return session.sessionName; if (page === 'classrooms') return '我的课堂'; if (page === 'sessions') return '上课记录'; if (page === 'profile') return '个人中心'; if (page === 'help') return '帮助与反馈'; if (page === 'tools') return '智能教学'; return '教师工作台'; }
+function pageSubtitle(page: string) { if (page === 'classrooms') return '课堂与成员管理'; if (page === 'sessions') return '课次与学生出勤'; if (page === 'profile') return '教师资料与账号安全'; if (page === 'help') return '教师支持'; if (page === 'tools') return '教师智能工具'; return '教学概览'; }
 function formatDate(value: string) { return new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(value)); }
 function formatFullDate(value: string) { return new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
 function formatTime(value: string) { return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }

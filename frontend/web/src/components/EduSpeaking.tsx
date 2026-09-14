@@ -782,14 +782,14 @@ function EvaluationView({ evaluation }: { evaluation: SpeakingLatestEvaluation }
   return (
     <div style={{ marginTop: 12, borderTop: '1px solid #f0efec', paddingTop: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-        <ScoreItem label="建议得分" value={evaluation.suggestedScore} />
-        <ScoreItem label="准确度" value={evaluation.pronAccuracy} />
-        <ScoreItem label="流利度" value={evaluation.pronFluency} />
-        <ScoreItem label="完整度" value={evaluation.pronCompletion} />
+        <ScoreItem label="建议得分" value={evaluation.suggestedScore} maxScore={100} />
+        <ScoreItem label="准确度" value={evaluation.pronAccuracy} maxScore={100} />
+        <ScoreItem label="流利度" value={evaluation.pronFluency} maxScore={1} />
+        <ScoreItem label="完整度" value={evaluation.pronCompletion} maxScore={1} />
       </div>
       {evaluation.recognizedText && (
         <div style={{ ...noteStyle, marginTop: 10 }}>
-          <strong>识别文本：</strong>{evaluation.recognizedText}
+          <strong>标准正确文本：</strong>{evaluation.recognizedText}
         </div>
       )}
       {evaluation.studentAudioUrl && <audio controls src={evaluation.studentAudioUrl} style={{ width: '100%', marginTop: 10 }} />}
@@ -807,11 +807,11 @@ function EvaluationView({ evaluation }: { evaluation: SpeakingLatestEvaluation }
   );
 }
 
-function ScoreItem({ label, value }: { label: string; value?: number }) {
+function ScoreItem({ label, value, maxScore }: { label: string; value?: number; maxScore?: number }) {
   return (
     <div style={{ background: '#fafaf9', border: '1px solid #f0efec', borderRadius: 8, padding: 10 }}>
       <div style={{ fontSize: 11, color: '#999' }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: '#234b49', marginTop: 4 }}>{formatScore(value)}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: '#234b49', marginTop: 4 }}>{formatScoreWithMax(value, maxScore)}</div>
     </div>
   );
 }
@@ -945,6 +945,14 @@ function formatTime(value?: string) {
 function formatScore(value?: number) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
   return Number(value).toFixed(1);
+}
+
+function formatScoreWithMax(value?: number, maxScore?: number) {
+  const score = formatScore(value);
+  if (score === '—' || maxScore === undefined) {
+    return score;
+  }
+  return `${score}/${maxScore}`;
 }
 
 const primaryBtn: React.CSSProperties = {
