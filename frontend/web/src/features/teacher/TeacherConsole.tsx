@@ -183,7 +183,7 @@ export function TeacherConsole() {
           {page === 'sessions' && !entityId && <SessionHistory classrooms={classrooms} go={go} />}
           {page === 'sessions' && entityId && sessionContext && <SessionRoom context={sessionContext} go={go} onState={status => { refresh(teacherRepository.setSessionState(ownerKey, sessionContext.classroom.id, sessionContext.session.id, status)); showToast(status === 'RUNNING' ? '已继续上课' : status === 'PAUSED' ? '课堂已暂停' : '本次课堂已结束'); }} onAttendance={studentId => refresh(teacherRepository.toggleAttendance(ownerKey, sessionContext.classroom.id, sessionContext.session.id, studentId))} />}
           {page === 'sessions' && entityId && !sessionContext && <NotFound onBack={() => go('/teacher/sessions')} />}
-          {page === 'profile' && <TeacherEmbeddedPage eyebrow="PROFILE" title="个人中心" subtitle="管理个人资料、绑定方式和账号安全。"><AccountPage /></TeacherEmbeddedPage>}
+          {page === 'profile' && <div className="teacher-account-page"><AccountPage /></div>}
           {page === 'help' && <TeacherEmbeddedPage eyebrow="SUPPORT" title="帮助与反馈" subtitle="获取使用帮助，或者把问题告诉我们。"><HelpPage /></TeacherEmbeddedPage>}
           {page === 'tools' && entityId === 'translate' && <TeacherEmbeddedPage eyebrow="LISTENING" title="实时转译" subtitle="在教师工作台中使用课堂音频实时识别与翻译。"><RealTimeTrans /></TeacherEmbeddedPage>}
           {page === 'tools' && entityId === 'writing-review' && <TeacherEmbeddedPage eyebrow="WRITING" title="作文批阅" subtitle="批阅学生作文并生成评分与逐句建议。"><EduWritingReview /></TeacherEmbeddedPage>}

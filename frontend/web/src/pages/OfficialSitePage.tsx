@@ -17,6 +17,7 @@ export function OfficialSitePage() {
         <nav className={`official-nav${navOpen ? ' open' : ''}`}>
           <a href="#features" onClick={() => setNavOpen(false)}>核心场景</a>
           <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
+          <a href="#api-key-guide" onClick={() => setNavOpen(false)}>API Key 指南</a>
           <Link to="/admin/login" onClick={() => setNavOpen(false)}>管理平台</Link>
         </nav>
         <button
@@ -36,7 +37,7 @@ export function OfficialSitePage() {
             <div className="official-kicker">Multi-Harness Agent Language Classroom</div>
             <h1>智语同航</h1>
             <p>
-              基于多 Harness 智能体协作与编排的智慧外语课堂，围绕听、写、读三类核心学习任务，提供实时转译、作文训练与词汇语境化学习支持。
+              基于多 Harness 智能体协作与编排的智慧外语课堂，围绕听、说、写、读四类核心学习任务，提供实时转译、口语跟读评测、作文训练与词汇语境化学习支持。
             </p>
             <div className="official-actions">
               <Link to={token ? '/dashboard' : '/login'} className="official-action-main">{token ? '进入平台' : '登录平台'}</Link>
@@ -47,6 +48,7 @@ export function OfficialSitePage() {
           <div className="official-visual" aria-hidden="true">
             <div className="official-board">
               <span>Listening</span>
+              <span>Speaking</span>
               <span>Writing</span>
               <span>Reading</span>
             </div>
@@ -67,6 +69,7 @@ export function OfficialSitePage() {
           <div className="official-feature-grid">
             {[
               { title: '课堂听力辅助', text: '将课堂音频实时转写、翻译并进行纠错辅助，降低听力基础薄弱学生的课堂负担。' },
+              { title: '口语跟读评测', text: '按语言、学段、难度和场景生成跟读句子、译文与标准音频，并从准确度、流利度和完整度反馈口语表现。' },
               { title: '写作训练闭环', text: '支持作文出题、文本批阅、图片批阅、逐句反馈和修改建议，帮助学生复盘表达问题。' },
               { title: '阅读词汇积累', text: '根据语言和学习阶段生成固定例句与图像素材，让单词学习从释义走向语境理解。' },
             ].map(item => (
@@ -81,10 +84,83 @@ export function OfficialSitePage() {
         <section id="workflow" className="official-section official-workflow">
           <div className="official-section-title">课堂流程</div>
           <div className="official-flow">
-            {['音频进入课堂', '生成学习材料', '完成训练反馈', '沉淀学习记录'].map((item, index) => (
+            {['音频进入课堂', '生成听说读写材料', '完成跟读与写作反馈', '沉淀学习记录'].map((item, index) => (
               <div key={item} className="official-flow-item">
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{item}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="api-key-guide" className="official-section official-api-guide">
+          <div className="official-section-title">API Key 指南</div>
+          <div className="official-api-layout">
+            <div className="official-api-intro">
+              <div className="official-kicker">Bring your own API key</div>
+              <h2>接入 AI 能力前，先准备对应厂商的密钥</h2>
+              <p>
+                平台支持用户在后台配置自己的 API Key，用于作文生成与批阅、口语素材生成、实时听力识别、语音合成、图片生成和口语评测等能力。
+                不同能力会读取对应厂商与模型配置，配置完成后即可在学习模块中选择使用。
+              </p>
+              <div className="official-api-actions">
+                <Link to={token ? '/dashboard?panel=api-key' : '/login'} className="official-action-main">
+                  {token ? '进入 API Key 配置' : '登录后配置'}
+                </Link>
+                <a
+                  href="https://help.aliyun.com/zh/model-studio/get-api-key"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="official-action-sub"
+                >
+                  查看百炼申请文档
+                </a>
+              </div>
+            </div>
+
+            <div className="official-provider-list">
+              {[
+                {
+                  name: '阿里云百炼',
+                  badge: 'LLM / ASR / TTS / 图像',
+                  text: '主要用于通义千问文本与多模态模型、实时语音识别、语音合成和阅读配图生成。',
+                  models: ['qwen-plus', 'qwen-max / flash 系列', 'paraformer-realtime', 'qwen-audio-tts', 'wan 文生图'],
+                  href: 'https://bailian.console.aliyun.com/?apiKey=1&tab=model',
+                },
+                {
+                  name: '腾讯云',
+                  badge: '口语评测',
+                  text: '主要用于口语跟读评测，需要在腾讯云访问管理中创建 SecretId 和 SecretKey。',
+                  models: ['SOE 口语评测', '英文跟读评测', '单词 / 句子维度评分'],
+                  href: 'https://console.cloud.tencent.com/cam/capi',
+                },
+              ].map(provider => (
+                <article key={provider.name} className="official-provider-card">
+                  <div className="official-provider-head">
+                    <h3>{provider.name}</h3>
+                    <span>{provider.badge}</span>
+                  </div>
+                  <p>{provider.text}</p>
+                  <div className="official-model-tags">
+                    {provider.models.map(model => <em key={model}>{model}</em>)}
+                  </div>
+                  <a href={provider.href} target="_blank" rel="noreferrer">前往控制台</a>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="official-api-steps">
+            {[
+              { title: '注册并开通服务', text: '进入厂商控制台，完成账号认证，并开通需要使用的模型或语音服务。' },
+              { title: '创建访问密钥', text: '在 API Key、AccessKey 或访问管理页面创建密钥，妥善保存 Secret。' },
+              { title: '回到平台配置', text: '在后台的 API Key 配置中填写厂商、Key、Secret 和可用模型。' },
+              { title: '选择模型使用', text: '在听说读写模块中选择已配置模型，开始生成、评测或识别。' },
+            ].map((step, index) => (
+              <div key={step.title} className="official-api-step">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <strong>{step.title}</strong>
+                <p>{step.text}</p>
               </div>
             ))}
           </div>
@@ -338,7 +414,7 @@ export function OfficialSitePage() {
         }
         .official-feature-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 14px;
         }
         .official-feature {
@@ -388,6 +464,137 @@ export function OfficialSitePage() {
           color: #283634;
           font-size: 15px;
         }
+        .official-api-guide {
+          padding-bottom: 64px;
+        }
+        .official-api-layout {
+          display: grid;
+          grid-template-columns: minmax(0, .88fr) minmax(360px, 1fr);
+          gap: 18px;
+          align-items: stretch;
+        }
+        .official-api-intro,
+        .official-provider-card,
+        .official-api-step {
+          background: #fff;
+          border: 1px solid #e8e2d8;
+          border-radius: 16px;
+        }
+        .official-api-intro {
+          padding: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .official-api-intro h2 {
+          margin: 0;
+          color: #1f2a2a;
+          font-size: 30px;
+          line-height: 1.35;
+          letter-spacing: 0;
+        }
+        .official-api-intro p {
+          margin: 16px 0 0;
+          color: #66706d;
+          font-size: 15px;
+          line-height: 1.9;
+        }
+        .official-api-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 24px;
+        }
+        .official-provider-list {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+        .official-provider-card {
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          min-height: 272px;
+        }
+        .official-provider-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 14px;
+        }
+        .official-provider-head h3 {
+          margin: 0;
+          color: #1f2a2a;
+          font-size: 18px;
+        }
+        .official-provider-head span {
+          flex: 0 0 auto;
+          padding: 5px 8px;
+          border-radius: 999px;
+          background: #eef4f2;
+          color: #285957;
+          font-size: 12px;
+          font-weight: 750;
+        }
+        .official-provider-card p {
+          margin: 14px 0 0;
+          color: #66706d;
+          font-size: 14px;
+          line-height: 1.8;
+        }
+        .official-model-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 18px;
+        }
+        .official-model-tags em {
+          padding: 6px 9px;
+          border-radius: 9px;
+          background: #f5f1e9;
+          color: #5c5548;
+          font-size: 12px;
+          font-style: normal;
+          font-weight: 650;
+        }
+        .official-provider-card > a {
+          width: fit-content;
+          margin-top: auto;
+          padding-top: 18px;
+          color: #234b49;
+          font-size: 14px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .official-provider-card > a:hover {
+          text-decoration: underline;
+        }
+        .official-api-steps {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+          margin-top: 14px;
+        }
+        .official-api-step {
+          padding: 20px;
+        }
+        .official-api-step span {
+          display: block;
+          color: #b28a48;
+          font-size: 13px;
+          font-weight: 800;
+          margin-bottom: 10px;
+        }
+        .official-api-step strong {
+          color: #283634;
+          font-size: 15px;
+        }
+        .official-api-step p {
+          margin: 10px 0 0;
+          color: #66706d;
+          font-size: 13px;
+          line-height: 1.75;
+        }
         .official-footer {
           padding: 18px 28px 30px;
           text-align: center;
@@ -427,7 +634,10 @@ export function OfficialSitePage() {
           }
           .official-hero,
           .official-feature-grid,
-          .official-flow {
+          .official-flow,
+          .official-api-layout,
+          .official-provider-list,
+          .official-api-steps {
             grid-template-columns: 1fr;
           }
           .official-hero h1 {
@@ -435,6 +645,10 @@ export function OfficialSitePage() {
           }
           .official-visual {
             height: 340px;
+          }
+          .official-board {
+            gap: 12px;
+            font-size: 15px;
           }
           .official-flow-item {
             border-right: none;
