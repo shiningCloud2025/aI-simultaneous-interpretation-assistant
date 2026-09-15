@@ -240,7 +240,9 @@ public class SpeakingMaterialGenerateAgent {
     }
 
     private String buildUserPrompt(SpeakingMaterialGenerateDTO dto) {
-        String scene = SpeakingSceneEnum.CUSTOM.equals(dto.sceneCode()) ? "自定义" : dto.sceneCode().getDesc();
+        String scene = SpeakingSceneEnum.CUSTOM.equals(dto.sceneCode())
+                ? blankToDefault(dto.customScene(), "自定义")
+                : dto.sceneCode().getDesc();
         String userPrompt = dto.userPrompt() == null || dto.userPrompt().isBlank() ? "无" : dto.userPrompt().trim();
 
         return """
@@ -348,7 +350,9 @@ public class SpeakingMaterialGenerateAgent {
         generation.setStageCode(dto.stageCode());
         generation.setDifficultyCode(dto.difficultyCode());
         generation.setSceneCode(dto.sceneCode());
+        generation.setCustomScene(dto.customScene());
         generation.setUserPrompt(dto.userPrompt());
+        generation.setCreatedById(userId);
         generation.setTitle(result.title());
         generation.setSceneDescription(result.sceneDescription());
         generation.setProvider(llmPreference.provider());
@@ -375,6 +379,7 @@ public class SpeakingMaterialGenerateAgent {
                 sentence.setStandardAudioUrl(audioUrl);
                 sentence.setKeyPoints(toJson(item.keyPoints()));
                 sentence.setPracticeTips(toJson(item.practiceTips()));
+                sentence.setCreatedById(userId);
 
                 Long sentenceId = speakingMaterialSentenceService.saveSentence(sentence);
                 sentenceVOList.add(new SpeakingMaterialGenerateSentenceVO(
@@ -412,6 +417,7 @@ public class SpeakingMaterialGenerateAgent {
             entity.setStageCode(dto == null ? null : dto.stageCode());
             entity.setDifficultyCode(dto == null ? null : dto.difficultyCode());
             entity.setSceneCode(dto == null ? null : dto.sceneCode());
+            entity.setCustomScene(dto == null ? null : dto.customScene());
             entity.setUserPrompt(dto == null ? null : dto.userPrompt());
             entity.setProvider(llmPreference == null ? null : llmPreference.provider());
             entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
@@ -437,6 +443,10 @@ public class SpeakingMaterialGenerateAgent {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String blankToDefault(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim();
     }
 
 }

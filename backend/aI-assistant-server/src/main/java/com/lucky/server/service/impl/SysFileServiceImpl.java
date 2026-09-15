@@ -26,8 +26,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> implements SysFileService {
 
-    private static final List<String> ALLOWED_TYPES = List.of("image/png", "image/jpeg", "image/webp", "image/gif");
-    private static final long MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final List<String> ALLOWED_TYPES = List.of(
+            "image/png",
+            "image/jpeg",
+            "image/webp",
+            "image/gif",
+            "audio/webm",
+            "audio/wav",
+            "audio/mpeg",
+            "audio/mp4",
+            "audio/x-m4a"
+    );
+
+    private static final long MAX_SIZE = 500 * 1024 * 1024; // 500MB
 
     private final FileStorageService fileStorageService;
 
@@ -38,11 +49,11 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         }
 
         if (!ALLOWED_TYPES.contains(file.getContentType())) {
-            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "仅支持 png、jpg、webp、gif 格式图片");
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "仅支持 png、jpg、webp、gif 图片或 webm、wav、mp3、m4a 音频");
         }
 
         if (file.getSize() > MAX_SIZE) {
-            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "单张图片大小不能超过 5MB");
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "文件大小不能超过 500MB");
         }
 
         String fileName = file.getOriginalFilename();
@@ -63,7 +74,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
         sysFile.setFileName(fileName);
         sysFile.setFileSize((int) file.getSize());
         sysFile.setMimeType(file.getContentType());
-        sysFile.setFileType("image");
+        sysFile.setFileType(resolveFileType(file.getContentType()));
         sysFile.setCreateTime(LocalDateTime.now());
 
         save(sysFile);
@@ -91,5 +102,19 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile> impl
     @Override
     public List<SysFile> listByIds(List<Long> ids) {
         return super.listByIds(ids);
+    }
+
+
+    private String resolveFileType(String contentType) {
+        if (contentType == null) {
+            return "unknown";
+        }
+        if (contentType.startsWith("image/")) {
+            return "image";
+        }
+        if (contentType.startsWith("audio/")) {
+            return "audio";
+        }
+        return "unknown";
     }
 }

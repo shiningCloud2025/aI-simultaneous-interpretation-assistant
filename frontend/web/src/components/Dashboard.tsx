@@ -23,6 +23,7 @@ interface DashboardStats {
   llmKeys: number;
   keyAvailable: number;
   feedbacks: number;
+  speakingMaterials: number;
   writingGenerations: number;
   writingEvaluations: number;
   wordMaterials: number;
@@ -36,10 +37,27 @@ const initialStats: DashboardStats = {
   llmKeys: 0,
   keyAvailable: 0,
   feedbacks: 0,
+  speakingMaterials: 0,
   writingGenerations: 0,
   writingEvaluations: 0,
   wordMaterials: 0,
 };
+
+async function loadDashboardItem<T>(label: string, request: Promise<T>): Promise<T | null> {
+  try {
+    return await request;
+  } catch (error) {
+    console.warn(`[Dashboard] ${label} 加载失败`, error);
+    return null;
+  }
+}
+
+function getPageTotal(page: PageResult | null): number {
+  if (!page) {
+    return 0;
+  }
+  return Number(page.total || 0);
+}
 
 export function Dashboard() {
   const user = useAppStore((s) => s.user);
@@ -56,18 +74,19 @@ export function Dashboard() {
     let mounted = true;
     setLoading(true);
 
-    Promise.allSettled([
-      apiCall<TermLibrary[]>('/sys/user/term/library'),
-      apiCall<ApiKeyRecord[]>('/sys/user/api-key'),
-      apiCall<PageResult>('/sys/user/feedback/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1 }) }),
-      apiCall<PageResult>('/writing/composition/generation/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) }),
-      apiCall<PageResult>('/writing/composition/evaluation/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) }),
-      apiCall<PageResult>('/reading/word/material/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) }),
-    ]).then(([termResult, keyResult, feedbackResult, writingGenerateResult, writingEvaluateResult, wordResult]) => {
+    Promise.all([
+      loadDashboardItem('术语库', apiCall<TermLibrary[]>('/sys/user/term/library')),
+      loadDashboardItem('API Key', apiCall<ApiKeyRecord[]>('/sys/user/api-key')),
+      loadDashboardItem('帮助反馈', apiCall<PageResult>('/sys/user/feedback/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1 }) })),
+      loadDashboardItem('口语素材历史', apiCall<PageResult>('/speaking/material/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) })),
+      loadDashboardItem('作文题目历史', apiCall<PageResult>('/writing/composition/generation/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) })),
+      loadDashboardItem('作文批阅历史', apiCall<PageResult>('/writing/composition/evaluation/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) })),
+      loadDashboardItem('单词素材历史', apiCall<PageResult>('/reading/word/material/history/page', { method: 'POST', body: JSON.stringify({ page: 1, size: 1, filter: { success: true } }) })),
+    ]).then(([termResult, keyResult, feedbackResult, speakingResult, writingGenerateResult, writingEvaluateResult, wordResult]) => {
       if (!mounted) return;
 
-      const libraries = termResult.status === 'fulfilled' && Array.isArray(termResult.value) ? termResult.value : [];
-      const keys = keyResult.status === 'fulfilled' && Array.isArray(keyResult.value) ? keyResult.value : [];
+      const libraries = Array.isArray(termResult) ? termResult : [];
+      const keys = Array.isArray(keyResult) ? keyResult : [];
 
       setStats({
         termLibraries: libraries.length,
@@ -76,10 +95,11 @@ export function Dashboard() {
         asrKeys: keys.filter(k => k.keyType === 'ASR').length,
         llmKeys: keys.filter(k => k.keyType === 'LLM').length,
         keyAvailable: keys.filter(k => k.status === 1).length,
-        feedbacks: feedbackResult.status === 'fulfilled' ? feedbackResult.value.total || 0 : 0,
-        writingGenerations: writingGenerateResult.status === 'fulfilled' ? writingGenerateResult.value.total || 0 : 0,
-        writingEvaluations: writingEvaluateResult.status === 'fulfilled' ? writingEvaluateResult.value.total || 0 : 0,
-        wordMaterials: wordResult.status === 'fulfilled' ? wordResult.value.total || 0 : 0,
+        feedbacks: getPageTotal(feedbackResult),
+        speakingMaterials: getPageTotal(speakingResult),
+        writingGenerations: getPageTotal(writingGenerateResult),
+        writingEvaluations: getPageTotal(writingEvaluateResult),
+        wordMaterials: getPageTotal(wordResult),
       });
     }).finally(() => {
       if (mounted) setLoading(false);
@@ -93,12 +113,14 @@ export function Dashboard() {
   const learningStats = [
     { label: '生成作文题目', value: stats.writingGenerations, sub: '写作训练题库', tone: '#0f6b68', icon: '✍️', panel: 'writing' },
     { label: '作文批阅报告', value: stats.writingEvaluations, sub: '评分与逐句反馈', tone: '#8f4b2e', icon: '📝', panel: 'writing-review' },
+    { label: '口语跟读素材', value: stats.speakingMaterials, sub: '句子、译文与标准音频', tone: '#0f6b68', icon: '🎙️', panel: 'speaking-practice' },
     { label: '单词学习素材', value: stats.wordMaterials, sub: '例句与图像材料', tone: '#1f5f8b', icon: '📖', panel: 'vocab' },
     { label: '术语库条目', value: stats.termEntries, sub: `${stats.termLibraries} 个术语库`, tone: '#a97900', icon: '📚', panel: 'term-library' },
   ];
 
   const features = [
     { id: 'translate', label: 'Listening', title: '实时转译', desc: '课堂音频实时识别、翻译与纠错辅助', icon: '🎧', accent: '#0f6b68' },
+    { id: 'speaking-generate', label: 'Speaking', title: '口语跟读', desc: '生成跟读素材，并在练习页完成录音评测', icon: '🎙️', accent: '#0f6b68' },
     { id: 'writing', label: 'Writing', title: '写作训练', desc: '生成作文题目，支持作文评分和逐句反馈', icon: '✍️', accent: '#8f4b2e' },
     { id: 'vocab', label: 'Reading', title: '单词记忆', desc: '按语言和学习阶段生成例句与图像素材', icon: '📖', accent: '#1f5f8b' },
   ];
@@ -117,6 +139,7 @@ export function Dashboard() {
         </div>
         <div className="dashboard-hero-right">
           <div className="dashboard-chip">Listening</div>
+          <div className="dashboard-chip">Speaking</div>
           <div className="dashboard-chip">Writing</div>
           <div className="dashboard-chip">Reading</div>
         </div>
@@ -159,6 +182,7 @@ export function Dashboard() {
             {[
               { id: 'api-key', label: 'API Key 配置', hint: `${stats.keyAvailable}/${stats.apiKeys} 可用 · ASR ${stats.asrKeys} · LLM ${stats.llmKeys}` },
               { id: 'term-library', label: '术语库', hint: `${stats.termLibraries} 个库 · ${stats.termEntries} 条术语` },
+              { id: 'speaking-practice', label: '口语素材历史', hint: `${stats.speakingMaterials} 条记录` },
               { id: 'writing-review', label: '作文批阅历史', hint: `${stats.writingEvaluations} 条报告` },
               { id: 'writing', label: '作文题目历史', hint: `${stats.writingGenerations} 条记录` },
               { id: 'vocab', label: '单词素材历史', hint: `${stats.wordMaterials} 条记录` },
@@ -203,11 +227,11 @@ export function Dashboard() {
           opacity: .82;
         }
         .dashboard-hero-right {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(104px, max-content));
           gap: 10px;
-          flex-wrap: wrap;
-          justify-content: flex-end;
-          max-width: 310px;
+          justify-content: end;
+          flex-shrink: 0;
         }
         .dashboard-chip {
           padding: 8px 14px;
@@ -216,11 +240,12 @@ export function Dashboard() {
           background: rgba(255,255,255,.12);
           font-size: 12px;
           font-weight: 700;
+          text-align: center;
           backdrop-filter: blur(8px);
         }
         .dashboard-stat-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 14px;
           margin-bottom: 18px;
         }
@@ -290,7 +315,7 @@ export function Dashboard() {
         }
         .dashboard-feature-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
         }
         .dashboard-feature {
@@ -419,6 +444,9 @@ export function Dashboard() {
           background: rgba(138,185,180,.14);
         }
         @media (max-width: 1100px) {
+          .dashboard-hero-right {
+            grid-template-columns: repeat(2, minmax(104px, 1fr));
+          }
           .dashboard-stat-grid,
           .dashboard-feature-grid,
           .dashboard-main-grid {
@@ -429,6 +457,10 @@ export function Dashboard() {
           .dashboard-hero {
             align-items: flex-start;
             flex-direction: column;
+          }
+          .dashboard-hero-right {
+            width: min(100%, 250px);
+            justify-content: start;
           }
           .dashboard-stat-grid,
           .dashboard-feature-grid,

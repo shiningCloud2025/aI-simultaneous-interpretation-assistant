@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智语同航 · 官网导航栏微调提案</title>
+  <style>
+    :root {
+      --canvas: #f7f5f0;
+      --paper: #fffefb;
+      --ink: #172726;
+      --text: #37423f;
+      --muted: #6d746f;
+      --brand: #223f3d;
+      --brand-hover: #183330;
+      --brand-soft: #e9efec;
+      --gold: #b58a48;
+      --line: #e6dfd2;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: #202020;
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+
+    /* 本原型只重点调整这里：导航栏 */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(247, 245, 240, .88);
+      backdrop-filter: blur(16px);
+    }
+    .header-inner {
+      width: min(1180px, 100%);
+      height: 76px;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+    .brand {
+      width: max-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #1f2a2a;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #fff;
+      background: #234b49;
+      font-weight: 800;
+      box-shadow: 0 7px 17px rgba(35, 75, 73, .18);
+    }
+    .main-nav { display: flex; align-items: center; gap: 8px; }
+    .main-nav a {
+      position: relative;
+      padding: 10px 13px;
+      color: #5f6763;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 650;
+      transition: color .18s ease, background .18s ease;
+    }
+    .main-nav a:hover { color: var(--brand); }
+    .main-nav a::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 4px;
+      width: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--gold);
+      transform: translateX(-50%);
+      transition: width .18s ease;
+    }
+    .main-nav a:hover::after { width: 17px; }
+    .header-actions { display: flex; justify-content: flex-end; align-items: center; }
+    .menu-button {
+      width: 42px;
+      height: 42px;
+      display: none;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--brand);
+      background: var(--paper);
+      font-size: 20px;
+    }
+
+    /* 以下保持当前官网的内容布局与视觉方向 */
+    .hero {
+      width: min(1180px, calc(100% - 56px));
+      min-height: calc(100vh - 160px);
+      margin: 0 auto;
+      padding: 66px 0 56px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+      align-items: center;
+      gap: 58px;
+    }
+    .kicker { margin-bottom: 18px; color: #8a6b35; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .hero h1 { margin: 0; color: var(--ink); font-size: 56px; line-height: 1.12; }
+    .hero-copy > p { max-width: 620px; margin: 22px 0 0; color: #5e6662; font-size: 18px; line-height: 1.8; }
+    .hero-actions { display: flex; gap: 14px; margin-top: 34px; }
+    .hero-actions a { padding: 13px 24px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 700; }
+    .hero-main { color: #fff; background: var(--brand); }
+    .hero-sub { color: var(--brand); border: 1px solid #ded8cc; background: #fff; }
+    .visual {
+      position: relative;
+      height: 420px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.58)), repeating-linear-gradient(0deg, transparent, transparent 21px, rgba(36,75,73,.07) 22px);
+      box-shadow: 0 18px 40px rgba(45,54,49,.12);
+    }
+    .board {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      top: 54px;
+      height: 158px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      border: 10px solid #caa66a;
+      border-radius: 12px;
+      color: rgba(255,255,255,.9);
+      background: #244b49;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+      font-family: Georgia, serif;
+      font-size: 18px;
+    }
+    .desk { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; border-top: 1px solid rgba(90,58,31,.22); background: linear-gradient(180deg, #d9bd8b, #b88a54); }
+    .book, .note, .cards span { position: absolute; border: 1px solid rgba(84,66,42,.16); border-radius: 10px; background: #fffaf0; box-shadow: 0 10px 22px rgba(66,49,30,.14); }
+    .book { left: 58px; bottom: 54px; width: 124px; height: 72px; transform: rotate(-5deg); }
+    .note { left: 198px; bottom: 54px; width: 92px; height: 116px; transform: rotate(4deg); }
+    .cards { position: absolute; right: 66px; bottom: 54px; width: 118px; height: 90px; }
+    .cards span { width: 92px; height: 48px; }
+    .cards span:nth-child(1) { left: 0; top: 0; transform: rotate(-8deg); }
+    .cards span:nth-child(2) { left: 18px; top: 22px; transform: rotate(4deg); }
+    .cards span:nth-child(3) { left: 8px; top: 52px; transform: rotate(-2deg); }
+    .section { width: min(1180px, calc(100% - 56px)); margin: 0 auto; padding: 18px 0 54px; }
+    .section-title { margin-bottom: 18px; color: #233331; font-size: 20px; font-weight: 800; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .feature { min-height: 170px; padding: 24px; border: 1px solid #e8e2d8; border-radius: 16px; background: #fff; transition: .18s ease; }
+    .feature:hover { transform: translateY(-3px); border-color: #cfc7ba; box-shadow: 0 14px 32px rgba(45,54,49,.08); }
+    .feature h2 { margin: 0 0 12px; color: #1f2a2a; font-size: 18px; }
+    .feature p { margin: 0; color: #66706d; font-size: 14px; line-height: 1.8; }
+    .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid #e8e2d8; border-radius: 16px; background: #fff; }
+    .flow-item { padding: 22px; border-right: 1px solid #eee8dd; }
+    .flow-item:last-child { border-right: none; }
+    .flow-item span { display: block; margin-bottom: 8px; color: var(--gold); font-size: 13px; font-weight: 800; }
+    .flow-item strong { color: #283634; font-size: 15px; }
+    .footer { padding: 24px 28px 32px; color: #777; text-align: center; font-size: 13px; }
+    .footer a { color: #666; text-decoration: none; }
+
+    @media (max-width: 920px) {
+      .header-inner { grid-template-columns: 1fr auto; }
+      .main-nav {
+        position: absolute;
+        top: 76px;
+        left: 20px;
+        right: 20px;
+        display: none;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255,254,251,.98);
+        box-shadow: 0 18px 45px rgba(45,54,49,.12);
+      }
+      .main-nav.open { display: grid; }
+      .menu-button { display: grid; }
+      .hero, .feature-grid, .flow { grid-template-columns: 1fr; }
+      .hero { min-height: auto; padding-top: 74px; }
+      .hero h1 { font-size: 42px; }
+      .visual { height: 380px; }
+      .flow-item { border-right: none; border-bottom: 1px solid #eee8dd; }
+    }
+
+    @media (max-width: 560px) {
+      .header-inner { height: 68px; padding: 0 15px; }
+      .hero, .section { width: calc(100% - 30px); }
+      .hero { padding-top: 55px; gap: 42px; }
+      .hero h1 { font-size: 38px; }
+      .hero-copy > p { font-size: 16px; }
+      .hero-actions { flex-direction: column; }
+      .hero-actions a { text-align: center; }
+      .visual { height: 330px; }
+      .board { left: 25px; right: 25px; top: 38px; gap: 10px; font-size: 14px; }
+      .note { left: 48%; }
+      .cards { right: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top"><span class="brand-mark">语</span><span>智语同航</span></a>
+
+      <nav class="main-nav" id="mainNav">
+        <a href="#features">核心场景</a>
+        <a href="#workflow">课堂流程</a>
+        <a href="/admin/login">管理平台</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="menu-button" id="menuButton" type="button" aria-label="展开导航">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="kicker">Multi-Harness Agent Language Classroom</div>
+        <h1>智语同航</h1>
+        <p>基于多 Harness 智能体协作与编排的智慧外语课堂，围绕听、写、读三类核心学习任务，提供实时转译、作文训练与词汇语境化学习支持。</p>
+        <div class="hero-actions">
+          <a class="hero-main" href="/login">登录平台</a>
+          <a class="hero-sub" href="/register">注册账号</a>
+        </div>
+      </div>
+      <div class="visual" aria-hidden="true">
+        <div class="board"><span>Listening</span><span>Writing</span><span>Reading</span></div>
+        <div class="desk"><div class="book"></div><div class="note"></div><div class="cards"><span></span><span></span><span></span></div></div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-title">核心场景</div>
+      <div class="feature-grid">
+        <article class="feature"><h2>课堂听力辅助</h2><p>将课堂音频实时转写、翻译并进行纠错辅助，降低听力基础薄弱学生的课堂负担。</p></article>
+        <article class="feature"><h2>写作训练闭环</h2><p>支持作文出题、文本批阅、图片批阅、逐句反馈和修改建议，帮助学生复盘表达问题。</p></article>
+        <article class="feature"><h2>阅读词汇积累</h2><p>根据语言和学习阶段生成固定例句与图像素材，让单词学习从释义走向语境理解。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="section-title">课堂流程</div>
+      <div class="flow">
+        <div class="flow-item"><span>01</span><strong>音频进入课堂</strong></div>
+        <div class="flow-item"><span>02</span><strong>生成学习材料</strong></div>
+        <div class="flow-item"><span>03</span><strong>完成训练反馈</strong></div>
+        <div class="flow-item"><span>04</span><strong>沉淀学习记录</strong></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><a href="https://beian.miit.gov.cn" target="_blank" rel="noreferrer">辽ICP备2026007778号-1</a></footer>
+
+  <script>
+    const menuButton = document.querySelector('#menuButton');
+    const mainNav = document.querySelector('#mainNav');
+    menuButton.addEventListener('click', () => mainNav.classList.toggle('open'));
+    mainNav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => mainNav.classList.remove('open')));
+  </script>
+</body>
+</html>

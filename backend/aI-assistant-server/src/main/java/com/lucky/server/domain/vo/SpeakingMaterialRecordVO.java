@@ -2,6 +2,7 @@ package com.lucky.server.domain.vo;
 
 import com.lucky.server.common.enums.SpeakingDifficultyEnum;
 import com.lucky.server.common.enums.SpeakingLanguageEnum;
+import com.lucky.server.common.enums.SpeakingMaterialGenerationFailureStageEnum;
 import com.lucky.server.common.enums.SpeakingSceneEnum;
 import com.lucky.server.common.enums.SpeakingStageEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,10 +17,12 @@ import java.time.LocalDateTime;
 @Schema(description = "口语素材记录视图")
 public record SpeakingMaterialRecordVO(
         @Schema(description = "主键ID") Long id,
+        @Schema(description = "是否成功") Boolean success,
         @Schema(description = "语言编码") SpeakingLanguageEnum languageCode,
         @Schema(description = "学习阶段编码") SpeakingStageEnum stageCode,
         @Schema(description = "难度编码") SpeakingDifficultyEnum difficultyCode,
         @Schema(description = "场景编码") SpeakingSceneEnum sceneCode,
+        @Schema(description = "自定义场景") String customScene,
         @Schema(description = "用户提示词/偏好说明") String userPrompt,
         @Schema(description = "口语素材标题") String title,
         @Schema(description = "口语练习场景说明") String sceneDescription,
@@ -29,6 +32,8 @@ public record SpeakingMaterialRecordVO(
         @Schema(description = "TTS模型名") String ttsModelName,
         @Schema(description = "TTS音色") String ttsVoice,
         @Schema(description = "TTS语速") BigDecimal ttsSpeechRate,
+        @Schema(description = "失败阶段") SpeakingMaterialGenerationFailureStageEnum failureStage,
+        @Schema(description = "错误信息") String errorMessage,
         @Schema(description = "创建时间") LocalDateTime createTime
 ) {
 }

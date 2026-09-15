@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
 import { AuthBox } from '../components/AuthBox';
+import { isTeacherUser } from '../lib/authRole';
 
 export function RegisterPage() {
   const [role, setRole] = useState<'student' | 'teacher'>('student');
@@ -57,7 +58,7 @@ export function RegisterPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(user.userType === 'teacher' ? '/dashboard?panel=teacher-classrooms' : '/dashboard');
+      nav(isTeacherUser(user) ? '/teacher' : '/dashboard');
     } catch (e: any) {
       showToast(e.message || '注册失败');
     } finally {

@@ -50,6 +50,10 @@ public class SpeakingMaterialGenerationFailure implements Serializable {
     @Schema(description = "场景编码")
     private SpeakingSceneEnum sceneCode;
 
+    @TableField("custom_scene")
+    @Schema(description = "自定义场景")
+    private String customScene;
+
     @TableField("user_prompt")
     @Schema(description = "用户提示词/偏好说明")
     private String userPrompt;

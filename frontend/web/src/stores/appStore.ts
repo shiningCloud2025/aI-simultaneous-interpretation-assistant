@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { clearRememberedUserRole, rememberUserRole } from '../lib/authRole';
 
 export interface UserInfo {
   id: number;
@@ -20,6 +21,7 @@ export interface AppState {
   activePanel: string;
   setUser: (user: UserInfo) => void;
   setToken: (token: string) => void;
+  syncToken: (token: string | null) => void;
   logout: () => void;
   setActivePanel: (panel: string) => void;
 }
@@ -27,16 +29,27 @@ export interface AppState {
 // API 请求工具
 const API_BASE = '/api';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+type AppRequestInit = RequestInit & {
+  skipAuth?: boolean;
+};
+
+async function request<T>(path: string, options?: AppRequestInit): Promise<T> {
   const token = useAppStore.getState().token;
+  const { skipAuth, ...requestOptions } = options || {};
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string> || {}),
+    ...(requestOptions.headers as Record<string, string> || {}),
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (!skipAuth && token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
   const json = await res.json();
+  if (res.status === 401) {
+    useAppStore.getState().logout();
+  }
+  if (!res.ok) {
+    throw new Error(json.detail || json.message || `请求失败 (HTTP ${res.status})`);
+  }
   if (json.code !== 200) {
     throw new Error(json.detail || json.message || '请求失败');
   }
@@ -46,30 +59,30 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   // 登录（学生端接口，用户类型由后端固定为 student，前端无法指定）
   login: (data: { keyword: string; password: string }) =>
-    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   loginByPhone: (data: { phone: string; captcha: string }) =>
-    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   loginByEmail: (data: { email: string; captcha: string }) =>
-    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   // 老师登录
   teacherLogin: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
-    request<{ token: string }>('/sys/user/teacher/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/teacher/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   // 注册
   register: (data: { account: string; username: string; password: string; phone?: string; email?: string; smsCaptcha?: string; emailCaptcha?: string }) =>
-    request<{ token: string }>('/sys/user/student/register', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/student/register', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   teacherRegister: (data: { account: string; username: string; password: string; phone?: string; email?: string; smsCaptcha?: string; emailCaptcha?: string }) =>
-    request<{ token: string }>('/sys/user/teacher/register', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ token: string }>('/sys/user/teacher/register', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   // 获取用户信息
   getUserInfo: () => request<UserInfo>('/sys/user/info'),
   // 发送短信验证码
   sendSmsCode: (phone: string) =>
-    request<void>(`/sys/user/sms/send?phone=${encodeURIComponent(phone)}`, { method: 'POST' }),
+    request<void>(`/sys/user/sms/send?phone=${encodeURIComponent(phone)}`, { method: 'POST', skipAuth: true }),
   // 发送邮箱验证码
   sendEmailCode: (email: string) =>
-    request<void>(`/sys/user/email/send?email=${encodeURIComponent(email)}`, { method: 'POST' }),
+    request<void>(`/sys/user/email/send?email=${encodeURIComponent(email)}`, { method: 'POST', skipAuth: true }),
   // 修改密码
   resetPassword: (data: { phone?: string; email?: string; captcha: string; newPassword: string }) =>
-    request<void>('/sys/user/reset-password', { method: 'PUT', body: JSON.stringify(data) }),
+    request<void>('/sys/user/reset-password', { method: 'PUT', body: JSON.stringify(data), skipAuth: true }),
   // 修改个人资料
   updateProfile: (data: { username?: string; phone?: string; email?: string; avatar?: string; password?: string; smsCaptcha?: string; emailCaptcha?: string }) =>
     request<void>('/sys/user/profile', { method: 'PUT', body: JSON.stringify(data) }),
@@ -101,13 +114,22 @@ export const useAppStore = create<AppState>((set) => ({
   user: null,
   token: localStorage.getItem('token'),
   activePanel: 'dashboard',
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    rememberUserRole(user.userType);
+    set({ user });
+  },
   setToken: (token) => {
     localStorage.setItem('token', token);
-    set({ token });
+    clearRememberedUserRole();
+    set({ token, user: null, activePanel: 'dashboard' });
+  },
+  syncToken: (token) => {
+    if (!token) clearRememberedUserRole();
+    set({ token, user: null, activePanel: 'dashboard' });
   },
   logout: () => {
     localStorage.removeItem('token');
+    clearRememberedUserRole();
     set({ user: null, token: null, activePanel: 'dashboard' });
   },
   setActivePanel: (panel) => set({ activePanel: panel }),

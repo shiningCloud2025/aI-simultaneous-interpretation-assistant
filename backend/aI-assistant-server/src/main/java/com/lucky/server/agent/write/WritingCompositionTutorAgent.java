@@ -7,6 +7,7 @@ import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.common.enums.WritingCompositionTutorMessageRoleEnum;
 import com.lucky.server.config.AgentScopeMysqlProperties;
 import com.lucky.server.config.LlmModelConfig;
 import com.lucky.server.domain.dto.WritingCompositionTutorChatDTO;
@@ -18,6 +19,7 @@ import com.lucky.server.mapper.WritingCompositionEvaluationMapper;
 import com.lucky.server.service.SysUserApiKeyService;
 import com.lucky.server.service.SysUserModelPreferenceService;
 import com.lucky.server.service.SysUserService;
+import com.lucky.server.service.WritingCompositionTutorMessageService;
 import io.agentscope.core.agent.RuntimeContext;
 import io.agentscope.core.message.*;
 import io.agentscope.core.model.GenerateOptions;
@@ -63,6 +65,7 @@ public class WritingCompositionTutorAgent {
     private final DataSource dataSource;
     private final WritingCompositionEvaluationMapper writingCompositionEvaluationMapper;
     private final SysUserService sysUserService;
+    private final WritingCompositionTutorMessageService writingCompositionTutorMessageService;
     private final ObjectMapper objectMapper;
 
     /** 用户模型级 Agent 缓存：key = userId:provider:modelName */
@@ -102,15 +105,31 @@ public class WritingCompositionTutorAgent {
 
         String input = buildTutorPrompt(evaluation, dto);
         UserMessage userMessage = buildUserMessage(evaluation, dto, input);
+        writingCompositionTutorMessageService.saveMessage(
+                userId,
+                dto.evaluationId(),
+                WritingCompositionTutorMessageRoleEnum.USER,
+                dto.question(),
+                dto.imageUrls()
+        );
 
         return agent.call(List.of(userMessage), WritingCompositionTutorAnswerVO.class, ctx)
                 .map(this::parseAnswer)
-                .map(answer -> new WritingCompositionTutorAnswerVO(
-                        dto.evaluationId(),
-                        dto.question(),
-                        dto.imageUrls(),
-                        answer
-                ))
+                .map(answer -> {
+                    writingCompositionTutorMessageService.saveMessage(
+                            userId,
+                            dto.evaluationId(),
+                            WritingCompositionTutorMessageRoleEnum.ASSISTANT,
+                            answer,
+                            null
+                    );
+                    return new WritingCompositionTutorAnswerVO(
+                            dto.evaluationId(),
+                            dto.question(),
+                            dto.imageUrls(),
+                            answer
+                    );
+                })
                 .doOnError(e -> log.error("写作作文AI辅导失败，evaluationId={}", dto.evaluationId(), e));
 
 

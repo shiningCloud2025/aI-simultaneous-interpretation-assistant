@@ -30,6 +30,9 @@ public record SpeakingMaterialGenerateDTO(
         @NotNull(message = "场景不能为空")
         SpeakingSceneEnum sceneCode,
 
+        @Schema(description = "自定义场景")
+        String customScene,
+
         @Schema(description = "用户提示词/偏好说明")
         String userPrompt
 ) {
