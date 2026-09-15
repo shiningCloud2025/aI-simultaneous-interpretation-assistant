@@ -1105,6 +1105,58 @@ function DataTable({ columns, rows }: { columns: string[]; rows: Array<Array<Rea
   );
 }
 
+function AdminPager({
+  current,
+  pages,
+  total,
+  loading,
+  onChange,
+}: {
+  current: number;
+  pages: number;
+  total: number;
+  loading?: boolean;
+  onChange: (page: number) => void;
+}) {
+  const safePages = Math.max(1, pages || 1);
+  const safeCurrent = Math.min(Math.max(1, current || 1), safePages);
+  const start = Math.max(1, Math.min(safeCurrent - 2, safePages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, safePages) }, (_, index) => start + index)
+    .filter((page) => page <= safePages);
+
+  return (
+    <div className="admin-pagination">
+      <span>共 {total || 0} 条 · 第 {safeCurrent} / {safePages} 页</span>
+      <div className="admin-page-buttons">
+        <button className="admin-btn" disabled={safeCurrent <= 1 || loading} onClick={() => onChange(safeCurrent - 1)}>上一页</button>
+        {start > 1 && (
+          <>
+            <button className="admin-btn" disabled={loading} onClick={() => onChange(1)}>1</button>
+            <span className="admin-page-ellipsis">...</span>
+          </>
+        )}
+        {pageNumbers.map((page) => (
+          <button
+            key={page}
+            className={`admin-btn admin-page-number ${page === safeCurrent ? 'active' : ''}`}
+            disabled={page === safeCurrent || loading}
+            onClick={() => onChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+        {pageNumbers[pageNumbers.length - 1] < safePages && (
+          <>
+            <span className="admin-page-ellipsis">...</span>
+            <button className="admin-btn" disabled={loading} onClick={() => onChange(safePages)}>{safePages}</button>
+          </>
+        )}
+        <button className="admin-btn" disabled={safeCurrent >= safePages || loading} onClick={() => onChange(safeCurrent + 1)}>下一页</button>
+      </div>
+    </div>
+  );
+}
+
 function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   const [data, setData] = useState<PageResult<ManagedUser>>({ records: [], total: 0, size: 20, current: 1 });
   const [keyword, setKeyword] = useState('');
@@ -1537,39 +1589,53 @@ function FeedbackPanel() {
 }
 
 function SkillPanel() {
-  const [data, setData] = useState<PageResult<SkillItem>>({ records: [], total: 0, size: 20, current: 1 });
+  const pageSize = 10;
+  const [data, setData] = useState<PageResult<SkillItem>>({ records: [], total: 0, size: pageSize, current: 1 });
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<SkillDetail | null>(null);
   const [form, setForm] = useState({ name: '', description: '', skillContent: '', overwrite: false });
+  const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const load = async (keyword = name) => {
+  const load = async (pageNum = data.current || 1, keyword = name) => {
     setError('');
     setLoading(true);
     try {
-      setData(await adminApi.skills({ pageNum: 1, pageSize: 50, name: keyword }));
+      setData(await adminApi.skills({ pageNum, pageSize, name: keyword.trim() || undefined }));
     } catch (e: any) {
       setError(e.message || 'Skill 加载失败');
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(1); }, []);
 
   const resetForm = () => {
     setEditing(null);
     setForm({ name: '', description: '', skillContent: '', overwrite: false });
   };
 
-  const edit = async (item: SkillItem) => {
+  const openCreate = () => {
+    setError('');
+    resetForm();
+    setModal('create');
+  };
+
+  const openDetail = async (item: SkillItem, nextModal: 'edit' | 'view') => {
     try {
       const detail = await adminApi.skillDetail(item.name);
       setEditing(detail);
       setForm({ name: detail.name, description: detail.description || '', skillContent: detail.skillContent || '', overwrite: true });
+      setModal(nextModal);
     } catch (e: any) {
       setError(e.message || '详情加载失败');
     }
+  };
+
+  const closeModal = () => {
+    setModal(null);
+    resetForm();
   };
 
   const save = async () => {
@@ -1577,8 +1643,8 @@ function SkillPanel() {
     try {
       if (editing) await adminApi.updateSkill(editing.name, { description: form.description, skillContent: form.skillContent });
       else await adminApi.createSkill(form);
-      resetForm();
-      await load();
+      closeModal();
+      await load(editing ? data.current : 1);
     } catch (e: any) {
       setError(e.message || '保存失败');
     }
@@ -1588,111 +1654,121 @@ function SkillPanel() {
     if (!window.confirm(`确定删除 ${item.name} 吗？`)) return;
     try {
       await adminApi.deleteSkill(item.name);
-      await load();
+      const nextPage = data.records.length === 1 && data.current > 1 ? data.current - 1 : data.current;
+      await load(nextPage);
     } catch (e: any) {
       setError(e.message || '删除失败');
     }
   };
 
+  const clearSearch = () => {
+    setName('');
+    load(1, '');
+  };
+
+  const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || pageSize)));
+
   return (
     <div className="admin-panel">
-      <div className="admin-skill-summary">
-        <div>
-          <span>已配置 Skill</span>
-          <strong>{data.total || data.records.length}</strong>
-        </div>
-        <div>
-          <span>当前模式</span>
-          <strong>{editing ? '编辑' : '新增'}</strong>
-        </div>
-        <div>
-          <span>内容长度</span>
-          <strong>{form.skillContent.length}</strong>
-        </div>
-      </div>
-
-      <div className="admin-skill-editor">
-        <section className="admin-card admin-skill-form-card">
-          <div className="admin-skill-card-head">
-            <div>
-              <h2>{editing ? '修改 Skill' : '新增 Skill'}</h2>
-              <p>{editing ? '正在编辑已有 Skill，名称保持不变。' : '第一版支持直接录入简单 Skill 内容。'}</p>
-            </div>
-            {editing && <button className="admin-btn" onClick={resetForm}>新建</button>}
+      <section className="admin-card admin-skill-manager">
+        <div className="admin-skill-card-head">
+          <div>
+            <h2>Skill 列表</h2>
+            <p>按名称查询、查看、编辑或删除 AgentScope Skill。</p>
           </div>
+          <div className="admin-skill-head-actions">
+            <span className="admin-skill-count">共 {data.total || 0} 条</span>
+            <button className="admin-btn primary" onClick={openCreate}>新增 Skill</button>
+          </div>
+        </div>
 
-          <div className="admin-skill-form">
-            <label>
-              <span>Skill 名称</span>
-              <input className="admin-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如 english_writing_rubric" disabled={!!editing} />
-            </label>
-            <label>
-              <span>Skill 描述</span>
-              <textarea className="admin-textarea" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" />
-            </label>
-            <label className="admin-skill-content-field">
-              <span>Skill 内容</span>
-              <textarea className="admin-textarea" value={form.skillContent} onChange={(e) => setForm({ ...form, skillContent: e.target.value })} placeholder="写入可被 AgentScope 使用的 Skill 内容" />
-            </label>
-            {!editing && (
+        <div className="admin-toolbar">
+          <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="输入 Skill 名称查询" onKeyDown={(e) => { if (e.key === 'Enter') load(1); }} />
+          <button className="admin-btn primary" onClick={() => load(1)}>{loading ? '查询中' : '查询'}</button>
+          {name && <button className="admin-btn" onClick={clearSearch}>清空</button>}
+        </div>
+        <ErrorBlock error={error} />
+
+        <div className="admin-table-wrap">
+          <table className="admin-table admin-skill-table">
+            <thead>
+              <tr>
+                <th>Skill 名称</th>
+                <th>描述</th>
+                <th>来源</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.records.map((item) => (
+                <tr key={item.name}>
+                  <td><strong className="admin-skill-name">{item.name}</strong></td>
+                  <td className="admin-skill-desc">{item.description || '暂无描述'}</td>
+                  <td><span className="admin-pill">{item.source || 'native'}</span></td>
+                  <td>{formatDate(item.createdAt)}</td>
+                  <td>{formatDate(item.updatedAt)}</td>
+                  <td>
+                    <div className="admin-row-actions admin-skill-row-actions">
+                      <button className="admin-btn" onClick={() => openDetail(item, 'view')}>查看</button>
+                      <button className="admin-btn" onClick={() => openDetail(item, 'edit')}>编辑</button>
+                      <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!data.records.length && <EmptyBlock text={loading ? '正在加载 Skill...' : '暂无 Skill'} />}
+        </div>
+
+        <AdminPager
+          current={data.current || 1}
+          pages={totalPages}
+          total={data.total || 0}
+          loading={loading}
+          onChange={(nextPage) => load(nextPage)}
+        />
+      </section>
+
+      {modal && (
+        <div className="admin-account-edit-mask" onClick={closeModal}>
+          <div className="admin-account-edit admin-skill-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-skill-modal-head">
+              <div>
+                <h3>{modal === 'create' ? '新增 Skill' : modal === 'edit' ? '编辑 Skill' : '查看 Skill'}</h3>
+                {modal !== 'create' && <strong>{form.name}</strong>}
+                <p>{modal === 'view' ? '查看当前 Skill 的描述和完整内容。' : '维护 AgentScope 可调用的 Skill 名称、说明与内容。'}</p>
+              </div>
+              <button onClick={closeModal}>×</button>
+            </div>
+            <div className={`admin-skill-modal-form ${modal !== 'create' ? 'without-name' : ''}`}>
+              {modal === 'create' && (
+                <AdminAccountField label="Skill 名称">
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如 english_writing_rubric" />
+                </AdminAccountField>
+              )}
+              <AdminAccountField label="Skill 描述">
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" disabled={modal === 'view'} />
+              </AdminAccountField>
+              <AdminAccountField label="Skill 内容">
+                <textarea className="admin-skill-content-textarea" value={form.skillContent} onChange={(e) => setForm({ ...form, skillContent: e.target.value })} placeholder="写入可被 AgentScope 使用的 Skill 内容" disabled={modal === 'view'} />
+              </AdminAccountField>
+            </div>
+            {modal === 'create' && (
               <label className="admin-skill-checkbox">
                 <input type="checkbox" checked={form.overwrite} onChange={(e) => setForm({ ...form, overwrite: e.target.checked })} />
                 <span>如果名称已存在，覆盖同名 Skill</span>
               </label>
             )}
-            <div className="admin-skill-actions">
-              <button className="admin-btn primary" onClick={save}>{editing ? '保存修改' : '新增 Skill'}</button>
-              {editing && <button className="admin-btn" onClick={resetForm}>取消编辑</button>}
+            <div className="admin-account-edit-actions">
+              {modal !== 'view' && <button className="primary" onClick={save}>{modal === 'create' ? '确认新增' : '保存修改'}</button>}
+              <button onClick={closeModal}>{modal === 'view' ? '关闭' : '取消'}</button>
             </div>
           </div>
-        </section>
-
-        <section className="admin-card admin-skill-list-card">
-          <div className="admin-skill-card-head">
-            <div>
-              <h2>Skill 列表</h2>
-              <p>按名称检索、编辑或删除 AgentScope Skill。</p>
-            </div>
-            <span className="admin-skill-count">{data.records.length} 条</span>
-          </div>
-
-          <div className="admin-toolbar">
-            <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="输入 Skill 名称查询" onKeyDown={(e) => { if (e.key === 'Enter') load(); }} />
-            <button className="admin-btn primary" onClick={() => load()}>{loading ? '查询中' : '查询'}</button>
-            {name && <button className="admin-btn" onClick={() => { setName(''); load(''); }}>清空</button>}
-          </div>
-          <ErrorBlock error={error} />
-
-          {data.records.length === 0 ? (
-            <div className="admin-skill-empty">
-              <strong>{loading ? '正在加载 Skill...' : '暂无 Skill'}</strong>
-              <span>{loading ? '请稍等一下。' : '可以先在左侧新增一个简单 Skill。'}</span>
-            </div>
-          ) : (
-            <div className="admin-skill-list">
-              {data.records.map((item) => (
-                <article className={`admin-skill-item ${editing?.name === item.name ? 'active' : ''}`} key={item.name}>
-                  <div className="admin-skill-item-main">
-                    <div className="admin-skill-title-row">
-                      <h3>{item.name}</h3>
-                      <span>{item.source || 'native'}</span>
-                    </div>
-                    <p>{item.description || '暂无描述'}</p>
-                    <div className="admin-skill-meta">
-                      <span>创建：{formatDate(item.createdAt)}</span>
-                      <span>更新：{formatDate(item.updatedAt)}</span>
-                    </div>
-                  </div>
-                  <div className="admin-skill-item-actions">
-                    <button className="admin-btn" onClick={() => edit(item)}>编辑</button>
-                    <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
