@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Card, PageBanner } from './ui';
+import { Card, PageBanner, Select } from './ui';
 import { apiCall, uploadFile } from '../lib/api';
 import { LlmModelPreference } from './LlmModelPreference';
 
@@ -72,12 +72,28 @@ interface TutorHistoryMessage {
   createTime?: string;
 }
 
+type RecordFilter = {
+  submitType: string;
+  languageCode: string;
+  stageCode: string;
+  genreCode: string;
+};
+
+const DEFAULT_RECORD_FILTER: RecordFilter = {
+  submitType: 'all',
+  languageCode: 'all',
+  stageCode: 'all',
+  genreCode: 'all',
+};
+
 export function EduWritingTutor() {
   const [records, setRecords] = useState<EvaluationRecord[]>([]);
   const [selected, setSelected] = useState<EvaluationRecord | null>(null);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [recordFilter, setRecordFilter] = useState<RecordFilter>(DEFAULT_RECORD_FILTER);
   const [question, setQuestion] = useState('');
   const [questionImages, setQuestionImages] = useState<string[]>([]);
   const [messages, setMessages] = useState<TutorMessage[]>([]);
@@ -102,27 +118,51 @@ export function EduWritingTutor() {
     chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, chatLoading, selected?.id]);
 
-  const loadRecords = async (nextPage = page) => {
+  useEffect(() => {
+    if (selected?.id) {
+      loadTutorMessages(selected.id);
+    }
+  }, [selected?.id]);
+
+  const loadRecords = async (nextPage = page, filter = recordFilter) => {
     setLoadingRecords(true);
     try {
+      const requestFilter: Record<string, unknown> = { success: true };
+      if (filter.submitType !== 'all') requestFilter.submitType = filter.submitType;
+      if (filter.languageCode !== 'all') requestFilter.languageCode = filter.languageCode;
+      if (filter.stageCode !== 'all') requestFilter.stageCode = filter.stageCode;
+      if (filter.genreCode !== 'all') requestFilter.genreCode = filter.genreCode;
+
       const data = await apiCall<PageResult<EvaluationRecord>>('/writing/composition/evaluation/history/page', {
         method: 'POST',
         body: JSON.stringify({
           page: nextPage,
           size: 8,
-          filter: { success: true },
+          filter: requestFilter,
         }),
       });
-      setRecords(data.records || []);
+      const records = data.records || [];
+      setRecords(records);
       setPage(data.current || nextPage);
       setPages(data.pages || 0);
+      setTotal(data.total || 0);
     } catch (e: any) {
       setRecords([]);
       setPages(0);
+      setTotal(0);
       showToast(e?.message || '已批阅作文加载失败');
     } finally {
       setLoadingRecords(false);
     }
+  };
+
+  const searchRecords = () => {
+    loadRecords(1, recordFilter);
+  };
+
+  const resetRecords = () => {
+    setRecordFilter(DEFAULT_RECORD_FILTER);
+    loadRecords(1, DEFAULT_RECORD_FILTER);
   };
 
   const selectRecord = (record: EvaluationRecord) => {
@@ -130,13 +170,15 @@ export function EduWritingTutor() {
     setQuestion('');
     setQuestionImages([]);
     setMessages([]);
-    loadTutorMessages(record.id);
   };
 
   const loadTutorMessages = async (evaluationId: number) => {
     setLoadingMessages(true);
     try {
-      const data = await apiCall<TutorHistoryMessage[]>(`/writing/composition/tutor/messages?evaluationId=${encodeURIComponent(evaluationId)}`);
+      const data = await apiCall<TutorHistoryMessage[]>(
+        `/writing/composition/tutor/messages?evaluationId=${encodeURIComponent(evaluationId)}&_t=${Date.now()}`,
+        { cache: 'no-store' }
+      );
       setMessages((data || []).map(toTutorMessage));
     } catch (e: any) {
       setMessages([]);
@@ -210,6 +252,41 @@ export function EduWritingTutor() {
           </Card>
 
           <Card title="选择一篇已批阅作文">
+            <div style={filterGrid}>
+              <Field label="提交类型">
+                <Select
+                  options={['全部类型', '文本作文', '图片作文']}
+                  value={recordFilter.submitType === 'text' ? '文本作文' : recordFilter.submitType === 'image' ? '图片作文' : '全部类型'}
+                  onChange={value => setRecordFilter(prev => ({ ...prev, submitType: value === '文本作文' ? 'text' : value === '图片作文' ? 'image' : 'all' }))}
+                />
+              </Field>
+              <Field label="语言">
+                <Select
+                  options={['全部语言', ...LANGUAGES.map(item => item.desc)]}
+                  value={recordFilter.languageCode === 'all' ? '全部语言' : labelOf(LANGUAGES, recordFilter.languageCode)}
+                  onChange={value => setRecordFilter(prev => ({ ...prev, languageCode: value === '全部语言' ? 'all' : codeOf(LANGUAGES, value) }))}
+                />
+              </Field>
+              <Field label="学习阶段">
+                <Select
+                  options={['全部阶段', ...STAGES.map(item => item.desc)]}
+                  value={recordFilter.stageCode === 'all' ? '全部阶段' : labelOf(STAGES, recordFilter.stageCode)}
+                  onChange={value => setRecordFilter(prev => ({ ...prev, stageCode: value === '全部阶段' ? 'all' : codeOf(STAGES, value) }))}
+                />
+              </Field>
+              <Field label="题型">
+                <Select
+                  options={['全部题型', ...GENRES.map(item => item.desc)]}
+                  value={recordFilter.genreCode === 'all' ? '全部题型' : labelOf(GENRES, recordFilter.genreCode)}
+                  onChange={value => setRecordFilter(prev => ({ ...prev, genreCode: value === '全部题型' ? 'all' : codeOf(GENRES, value) }))}
+                />
+              </Field>
+              <div style={{ display: 'flex', alignItems: 'end', gap: 8 }}>
+                <button onClick={searchRecords} disabled={loadingRecords} style={primaryBtn}>查询</button>
+                <button onClick={resetRecords} disabled={loadingRecords} style={ghostBtn}>重置</button>
+              </div>
+            </div>
+
             <div style={recordPickerHead}>
               <div>
                 <div style={{ fontSize: 13, color: '#777' }}>仅显示成功批阅记录</div>
@@ -240,13 +317,13 @@ export function EduWritingTutor() {
               </div>
             )}
 
-            {pages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 18 }}>
-                <button onClick={() => loadRecords(page - 1)} disabled={page <= 1 || loadingRecords} style={{ ...ghostBtn, opacity: page <= 1 ? .45 : 1 }}>上一页</button>
-                <span style={{ fontSize: 12, color: '#999' }}>{page} / {pages}</span>
-                <button onClick={() => loadRecords(page + 1)} disabled={page >= pages || loadingRecords} style={{ ...ghostBtn, opacity: page >= pages ? .45 : 1 }}>下一页</button>
-              </div>
-            )}
+            <PaginationBar
+              current={page}
+              pages={pages}
+              total={total}
+              loading={loadingRecords}
+              onChange={nextPage => loadRecords(nextPage)}
+            />
           </Card>
         </>
       ) : (
@@ -407,8 +484,68 @@ function ChatBubble({ message, onPreview }: { message: TutorMessage; onPreview: 
   );
 }
 
+function PaginationBar({
+  current,
+  pages,
+  total,
+  loading,
+  onChange,
+}: {
+  current: number;
+  pages: number;
+  total: number;
+  loading: boolean;
+  onChange: (page: number) => void;
+}) {
+  const safePages = Math.max(1, pages || 1);
+  const safeCurrent = Math.min(Math.max(1, current || 1), safePages);
+  const start = Math.max(1, Math.min(safeCurrent - 2, safePages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, safePages) }, (_, index) => start + index)
+    .filter(item => item <= safePages);
+
+  return (
+    <div style={pagerWrap}>
+      <div style={pagerMeta}>共 {total || 0} 条 · 第 {safeCurrent} / {safePages} 页</div>
+      <div style={pagerBtns}>
+        <button onClick={() => onChange(safeCurrent - 1)} disabled={safeCurrent <= 1 || loading} style={pagerBtn(safeCurrent <= 1 || loading)}>上一页</button>
+        {start > 1 && (
+          <>
+            <button onClick={() => onChange(1)} disabled={loading} style={pagerBtn(loading)}>1</button>
+            <span style={pagerDots}>...</span>
+          </>
+        )}
+        {pageNumbers.map(item => (
+          <button key={item} onClick={() => onChange(item)} disabled={item === safeCurrent || loading} style={item === safeCurrent ? pagerActiveBtn : pagerBtn(loading)}>
+            {item}
+          </button>
+        ))}
+        {pageNumbers[pageNumbers.length - 1] < safePages && (
+          <>
+            <span style={pagerDots}>...</span>
+            <button onClick={() => onChange(safePages)} disabled={loading} style={pagerBtn(loading)}>{safePages}</button>
+          </>
+        )}
+        <button onClick={() => onChange(safeCurrent + 1)} disabled={safeCurrent >= safePages || loading} style={pagerBtn(safeCurrent >= safePages || loading)}>下一页</button>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
 function labelOf(options: { code: string; desc: string }[], code?: string) {
   return options.find(o => o.code === code)?.desc || code || '—';
+}
+
+function codeOf(options: { code: string; desc: string }[], desc: string) {
+  return options.find(o => o.desc === desc)?.code || 'all';
 }
 
 function toTutorMessage(message: TutorHistoryMessage): TutorMessage {
@@ -447,6 +584,75 @@ const primaryBtn: React.CSSProperties = {
   color: '#fff',
   fontSize: 12,
   cursor: 'pointer',
+};
+
+function pagerBtn(disabled: boolean): React.CSSProperties {
+  return {
+    minWidth: 34,
+    height: 32,
+    padding: '0 10px',
+    borderRadius: 8,
+    border: '1px solid #e8e6e1',
+    background: '#fff',
+    color: '#666',
+    fontSize: 12,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? .45 : 1,
+  };
+}
+
+const pagerActiveBtn: React.CSSProperties = {
+  minWidth: 34,
+  height: 32,
+  padding: '0 10px',
+  borderRadius: 8,
+  border: '1px solid #234b49',
+  background: '#234b49',
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'default',
+};
+
+const pagerWrap: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: 12,
+  flexWrap: 'wrap',
+  marginTop: 18,
+  paddingTop: 14,
+  borderTop: '1px solid #f0efec',
+};
+
+const pagerMeta: React.CSSProperties = {
+  fontSize: 12,
+  color: '#999',
+};
+
+const pagerBtns: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  flexWrap: 'wrap',
+};
+
+const pagerDots: React.CSSProperties = {
+  fontSize: 12,
+  color: '#aaa',
+  padding: '0 2px',
+};
+
+const filterGrid: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+  gap: 14,
+  alignItems: 'end',
+  marginBottom: 18,
+  padding: 14,
+  borderRadius: 14,
+  border: '1px solid #f0efec',
+  background: '#fbfaf7',
 };
 
 const recordPickerHead: React.CSSProperties = {

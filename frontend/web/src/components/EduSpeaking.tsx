@@ -153,6 +153,7 @@ export function EduSpeakingGenerate() {
   const [history, setHistory] = useState<SpeakingRecord[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(0);
+  const [historyTotal, setHistoryTotal] = useState(0);
   const [readonlyDetail, setReadonlyDetail] = useState<SpeakingPracticeDetail | null>(null);
   const [readonlyLoadingId, setReadonlyLoadingId] = useState<number | null>(null);
   const [toast, setToast] = useState('');
@@ -174,11 +175,11 @@ export function EduSpeakingGenerate() {
     loadHistory(1, historySuccess);
   }, [historySuccess, historyUseCurrentFilter, language, stage, difficulty, scene]);
 
-  const loadHistory = async (page = historyPage, success = historySuccess) => {
+  const loadHistory = async (page = historyPage, success = historySuccess, useCurrentFilter = historyUseCurrentFilter) => {
     setHistoryLoading(true);
     try {
       const filter: Record<string, unknown> = { success };
-      if (historyUseCurrentFilter) {
+      if (useCurrentFilter) {
         filter.languageCode = language || undefined;
         filter.stageCode = stage || undefined;
         filter.difficultyCode = difficulty || undefined;
@@ -191,13 +192,25 @@ export function EduSpeakingGenerate() {
       setHistory(data.records || []);
       setHistoryPage(data.current || page);
       setHistoryPages(data.pages || 0);
+      setHistoryTotal(data.total || 0);
     } catch (e: any) {
       setHistory([]);
       setHistoryPages(0);
+      setHistoryTotal(0);
       showToast(e?.message || '口语素材历史加载失败');
     } finally {
       setHistoryLoading(false);
     }
+  };
+
+  const changeHistorySuccess = (success: boolean) => {
+    setHistorySuccess(success);
+    loadHistory(1, success, historyUseCurrentFilter);
+  };
+
+  const changeHistoryFilter = (checked: boolean) => {
+    setHistoryUseCurrentFilter(checked);
+    loadHistory(1, historySuccess, checked);
   };
 
   const handleGenerate = async () => {
@@ -299,10 +312,10 @@ export function EduSpeakingGenerate() {
       <Card title="生成历史">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => setHistorySuccess(true)} style={tabBtn(historySuccess)}>成功记录</button>
-            <button onClick={() => setHistorySuccess(false)} style={tabBtn(!historySuccess)}>失败记录</button>
+            <button onClick={() => changeHistorySuccess(true)} style={tabBtn(historySuccess)}>成功记录</button>
+            <button onClick={() => changeHistorySuccess(false)} style={tabBtn(!historySuccess)}>失败记录</button>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
-              <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => setHistoryUseCurrentFilter(e.target.checked)} />
+              <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => changeHistoryFilter(e.target.checked)} />
               按当前条件筛选
             </label>
           </div>
@@ -342,13 +355,13 @@ export function EduSpeakingGenerate() {
           </div>
         )}
 
-        {historyPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 }}>
-            <button onClick={() => loadHistory(historyPage - 1, historySuccess)} disabled={historyPage <= 1 || historyLoading} style={{ ...ghostBtn, opacity: historyPage <= 1 ? .4 : 1 }}>上一页</button>
-            <span style={{ fontSize: 12, color: '#999' }}>{historyPage} / {historyPages}</span>
-            <button onClick={() => loadHistory(historyPage + 1, historySuccess)} disabled={historyPage >= historyPages || historyLoading} style={{ ...ghostBtn, opacity: historyPage >= historyPages ? .4 : 1 }}>下一页</button>
-          </div>
-        )}
+        <PaginationBar
+          current={historyPage}
+          pages={historyPages}
+          total={historyTotal}
+          loading={historyLoading}
+          onChange={nextPage => loadHistory(nextPage, historySuccess)}
+        />
       </Card>
 
       {readonlyDetail && (
@@ -373,6 +386,7 @@ export function EduSpeakingPractice() {
   const [history, setHistory] = useState<SpeakingRecord[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(0);
+  const [historyTotal, setHistoryTotal] = useState(0);
   const [detail, setDetail] = useState<SpeakingPracticeDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
   const [autoOpenedMaterialId, setAutoOpenedMaterialId] = useState<number | null>(null);
@@ -404,11 +418,11 @@ export function EduSpeakingPractice() {
     openPracticeDetailById(materialId);
   }, [searchParams, autoOpenedMaterialId]);
 
-  const loadHistory = async (page = historyPage) => {
+  const loadHistory = async (page = historyPage, useCurrentFilter = historyUseCurrentFilter) => {
     setHistoryLoading(true);
     try {
       const filter: Record<string, unknown> = {};
-      if (historyUseCurrentFilter) {
+      if (useCurrentFilter) {
         filter.languageCode = language || undefined;
         filter.stageCode = stage || undefined;
         filter.difficultyCode = difficulty || undefined;
@@ -421,13 +435,20 @@ export function EduSpeakingPractice() {
       setHistory(data.records || []);
       setHistoryPage(data.current || page);
       setHistoryPages(data.pages || 0);
+      setHistoryTotal(data.total || 0);
     } catch (e: any) {
       setHistory([]);
       setHistoryPages(0);
+      setHistoryTotal(0);
       showToast(e?.message || '口语素材历史加载失败');
     } finally {
       setHistoryLoading(false);
     }
+  };
+
+  const changeHistoryFilter = (checked: boolean) => {
+    setHistoryUseCurrentFilter(checked);
+    loadHistory(1, checked);
   };
 
   const openPracticeDetail = async (record: SpeakingRecord) => {
@@ -475,7 +496,7 @@ export function EduSpeakingPractice() {
       <Card title="我的口语素材">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#888', cursor: 'pointer' }}>
-            <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => setHistoryUseCurrentFilter(e.target.checked)} />
+            <input type="checkbox" checked={historyUseCurrentFilter} onChange={e => changeHistoryFilter(e.target.checked)} />
             按当前条件筛选
           </label>
           <button onClick={() => loadHistory(1)} disabled={historyLoading} style={ghostBtn}>{historyLoading ? '刷新中...' : '刷新'}</button>
@@ -508,13 +529,13 @@ export function EduSpeakingPractice() {
           </div>
         )}
 
-        {historyPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 }}>
-            <button onClick={() => loadHistory(historyPage - 1)} disabled={historyPage <= 1 || historyLoading} style={{ ...ghostBtn, opacity: historyPage <= 1 ? .4 : 1 }}>上一页</button>
-            <span style={{ fontSize: 12, color: '#999' }}>{historyPage} / {historyPages}</span>
-            <button onClick={() => loadHistory(historyPage + 1)} disabled={historyPage >= historyPages || historyLoading} style={{ ...ghostBtn, opacity: historyPage >= historyPages ? .4 : 1 }}>下一页</button>
-          </div>
-        )}
+        <PaginationBar
+          current={historyPage}
+          pages={historyPages}
+          total={historyTotal}
+          loading={historyLoading}
+          onChange={nextPage => loadHistory(nextPage)}
+        />
       </Card>
 
       {detail && (
@@ -914,6 +935,58 @@ function TipSection({ title, items }: { title: string; items?: string[] }) {
   );
 }
 
+function PaginationBar({
+  current,
+  pages,
+  total,
+  loading,
+  onChange,
+}: {
+  current: number;
+  pages: number;
+  total: number;
+  loading: boolean;
+  onChange: (page: number) => void;
+}) {
+  const safePages = Math.max(1, pages || 1);
+  const safeCurrent = Math.min(Math.max(1, current || 1), safePages);
+  const start = Math.max(1, Math.min(safeCurrent - 2, safePages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, safePages) }, (_, index) => start + index)
+    .filter(page => page <= safePages);
+
+  return (
+    <div style={pagerWrap}>
+      <div style={pagerMeta}>共 {total || 0} 条 · 第 {safeCurrent} / {safePages} 页</div>
+      <div style={pagerBtns}>
+        <button onClick={() => onChange(safeCurrent - 1)} disabled={safeCurrent <= 1 || loading} style={pagerBtn(safeCurrent <= 1 || loading)}>上一页</button>
+        {start > 1 && (
+          <>
+            <button onClick={() => onChange(1)} disabled={loading} style={pagerBtn(loading)}>1</button>
+            <span style={pagerDots}>...</span>
+          </>
+        )}
+        {pageNumbers.map(page => (
+          <button
+            key={page}
+            onClick={() => onChange(page)}
+            disabled={page === safeCurrent || loading}
+            style={page === safeCurrent ? pagerActiveBtn : pagerBtn(loading)}
+          >
+            {page}
+          </button>
+        ))}
+        {pageNumbers[pageNumbers.length - 1] < safePages && (
+          <>
+            <span style={pagerDots}>...</span>
+            <button onClick={() => onChange(safePages)} disabled={loading} style={pagerBtn(loading)}>{safePages}</button>
+          </>
+        )}
+        <button onClick={() => onChange(safeCurrent + 1)} disabled={safeCurrent >= safePages || loading} style={pagerBtn(safeCurrent >= safePages || loading)}>下一页</button>
+      </div>
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -982,6 +1055,63 @@ function tabBtn(active: boolean): React.CSSProperties {
     cursor: 'pointer',
   };
 }
+
+function pagerBtn(disabled: boolean): React.CSSProperties {
+  return {
+    minWidth: 34,
+    height: 32,
+    padding: '0 10px',
+    borderRadius: 8,
+    border: '1px solid #e8e6e1',
+    background: '#fff',
+    color: '#666',
+    fontSize: 12,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? .45 : 1,
+  };
+}
+
+const pagerActiveBtn: React.CSSProperties = {
+  minWidth: 34,
+  height: 32,
+  padding: '0 10px',
+  borderRadius: 8,
+  border: '1px solid #234b49',
+  background: '#234b49',
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'default',
+};
+
+const pagerWrap: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: 12,
+  flexWrap: 'wrap',
+  marginTop: 14,
+  paddingTop: 12,
+  borderTop: '1px solid #f0efec',
+};
+
+const pagerMeta: React.CSSProperties = {
+  fontSize: 12,
+  color: '#999',
+};
+
+const pagerBtns: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  flexWrap: 'wrap',
+};
+
+const pagerDots: React.CSSProperties = {
+  fontSize: 12,
+  color: '#aaa',
+  padding: '0 2px',
+};
 
 const ghostBtn: React.CSSProperties = {
   padding: '7px 14px',
