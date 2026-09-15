@@ -2082,13 +2082,230 @@
 
 .admin-skill-editor {
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .admin-form-grid {
   display: grid;
   gap: 10px;
+}
+
+.admin-skill-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-skill-summary > div {
+  min-height: 88px;
+  padding: 16px 18px;
+  border: 1px solid #eee5d8;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff 0%, #fbfaf7 100%);
+  box-shadow: 0 14px 34px rgba(31, 42, 37, .04);
+}
+
+.admin-skill-summary span {
+  display: block;
+  color: #8f918d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-skill-summary strong {
+  display: block;
+  margin-top: 10px;
+  color: #20302c;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.admin-skill-form-card,
+.admin-skill-list-card {
+  min-height: 640px;
+}
+
+.admin-skill-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-skill-card-head h2 {
+  margin-bottom: 5px;
+}
+
+.admin-skill-card-head p {
+  color: #939690;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-skill-count {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #eef5f2;
+  color: #244f4b;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-skill-form {
+  display: grid;
+  gap: 13px;
+}
+
+.admin-skill-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-skill-form label > span {
+  color: #66706b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-skill-content-field .admin-textarea {
+  min-height: 310px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.admin-skill-checkbox {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 8px !important;
+  color: #70756f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-skill-checkbox input {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-skill-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-skill-actions .admin-btn.primary {
+  flex: 1;
+}
+
+.admin-skill-empty {
+  min-height: 360px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  border: 1px dashed #e7dfd3;
+  border-radius: 14px;
+  background: #fbfaf7;
+  color: #9a9b96;
+}
+
+.admin-skill-empty strong {
+  color: #515b56;
+  font-size: 16px;
+}
+
+.admin-skill-empty span {
+  font-size: 12px;
+}
+
+.admin-skill-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-skill-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 15px 16px;
+  border: 1px solid #eee5d8;
+  border-radius: 14px;
+  background: #fff;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.admin-skill-item:hover,
+.admin-skill-item.active {
+  border-color: #b8cec7;
+  box-shadow: 0 16px 38px rgba(31, 42, 37, .06);
+  transform: translateY(-1px);
+}
+
+.admin-skill-item-main {
+  min-width: 0;
+}
+
+.admin-skill-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-skill-title-row h3 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #22312d;
+  font-size: 15px;
+}
+
+.admin-skill-title-row span {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f4f1ea;
+  color: #8b826d;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-skill-item p {
+  margin-top: 8px;
+  color: #68706b;
+  font-size: 12px;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-skill-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: #a0a39f;
+  font-size: 11px;
+}
+
+.admin-skill-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 1200px) {
@@ -2102,6 +2319,10 @@
   .admin-skill-editor {
     grid-template-columns: 1fr;
     height: auto;
+  }
+
+  .admin-skill-summary {
+    grid-template-columns: 1fr;
   }
 
   .admin-star-planet {

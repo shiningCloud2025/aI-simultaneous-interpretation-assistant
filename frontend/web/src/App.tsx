@@ -8,6 +8,7 @@ import { MainLayout } from './pages/MainLayout';
 import { ChangePwdPage } from './pages/ChangePwdPage';
 import { OfficialSitePage } from './pages/OfficialSitePage';
 import { ApiKeyGuidePage } from './pages/ApiKeyGuidePage';
+import { DesktopAppPage } from './pages/DesktopAppPage';
 import { SuperAdminConsole, SuperAdminLoginPage } from './features/superadmin/SuperAdminConsole';
 import { TeacherConsole } from './features/teacher/TeacherConsole';
 import './App.css';
@@ -44,6 +45,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<OfficialSitePage />} />
         <Route path="/api-key-guide" element={<ApiKeyGuidePage />} />
+        <Route path="/desktop" element={<DesktopAppPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot" element={<ForgotPage />} />

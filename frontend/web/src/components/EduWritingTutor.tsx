@@ -102,12 +102,6 @@ export function EduWritingTutor() {
     chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, chatLoading, selected?.id]);
 
-  useEffect(() => {
-    if (selected) {
-      loadTutorMessages(selected.id);
-    }
-  }, [selected?.id]);
-
   const loadRecords = async (nextPage = page) => {
     setLoadingRecords(true);
     try {
@@ -136,6 +130,7 @@ export function EduWritingTutor() {
     setQuestion('');
     setQuestionImages([]);
     setMessages([]);
+    loadTutorMessages(record.id);
   };
 
   const loadTutorMessages = async (evaluationId: number) => {
@@ -281,7 +276,10 @@ export function EduWritingTutor() {
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#1f2b27' }}>作文答疑</div>
                 <div style={{ fontSize: 12, color: '#8d948f', marginTop: 4 }}>围绕当前评阅连续追问，后端会按这篇作文维度保留上下文。</div>
               </div>
-              <button onClick={() => setMessages([])} disabled={messages.length === 0 || chatLoading} style={{ ...ghostBtn, opacity: messages.length === 0 || chatLoading ? .45 : 1 }}>清空本页对话</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => loadTutorMessages(selected.id)} disabled={loadingMessages || chatLoading} style={{ ...ghostBtn, opacity: loadingMessages || chatLoading ? .45 : 1 }}>{loadingMessages ? '刷新中' : '刷新历史'}</button>
+                <button onClick={() => setMessages([])} disabled={messages.length === 0 || chatLoading} style={{ ...ghostBtn, opacity: messages.length === 0 || chatLoading ? .45 : 1 }}>清空本页</button>
+              </div>
             </div>
 
             <div ref={chatBodyRef} style={chatBody}>
@@ -292,7 +290,8 @@ export function EduWritingTutor() {
                 </div>
               ) : messages.length === 0 ? (
                 <div style={emptyChat}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#283430' }}>可以从这些问题开始</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#283430' }}>这次评阅还没有历史答疑</div>
+                  <div style={{ fontSize: 12, color: '#9a9f9b', marginTop: 8 }}>选中评阅时已查询历史接口，可以从下面的问题开始继续追问。</div>
                   <div style={quickGrid}>
                     {['这篇作文主要为什么扣分？', '帮我把修改建议拆成三步。', '第二段怎么写会更自然？', '老师这次评分合理吗？'].map(text => (
                       <button key={text} onClick={() => setQuestion(text)} style={quickBtn}>{text}</button>
@@ -385,7 +384,7 @@ function SelectedSummary({ record, onPreview, compact = false }: { record: Evalu
 function ChatBubble({ message, onPreview }: { message: TutorMessage; onPreview: (url: string) => void }) {
   const isUser = message.role === 'user';
   return (
-    <div style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', maxWidth: '78%' }}>
+    <div style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', width: isUser ? 'min(640px, 76%)' : 'min(900px, 88%)' }}>
       <div style={{
         borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
         padding: '12px 14px',
@@ -549,7 +548,7 @@ const chatTopbar: React.CSSProperties = {
 const chatBody: React.CSSProperties = {
   minHeight: 0,
   overflowY: 'auto',
-  padding: '28px 22px',
+  padding: '30px max(22px, calc((100% - 980px) / 2))',
   background: 'linear-gradient(180deg, #fbfaf7 0%, #fff 54%)',
 };
 
@@ -599,7 +598,7 @@ const quickGrid: React.CSSProperties = {
   gridTemplateColumns: 'repeat(2, minmax(220px, 1fr))',
   gap: 10,
   marginTop: 20,
-  width: 'min(620px, 100%)',
+  width: 'min(720px, 100%)',
 };
 
 const quickBtn: React.CSSProperties = {

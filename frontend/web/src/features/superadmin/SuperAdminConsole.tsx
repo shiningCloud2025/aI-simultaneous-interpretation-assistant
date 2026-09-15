@@ -1658,7 +1658,7 @@ function SkillPanel() {
 
           <div className="admin-toolbar">
             <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="输入 Skill 名称查询" onKeyDown={(e) => { if (e.key === 'Enter') load(); }} />
-            <button className="admin-btn primary" onClick={load}>{loading ? '查询中' : '查询'}</button>
+            <button className="admin-btn primary" onClick={() => load()}>{loading ? '查询中' : '查询'}</button>
             {name && <button className="admin-btn" onClick={() => { setName(''); load(''); }}>清空</button>}
           </div>
           <ErrorBlock error={error} />

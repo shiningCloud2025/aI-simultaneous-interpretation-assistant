@@ -73,11 +73,9 @@ export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
   const nav = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(!user);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 1500); };
 
   const changePanel = (panel: string) => {
     setActivePanel(panel);
@@ -168,12 +166,10 @@ export function MainLayout() {
         <div className="topbar">
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={() => nav('/')} className="btn">官网</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
               <option value="dark">🌙 深色</option>
             </select>
-            <button onClick={() => showToast('桌面工具栏已就绪')} className="btn">🪟 工具栏</button>
             <button onClick={handleLogout} className="btn">退出</button>
           </div>
         </div>
@@ -181,7 +177,6 @@ export function MainLayout() {
           <PanelComponent />
         </div>
       </div>
-      {toast && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{toast}</div>}
     </div>
   );
 }

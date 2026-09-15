@@ -20,6 +20,7 @@ export function OfficialSitePage() {
           <a href="#audience" onClick={() => setNavOpen(false)}>适用人群</a>
           <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
           <Link to="/api-key-guide" onClick={() => setNavOpen(false)}>模型支持</Link>
+          <Link to="/desktop" onClick={() => setNavOpen(false)}>桌面端</Link>
           <Link to="/admin/login" onClick={() => setNavOpen(false)}>管理平台</Link>
         </nav>
         <button
