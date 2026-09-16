@@ -1,5 +1,6 @@
 com/lucky/server/common/enums/WritingCompositionTutorMessageRoleEnum.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardOnlineVO.class
+com/lucky/server/domain/entity/Classroom.class
 com/lucky/server/service/impl/SysUserApiKeyServiceImpl.class
 com/lucky/server/asr/stream/impl/AlibabaAsrService.class
 com/lucky/server/domain/vo/SpeakingMaterialGenerateSentenceVO.class
