@@ -7,9 +7,11 @@ import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.domain.dto.ClassroomCreateDTO;
+import com.lucky.server.domain.dto.ClassroomUpdateDTO;
 import com.lucky.server.domain.entity.Classroom;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.ClassroomDetailVO;
+import com.lucky.server.domain.vo.ClassroomInviteVO;
 import com.lucky.server.mapper.ClassroomMapper;
 import com.lucky.server.service.ClassroomService;
 import com.lucky.server.service.SysUserService;
@@ -70,6 +72,61 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
         return convertToDetailVO(classroom);
     }
 
+    @Override
+    public ClassroomDetailVO updateClassroom(Long classroomId, ClassroomUpdateDTO dto) {
+        SysUser currentTeacher = getCurrentTeacher();
+        Classroom classroom = getOwnedClassroom(classroomId, currentTeacher.getId());
+
+        ensureClassroomNormal(classroom);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean updated = lambdaUpdate()
+                .eq(Classroom::getId, classroomId)
+                .eq(Classroom::getTeacherId, currentTeacher.getId())
+                .eq(Classroom::getStatus, ClassroomStatusEnum.NORMAL)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .set(Classroom::getName, dto.name().trim())
+                .set(Classroom::getDescription, dto.description())
+                .set(Classroom::getUpdatedById, currentTeacher.getId())
+                .set(Classroom::getUpdateTime, now)
+                .update();
+
+        if (!updated) {
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "课堂信息已发生变化，请刷新后重试");
+        }
+
+        Classroom updatedClassroom = getOwnedClassroom(classroomId, currentTeacher.getId());
+        return convertToDetailVO(updatedClassroom);
+    }
+
+    @Override
+    public ClassroomInviteVO refreshInviteCode(Long classroomId) {
+        SysUser currentTeacher = getCurrentTeacher();
+        Classroom classroom = getOwnedClassroom(classroomId, currentTeacher.getId());
+
+        ensureClassroomNormal(classroom);
+
+        String inviteCode = generateInviteCode();
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean updated = lambdaUpdate()
+                .eq(Classroom::getId, classroomId)
+                .eq(Classroom::getTeacherId, currentTeacher.getId())
+                .eq(Classroom::getStatus, ClassroomStatusEnum.NORMAL)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .set(Classroom::getInviteCode, inviteCode)
+                .set(Classroom::getUpdatedById, currentTeacher.getId())
+                .set(Classroom::getUpdateTime, now)
+                .update();
+
+        if (!updated) {
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "课堂信息已发生变化，请刷新后重试");
+        }
+
+        return new ClassroomInviteVO(inviteCode);
+    }
+
     /**
      * 获取当前登录老师
      *
@@ -83,6 +140,38 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
         }
 
         return currentUser;
+    }
+
+    /**
+     * 获取当前老师拥有的课堂
+     *
+     * @param classroomId 课堂ID
+     * @param teacherId 老师用户ID
+     * @return 课堂实体
+     */
+    private Classroom getOwnedClassroom(Long classroomId, Long teacherId) {
+        Classroom classroom = lambdaQuery()
+                .eq(Classroom::getId, classroomId)
+                .eq(Classroom::getTeacherId, teacherId)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
+
+        if (classroom == null) {
+            throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "课堂不存在");
+        }
+
+        return classroom;
+    }
+
+    /**
+     * 校验课堂是否处于正常状态
+     *
+     * @param classroom 课堂实体
+     */
+    private void ensureClassroomNormal(Classroom classroom) {
+        if (classroom.getStatus() != ClassroomStatusEnum.NORMAL) {
+            throw new BusinessException(ResultCodeEnum.ILLEGAL_STATE, "已归档课堂不能执行此操作");
+        }
     }
 
     /**

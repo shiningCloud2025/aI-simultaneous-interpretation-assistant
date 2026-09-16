@@ -33,10 +33,7 @@ public interface ClassroomService extends IService<Classroom> {
      * @param dto 修改课堂参数
      * @return 修改后的课堂详情
      */
-    ClassroomDetailVO updateClassroom(
-            Long classroomId,
-            ClassroomUpdateDTO dto
-    );
+    ClassroomDetailVO updateClassroom(Long classroomId, ClassroomUpdateDTO dto);
 
     /**
      * 刷新课堂邀请码
