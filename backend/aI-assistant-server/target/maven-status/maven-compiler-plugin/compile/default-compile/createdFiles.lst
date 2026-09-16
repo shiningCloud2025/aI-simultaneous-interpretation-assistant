@@ -48,6 +48,7 @@ com/lucky/server/agent/read/ReadingWordMaterialGenerateAgent.class
 com/lucky/server/asr/stream/AsrCallback.class
 com/lucky/server/service/SpeakingTtsGenerateService.class
 com/lucky/server/mapper/AgentScopeSkillMapper.class
+com/lucky/server/domain/vo/ClassroomInviteVO.class
 com/lucky/server/domain/entity/SysUserFeedback.class
 com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl.class
 com/lucky/server/domain/dto/SysUserTeacherLoginDTO.class
@@ -85,10 +86,12 @@ com/lucky/server/handler/AudioWebSocketHandler.class
 com/lucky/server/asr/stream/AsrStreamProperties$Category.class
 com/lucky/server/asr/stream/AsrStreamProperties$Model.class
 com/lucky/server/service/superadmin/impl/SuperAdminLogDashboardServiceImpl.class
+com/lucky/server/domain/dto/ClassroomPageQueryDTO$Filter.class
 com/lucky/server/domain/entity/SpeakingMaterialGeneration.class
 com/lucky/server/domain/dto/SysUserModelPreferenceDTO.class
 com/lucky/server/agent/middleware/TimingMiddleware.class
 com/lucky/server/mapper/WritingCompositionGenerationFailureMapper.class
+com/lucky/server/service/impl/ClassroomServiceImpl.class
 com/lucky/server/config/AsrModelConfig$ProviderInfo.class
 com/lucky/server/common/enums/ClassroomLanguageEnum.class
 com/lucky/server/common/enums/SpeakingLanguageEnum.class
@@ -197,6 +200,7 @@ com/lucky/server/common/jwt/JwtUtil.class
 com/lucky/server/domain/entity/WritingCompositionTutorMessage.class
 com/lucky/server/service/impl/SysAttachmentServiceImpl.class
 com/lucky/server/domain/dto/SysUserTermLibrarySaveDTO.class
+com/lucky/server/domain/dto/ClassroomUpdateDTO.class
 com/lucky/server/config/SuperAdminLogProperties.class
 com/lucky/server/service/superadmin/impl/SuperAdminUserDashboardServiceImpl.class
 com/lucky/server/common/enums/ApiKeyTypeEnum.class
@@ -204,6 +208,7 @@ com/lucky/server/service/AuthTokenService.class
 com/lucky/server/mapper/WritingCompositionEvaluationFailureMapper.class
 com/lucky/server/mapper/SpeakingMaterialSentenceMapper.class
 com/lucky/server/domain/dto/SysUserStudentLoginDTO.class
+com/lucky/server/domain/vo/ClassroomDetailVO.class
 com/lucky/server/service/superadmin/SuperAdminUserDashboardService.class
 com/lucky/server/domain/entity/SysAttachment.class
 com/lucky/server/controller/api/SysUserFeedbackController.class
@@ -215,6 +220,7 @@ com/lucky/server/domain/entity/WritingCompositionEvaluationFailure.class
 com/lucky/server/mapper/WritingCompositionEvaluationMapper.class
 com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
 com/lucky/server/common/enums/ClassroomStatusEnum.class
+com/lucky/server/domain/dto/ClassroomCreateDTO.class
 com/lucky/server/common/enums/CompositionSubmitTypeEnum.class
 com/lucky/server/domain/dto/SuperAdminFeedbackProcessDTO.class
 com/lucky/server/domain/vo/WritingCompositionEvaluateResultVO$SentenceFeedback.class
@@ -239,11 +245,13 @@ com/lucky/server/controller/api/SysUserApiKeyController.class
 com/lucky/server/domain/dto/SuperAdminUserDashboardOnlineQueryDTO.class
 com/lucky/server/domain/vo/SpeakingEvaluationResultVO.class
 com/lucky/server/service/impl/SpeakingTtsGenerateServiceImpl.class
+com/lucky/server/service/ClassroomService.class
 com/lucky/server/domain/entity/SpeakingMaterialGenerationFailure.class
 com/lucky/server/common/util/RedisCacheUtil.class
 com/lucky/server/service/impl/SpeakingEvaluationServiceImpl$1.class
 com/lucky/server/asr/AsrFactory$1.class
 com/lucky/server/asr/stream/AsrConfig$AsrConfigBuilder.class
+com/lucky/server/domain/vo/ClassroomListVO.class
 com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO$Filter.class
 com/lucky/server/domain/entity/SysUserModelPreference.class
 com/lucky/server/agent/listen/CorrectionAgent.class
@@ -302,6 +310,7 @@ com/lucky/server/common/storage/FileStorageService.class
 com/lucky/server/domain/dto/FeedbackPageQueryDTO.class
 com/lucky/server/domain/vo/SpeakingMaterialPracticeSentenceVO.class
 com/lucky/server/controller/api/SysFileController.class
+com/lucky/server/mapper/ClassroomMapper.class
 com/lucky/server/config/SecurityConfig.class
 com/lucky/server/controller/superadmin/SuperAdminLogDashboardController.class
 com/lucky/server/service/SysUserEmailService.class
@@ -332,3 +341,4 @@ com/lucky/server/domain/vo/SuperAdminLogContentVO.class
 com/lucky/server/mapper/SysAttachmentMapper.class
 com/lucky/server/common/util/AudioUtil.class
 com/lucky/server/domain/dto/SysUserTermEntrySaveDTO$EntryItem.class
+com/lucky/server/domain/dto/ClassroomPageQueryDTO.class

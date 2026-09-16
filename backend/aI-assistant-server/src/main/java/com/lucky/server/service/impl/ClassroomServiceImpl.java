@@ -1,5 +1,8 @@
 package com.lucky.server.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ClassroomStatusEnum;
@@ -7,11 +10,13 @@ import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.domain.dto.ClassroomCreateDTO;
+import com.lucky.server.domain.dto.ClassroomPageQueryDTO;
 import com.lucky.server.domain.dto.ClassroomUpdateDTO;
 import com.lucky.server.domain.entity.Classroom;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.ClassroomDetailVO;
 import com.lucky.server.domain.vo.ClassroomInviteVO;
+import com.lucky.server.domain.vo.ClassroomListVO;
 import com.lucky.server.mapper.ClassroomMapper;
 import com.lucky.server.service.ClassroomService;
 import com.lucky.server.service.SysUserService;
@@ -20,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,6 +132,100 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
         }
 
         return new ClassroomInviteVO(inviteCode);
+    }
+
+    @Override
+    public void archiveClassroom(Long classroomId) {
+        SysUser currentTeacher = getCurrentTeacher();
+        Classroom classroom = getOwnedClassroom(classroomId, currentTeacher.getId());
+
+        ensureClassroomNormal(classroom);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean updated = lambdaUpdate()
+                .eq(Classroom::getId, classroomId)
+                .eq(Classroom::getTeacherId, currentTeacher.getId())
+                .eq(Classroom::getStatus, ClassroomStatusEnum.NORMAL)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .set(Classroom::getStatus, ClassroomStatusEnum.ARCHIVED)
+                .set(Classroom::getUpdatedById, currentTeacher.getId())
+                .set(Classroom::getUpdateTime, now)
+                .update();
+
+        if (!updated) {
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "课堂状态已发生变化，请刷新后重试");
+        }
+    }
+
+    @Override
+    public ClassroomDetailVO getMyClassroomDetail(Long classroomId) {
+        SysUser currentTeacher = getCurrentTeacher();
+        Classroom classroom = getOwnedClassroom(classroomId, currentTeacher.getId());
+        return convertToDetailVO(classroom);
+    }
+
+    @Override
+    public Page<ClassroomListVO> pageMyClassrooms(ClassroomPageQueryDTO dto) {
+        SysUser currentTeacher = getCurrentTeacher();
+
+        LambdaQueryWrapper<Classroom> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(Classroom::getTeacherId, currentTeacher.getId());
+        wrapper.eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL);
+
+        ClassroomPageQueryDTO.Filter filter = dto.filter();
+
+        if (filter != null) {
+            if (filter.keyword() != null && !filter.keyword().isBlank()) {
+                wrapper.like(Classroom::getName, filter.keyword().trim());
+            }
+
+            if (filter.status() != null) {
+                wrapper.eq(Classroom::getStatus, filter.status());
+            }
+        }
+
+        wrapper.orderByDesc(Classroom::getStatus);
+        wrapper.orderByDesc(Classroom::getUpdateTime);
+
+        Page<Classroom> pageResult = page(new Page<>(dto.page(), dto.size()), wrapper);
+        List<ClassroomListVO> records = pageResult.getRecords()
+                .stream()
+                .map(this::convertToListVO)
+                .toList();
+
+        Page<ClassroomListVO> result = new Page<>();
+        result.setRecords(records);
+        result.setTotal(pageResult.getTotal());
+        result.setSize(pageResult.getSize());
+        result.setCurrent(pageResult.getCurrent());
+        result.setPages(pageResult.getPages());
+        return result;
+    }
+
+    @Override
+    public Classroom getNormalClassroomByInviteCode(String inviteCode) {
+        if (inviteCode == null || inviteCode.isBlank()) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "课堂邀请码不能为空");
+        }
+
+        String normalizedInviteCode = inviteCode.trim().toUpperCase(Locale.ROOT);
+
+        if (normalizedInviteCode.length() != INVITE_CODE_LENGTH) {
+            throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "课堂邀请码格式不正确");
+        }
+
+        Classroom classroom = lambdaQuery()
+                .eq(Classroom::getInviteCode, normalizedInviteCode)
+                .eq(Classroom::getStatus, ClassroomStatusEnum.NORMAL)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
+
+        if (classroom == null) {
+            throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "课堂邀请码无效");
+        }
+
+        return classroom;
     }
 
     /**
@@ -245,6 +346,27 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
                 classroom.getAcademicYear(),
                 classroom.getSemesterCode(),
                 classroom.getDescription(),
+                classroom.getInviteCode(),
+                classroom.getStatus(),
+                classroom.getCreateTime(),
+                classroom.getUpdateTime()
+        );
+    }
+
+    /**
+     * 将课堂实体转换为课堂列表VO
+     *
+     * @param classroom 课堂实体
+     * @return 课堂列表VO
+     */
+    private ClassroomListVO convertToListVO(Classroom classroom) {
+        return new ClassroomListVO(
+                classroom.getId(),
+                classroom.getName(),
+                classroom.getLanguageCode(),
+                classroom.getStageCode(),
+                classroom.getAcademicYear(),
+                classroom.getSemesterCode(),
                 classroom.getInviteCode(),
                 classroom.getStatus(),
                 classroom.getCreateTime(),
