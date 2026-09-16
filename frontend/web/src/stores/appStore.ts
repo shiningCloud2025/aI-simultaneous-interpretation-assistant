@@ -33,6 +33,12 @@ type AppRequestInit = RequestInit & {
   skipAuth?: boolean;
 };
 
+const SERVICE_UNAVAILABLE_MESSAGE = '系统暂时无法响应，请稍后再试';
+
+function parseResponseJson(res: Response) {
+  return res.json().catch(() => ({}));
+}
+
 async function request<T>(path: string, options?: AppRequestInit): Promise<T> {
   const token = useAppStore.getState().token;
   const { skipAuth, ...requestOptions } = options || {};
@@ -42,16 +48,21 @@ async function request<T>(path: string, options?: AppRequestInit): Promise<T> {
   };
   if (!skipAuth && token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
-  const json = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
+  } catch {
+    throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+  }
+  const json = await parseResponseJson(res);
   if (res.status === 401) {
     useAppStore.getState().logout();
   }
   if (!res.ok) {
-    throw new Error(json.detail || json.message || `请求失败 (HTTP ${res.status})`);
+    throw new Error(json.detail || json.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   if (json.code !== 200) {
-    throw new Error(json.detail || json.message || '请求失败');
+    throw new Error(json.detail || json.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   return json.data;
 }

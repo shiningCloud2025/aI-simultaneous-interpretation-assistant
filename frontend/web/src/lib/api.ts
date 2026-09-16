@@ -7,6 +7,8 @@ export const APP_ORIGIN = API_BASE.startsWith('http')
   ? API_BASE.replace(/\/api$/, '')
   : window.location.origin;
 
+const SERVICE_UNAVAILABLE_MESSAGE = '系统暂时无法响应，请稍后再试';
+
 export function getToken(): string {
   return localStorage.getItem('token') || '';
 }
@@ -20,6 +22,10 @@ type ApiRequestInit = RequestInit & {
   skipAuth?: boolean;
 };
 
+function parseResponseJson(res: Response) {
+  return res.json().catch(() => ({}));
+}
+
 export async function apiCall<T = unknown>(
   path: string,
   options: ApiRequestInit = {}
@@ -32,16 +38,21 @@ export async function apiCall<T = unknown>(
   };
   if (!skipAuth && token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
-  const json = await res.json().catch(() => ({}));
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...requestOptions, headers });
+  } catch {
+    throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+  }
+  const json = await parseResponseJson(res);
   if (res.status === 401) {
     clearAuthState();
   }
   if (!res.ok) {
-    throw new Error(json?.detail || json?.message || `请求失败 (HTTP ${res.status})`);
+    throw new Error(json?.detail || json?.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   if (json && typeof json === 'object' && 'code' in json && json.code !== 200) {
-    throw new Error(json.detail || json.message || `请求失败 (code=${json.code})`);
+    throw new Error(json.detail || json.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   return (json?.data ?? json) as T;
 }
@@ -51,20 +62,25 @@ export async function uploadFile<T = unknown>(file: File): Promise<T> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(`${API_BASE}/common/file/upload`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-  const json = await res.json().catch(() => ({}));
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/common/file/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    });
+  } catch {
+    throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+  }
+  const json = await parseResponseJson(res);
   if (res.status === 401) {
     clearAuthState();
   }
   if (!res.ok) {
-    throw new Error(json?.detail || json?.message || `上传失败 (HTTP ${res.status})`);
+    throw new Error(json?.detail || json?.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   if (json && typeof json === 'object' && 'code' in json && json.code !== 200) {
-    throw new Error(json.detail || json.message || `上传失败 (code=${json.code})`);
+    throw new Error(json.detail || json.message || SERVICE_UNAVAILABLE_MESSAGE);
   }
   return (json?.data ?? json) as T;
 }

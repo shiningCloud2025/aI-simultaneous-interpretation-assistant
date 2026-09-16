@@ -204,21 +204,21 @@ export interface ReviewResult {
 // ============ 接口封装 ============
 
 export const api = {
-  // ---- 登录（三种方式，与平台端一致，均走 /sys/user/login，靠字段区分）----
+  // ---- 登录（三种方式，均走学生端接口，靠请求字段区分）----
   login: (keyword: string, password: string) =>
-    request<{ token: string }>('/sys/user/login', {
+    request<{ token: string }>('/sys/user/student/login', {
       method: 'POST',
       body: JSON.stringify({ keyword, password }),
     }),
 
   loginByPhone: (phone: string, captcha: string) =>
-    request<{ token: string }>('/sys/user/login', {
+    request<{ token: string }>('/sys/user/student/login', {
       method: 'POST',
       body: JSON.stringify({ phone, captcha }),
     }),
 
   loginByEmail: (email: string, captcha: string) =>
-    request<{ token: string }>('/sys/user/login', {
+    request<{ token: string }>('/sys/user/student/login', {
       method: 'POST',
       body: JSON.stringify({ email, captcha }),
     }),
@@ -233,7 +233,7 @@ export const api = {
     smsCaptcha?: string;
     emailCaptcha?: string;
   }) =>
-    request<{ token: string }>('/sys/user/register', {
+    request<{ token: string }>('/sys/user/student/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
