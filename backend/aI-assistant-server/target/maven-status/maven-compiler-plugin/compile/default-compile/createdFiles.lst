@@ -76,6 +76,7 @@ com/lucky/server/agent/write/WritingCompositionTutorAgent.class
 com/lucky/server/service/SpeakingMaterialSentenceService.class
 com/lucky/server/agent/speak/SpeakingMaterialAgentSentenceResult.class
 com/lucky/server/common/enums/UserStatusEnum.class
+com/lucky/server/common/enums/ClassroomSemesterEnum.class
 com/lucky/server/domain/vo/SuperAdminLogContentVO$Entry.class
 com/lucky/server/domain/dto/SuperAdminSkillUploadDTO.class
 com/lucky/server/config/AsrModelConfig$ModelInfo.class
@@ -88,6 +89,7 @@ com/lucky/server/domain/dto/SysUserModelPreferenceDTO.class
 com/lucky/server/agent/middleware/TimingMiddleware.class
 com/lucky/server/mapper/WritingCompositionGenerationFailureMapper.class
 com/lucky/server/config/AsrModelConfig$ProviderInfo.class
+com/lucky/server/common/enums/ClassroomLanguageEnum.class
 com/lucky/server/common/enums/SpeakingLanguageEnum.class
 com/lucky/server/service/impl/SysUserShortcutConfigServiceImpl.class
 com/lucky/server/domain/vo/SysUserTermLibraryVO.class
@@ -119,6 +121,7 @@ com/lucky/server/domain/dto/WritingCompositionEvaluationPageQueryDTO.class
 com/lucky/server/domain/vo/SysUserFeedbackVO.class
 com/lucky/server/domain/vo/WritingCompositionEvaluationRecordVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardOnlineVO$OnlineUser.class
+com/lucky/server/common/enums/ClassroomStageEnum.class
 com/lucky/server/domain/vo/SysUserInfoVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardSummaryVO$Metric.class
 com/lucky/server/domain/vo/SuperAdminSkillDetailVO.class
@@ -210,6 +213,7 @@ com/lucky/server/common/tester/LlmApiKeyTester.class
 com/lucky/server/domain/entity/WritingCompositionEvaluationFailure.class
 com/lucky/server/mapper/WritingCompositionEvaluationMapper.class
 com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
+com/lucky/server/common/enums/ClassroomStatusEnum.class
 com/lucky/server/common/enums/CompositionSubmitTypeEnum.class
 com/lucky/server/domain/dto/SuperAdminFeedbackProcessDTO.class
 com/lucky/server/domain/vo/WritingCompositionEvaluateResultVO$SentenceFeedback.class
