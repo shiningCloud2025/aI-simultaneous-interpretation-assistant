@@ -37,19 +37,7 @@ public interface ClassroomMemberService extends IService<ClassroomMember> {
      * @param dto 修改参数
      * @return 修改后的课堂成员详情
      */
-    ClassroomMemberDetailVO updateMyClassroomMember(Long classroomMemberId,
-                                                    ClassroomMemberUpdateDTO dto
-    );
-    /**
-     * 学生修改自己在课堂中的真实姓名
-     *
-     * @param classroomMemberId 课堂成员ID
-     * @param dto 修改参数
-     * @return 修改后的课堂成员详情
-     */
-    ClassroomMemberDetailVO updateMyClassroomMember(Long classroomMemberId,
-                                                    ClassroomMemberUpdateDTO dto
-    );
+    ClassroomMemberDetailVO updateMyClassroomMember(Long classroomMemberId, ClassroomMemberUpdateDTO dto);
 
     /**
      * 老师修改课堂成员的真实姓名
@@ -58,23 +46,7 @@ public interface ClassroomMemberService extends IService<ClassroomMember> {
      * @param dto 修改参数
      * @return 修改后的课堂成员详情
      */
-    ClassroomMemberDetailVO updateClassroomMember(
-            Long classroomMemberId,
-            ClassroomMemberUpdateDTO dto
-    );
-
-
-    /**
-     * 老师修改课堂成员的真实姓名
-     *
-     * @param classroomMemberId 课堂成员ID
-     * @param dto 修改参数
-     * @return 修改后的课堂成员详情
-     */
-    ClassroomMemberDetailVO updateClassroomMember(
-            Long classroomMemberId,
-            ClassroomMemberUpdateDTO dto
-    );
+    ClassroomMemberDetailVO updateClassroomMember(Long classroomMemberId, ClassroomMemberUpdateDTO dto);
 
     /**
      * 老师移除课堂成员
