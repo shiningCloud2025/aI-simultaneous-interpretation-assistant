@@ -24,13 +24,10 @@ public interface ClassroomMemberService extends IService<ClassroomMember> {
      * @param studentId 学生用户ID
      * @param studentName 学生在课堂中的真实姓名
      * @param joinType 加入方式
-     * @return 课堂成员实体
+     * @return 课堂成员ID
      */
-    ClassroomMember addClassroomMember(
-            Long classroomId,
-            Long studentId,
-            String studentName,
-            ClassroomMemberJoinTypeEnum joinType
+    Long addClassroomMember(Long classroomId, Long studentId,
+            String studentName, ClassroomMemberJoinTypeEnum joinType
     );
 
     /**
@@ -40,10 +37,32 @@ public interface ClassroomMemberService extends IService<ClassroomMember> {
      * @param dto 修改参数
      * @return 修改后的课堂成员详情
      */
-    ClassroomMemberDetailVO updateMyClassroomMember(
+    ClassroomMemberDetailVO updateMyClassroomMember(Long classroomMemberId,
+                                                    ClassroomMemberUpdateDTO dto
+    );
+    /**
+     * 学生修改自己在课堂中的真实姓名
+     *
+     * @param classroomMemberId 课堂成员ID
+     * @param dto 修改参数
+     * @return 修改后的课堂成员详情
+     */
+    ClassroomMemberDetailVO updateMyClassroomMember(Long classroomMemberId,
+                                                    ClassroomMemberUpdateDTO dto
+    );
+
+    /**
+     * 老师修改课堂成员的真实姓名
+     *
+     * @param classroomMemberId 课堂成员ID
+     * @param dto 修改参数
+     * @return 修改后的课堂成员详情
+     */
+    ClassroomMemberDetailVO updateClassroomMember(
             Long classroomMemberId,
             ClassroomMemberUpdateDTO dto
     );
+
 
     /**
      * 老师修改课堂成员的真实姓名
