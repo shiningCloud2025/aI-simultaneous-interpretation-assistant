@@ -144,6 +144,7 @@ com/lucky/server/mapper/SpeakingEvaluationRecordMapper.class
 com/lucky/server/common/enums/CompositionDifficultyEnum.class
 com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl$2.class
 com/lucky/server/domain/vo/SpeakingEvaluationWordVO.class
+com/lucky/server/common/enums/ClassroomMemberJoinTypeEnum.class
 com/lucky/server/controller/superadmin/SuperAdminUserManageController.class
 com/lucky/server/controller/api/SysUserTermLibraryController.class
 com/lucky/server/domain/dto/SuperAdminSkillPageQueryDTO.class
