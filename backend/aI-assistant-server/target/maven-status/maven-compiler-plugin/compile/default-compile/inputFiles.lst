@@ -73,6 +73,7 @@
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/SuperAdminSkillUpdateDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/config/ReadingWordImageProperties.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/common/tester/AsrApiKeyTester.java
+/Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/vo/ClassroomMemberDetailVO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/impl/WritingCompositionTutorMessageServiceImpl.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/SpeakingTtsGenerateService.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/controller/api/ReadingWordMaterialController.java
@@ -83,6 +84,7 @@
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/common/storage/FileStorageService.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/vo/SysUserTermEntryVO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/controller/superadmin/SysUserSuperAdminController.java
+/Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/ClassroomMemberUpdateDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/filter/JwtAuthFilter.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/mapper/SysAttachmentMapper.java
@@ -124,6 +126,7 @@
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/superadmin/SuperAdminUserDashboardService.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/SuperAdminFeedbackPageQueryDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/common/enums/SpeakingLanguageEnum.java
+/Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/vo/ClassroomMemberListVO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/controller/api/SysUserFeedbackController.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/agent/middleware/DynamicContextMiddleware.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/entity/SpeakingMaterialSentence.java
@@ -193,6 +196,7 @@
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/entity/WritingCompositionEvaluation.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/mapper/WritingCompositionEvaluationFailureMapper.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/agent/listen/ListenTestClass.java
+/Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/ClassroomMemberPageQueryDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/vo/SysFileVO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/controller/superadmin/SuperAdminSkillManageController.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/common/enums/WritingCompositionTutorMessageRoleEnum.java
@@ -257,6 +261,7 @@
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/ReadingWordMaterialService.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/vo/SpeakingMaterialPracticeSentenceVO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/impl/SpeakingEvaluationRecordServiceImpl.java
+/Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/service/impl/ClassroomMemberServiceImpl.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/dto/ReadingWordMaterialGenerateDTO.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/domain/entity/ReadingWordMaterial.java
 /Users/zhaoyunhan/PersonalJavaProject/aI-simultaneous-interpretation-assistant/backend/aI-assistant-server/src/main/java/com/lucky/server/mapper/ClassroomMemberMapper.java

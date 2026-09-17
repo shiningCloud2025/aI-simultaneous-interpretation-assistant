@@ -58,22 +58,23 @@ public interface ClassroomMemberService extends IService<ClassroomMember> {
     /**
      * 获取课堂成员详情
      *
+     * 老师可以查看自己课堂的成员，
+     * 学生可以查看自己已加入课堂的成员。
+     *
      * @param classroomMemberId 课堂成员ID
      * @return 课堂成员详情
      */
-    ClassroomMemberDetailVO getClassroomMemberDetail(
-            Long classroomMemberId
-    );
+    ClassroomMemberDetailVO getClassroomMemberDetail(Long classroomMemberId);
 
     /**
      * 分页查询指定课堂的成员
+     *
+     * 老师可以查询自己课堂的成员，
+     * 学生可以查询自己已加入课堂的成员。
      *
      * @param classroomId 课堂ID
      * @param dto 分页查询参数
      * @return 课堂成员分页数据
      */
-    Page<ClassroomMemberListVO> pageClassroomMembers(
-            Long classroomId,
-            ClassroomMemberPageQueryDTO dto
-    );
+    Page<ClassroomMemberListVO> pageClassroomMembers(Long classroomId, ClassroomMemberPageQueryDTO dto);
 }
