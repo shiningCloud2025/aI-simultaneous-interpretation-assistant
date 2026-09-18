@@ -66,6 +66,7 @@ com/lucky/server/service/SysAttachmentService.class
 com/lucky/server/domain/vo/SysUserModelPreferenceVO.class
 com/lucky/server/common/tester/AsrApiKeyTester.class
 com/lucky/server/domain/vo/SysUserLoginTokenVO.class
+com/lucky/server/domain/entity/ClassroomSession.class
 com/lucky/server/service/impl/ReadingWordImageGenerateServiceImpl.class
 com/lucky/server/common/storage/impl/TencentCosStorageServiceImpl.class
 com/lucky/server/service/ClassroomMemberService.class
@@ -357,6 +358,7 @@ com/lucky/server/domain/dto/WritingCompositionGenerateDTO.class
 com/lucky/server/domain/vo/WritingCompositionGenerationRecordVO.class
 com/lucky/server/service/impl/WritingCompositionGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermEntryService.class
+com/lucky/server/mapper/ClassroomSessionMapper.class
 com/lucky/server/service/impl/SysUserModelPreferenceServiceImpl.class
 com/lucky/server/domain/vo/SuperAdminLogContentVO.class
 com/lucky/server/mapper/SysAttachmentMapper.class
