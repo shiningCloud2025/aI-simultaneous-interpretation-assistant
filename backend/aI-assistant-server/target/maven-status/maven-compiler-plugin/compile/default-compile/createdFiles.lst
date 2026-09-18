@@ -91,6 +91,7 @@ com/lucky/server/service/superadmin/impl/SuperAdminLogDashboardServiceImpl.class
 com/lucky/server/domain/dto/ClassroomPageQueryDTO$Filter.class
 com/lucky/server/domain/entity/SpeakingMaterialGeneration.class
 com/lucky/server/domain/dto/SysUserModelPreferenceDTO.class
+com/lucky/server/service/impl/ClassroomSessionServiceImpl.class
 com/lucky/server/agent/middleware/TimingMiddleware.class
 com/lucky/server/mapper/WritingCompositionGenerationFailureMapper.class
 com/lucky/server/service/impl/ClassroomServiceImpl.class
@@ -247,6 +248,7 @@ com/lucky/server/domain/vo/SysUserTermEntryVO.class
 com/lucky/server/service/superadmin/SuperAdminFeedbackService.class
 com/lucky/server/domain/vo/ClassroomMemberListVO.class
 com/lucky/server/controller/api/SysUserModelPreferenceController.class
+com/lucky/server/domain/dto/ClassroomSessionStartDTO.class
 com/lucky/server/domain/vo/SpeakingMaterialPracticeDetailVO.class
 com/lucky/server/service/impl/SpeakingEvaluationServiceImpl.class
 com/lucky/server/domain/vo/SysFileVO.class
@@ -304,6 +306,7 @@ com/lucky/server/common/enums/SpeakingSceneEnum.class
 com/lucky/server/domain/dto/SpeakingMaterialPageQueryDTO$Filter.class
 com/lucky/server/handler/AudioWebSocketHandler$1.class
 com/lucky/server/common/basic/BusinessException.class
+com/lucky/server/service/ClassroomSessionService.class
 com/lucky/server/domain/dto/SuperAdminSkillUpdateDTO.class
 com/lucky/server/domain/entity/SpeakingEvaluationRecord.class
 com/lucky/server/mapper/SpeakingMaterialGenerationMapper.class
@@ -356,6 +359,7 @@ com/lucky/server/domain/dto/SuperAdminUserDashboardTrendQueryDTO.class
 com/lucky/server/service/impl/WritingCompositionEvaluationServiceImpl$1.class
 com/lucky/server/domain/dto/WritingCompositionGenerateDTO.class
 com/lucky/server/domain/vo/WritingCompositionGenerationRecordVO.class
+com/lucky/server/domain/vo/ClassroomSessionDetailVO.class
 com/lucky/server/service/impl/WritingCompositionGenerationFailureServiceImpl.class
 com/lucky/server/service/SysUserTermEntryService.class
 com/lucky/server/mapper/ClassroomSessionMapper.class
