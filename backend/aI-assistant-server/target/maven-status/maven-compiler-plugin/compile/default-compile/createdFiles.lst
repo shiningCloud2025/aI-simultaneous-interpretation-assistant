@@ -253,6 +253,7 @@ com/lucky/server/agent/speak/SpeakingMaterialGenerateAgent.class
 com/lucky/server/domain/dto/FeedbackPageQueryDTO$Filter.class
 com/lucky/server/config/LlmModelConfig.class
 com/lucky/server/controller/api/SysUserApiKeyController.class
+com/lucky/server/common/enums/ClassroomSessionStatusEnum.class
 com/lucky/server/domain/dto/SuperAdminUserDashboardOnlineQueryDTO.class
 com/lucky/server/domain/vo/SpeakingEvaluationResultVO.class
 com/lucky/server/service/impl/SpeakingTtsGenerateServiceImpl.class
