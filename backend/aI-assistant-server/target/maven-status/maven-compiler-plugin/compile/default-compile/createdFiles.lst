@@ -162,6 +162,7 @@ com/lucky/server/domain/vo/SuperAdminOnlineUserVO.class
 com/lucky/server/config/RedisConfig.class
 com/lucky/server/domain/dto/SysUserSkillPageQueryDTO.class
 com/lucky/server/domain/dto/SysUserShortcutConfigSaveDTO.class
+com/lucky/server/controller/api/StudentClassroomController.class
 com/lucky/server/service/superadmin/SuperAdminService.class
 com/lucky/server/domain/dto/SpeakingEvaluationDTO.class
 com/lucky/server/service/impl/SpeakingMaterialSentenceServiceImpl$1.class
@@ -174,6 +175,7 @@ com/lucky/server/common/email/EmailVerifyCodeUtil.class
 com/lucky/server/service/impl/SysUserSkillServiceImpl.class
 com/lucky/server/service/FeishuFeedbackNotifyService.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardStructureVO$TypeItem.class
+com/lucky/server/controller/api/TeacherClassroomController.class
 com/lucky/server/common/enums/ReadingLanguageEnum.class
 com/lucky/server/agent/middleware/StopOnAllDeniedMiddleware.class
 com/lucky/server/mapper/SysUserFeedbackMapper.class
@@ -220,6 +222,7 @@ com/lucky/server/domain/entity/SysAttachment.class
 com/lucky/server/controller/api/SysUserFeedbackController.class
 com/lucky/server/service/impl/SysUserTermLibraryServiceImpl.class
 com/lucky/server/domain/vo/SuperAdminSkillVO.class
+com/lucky/server/controller/api/TeacherClassroomMemberController.class
 com/lucky/server/common/enums/SpeakingMaterialGenerationFailureStageEnum.class
 com/lucky/server/common/tester/LlmApiKeyTester.class
 com/lucky/server/domain/entity/WritingCompositionEvaluationFailure.class
@@ -344,6 +347,7 @@ com/lucky/server/mapper/SysUserModelPreferenceMapper.class
 com/lucky/server/config/AgentScopeMysqlProperties.class
 com/lucky/server/controller/api/WritingCompositionController.class
 com/lucky/server/controller/superadmin/SuperAdminFeedbackController.class
+com/lucky/server/controller/api/StudentClassroomMemberController.class
 com/lucky/server/service/SysUserService.class
 com/lucky/server/common/util/WebUtil.class
 com/lucky/server/domain/dto/SuperAdminUserDashboardTrendQueryDTO.class
