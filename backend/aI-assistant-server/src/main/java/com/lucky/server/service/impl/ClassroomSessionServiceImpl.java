@@ -220,4 +220,215 @@ public class ClassroomSessionServiceImpl
                 now
         );
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ClassroomSessionDetailVO resumeClassroomSession(
+            Long classroomSessionId
+    ) {
+        SysUser currentTeacher = sysUserService.getCurrentUser();
+
+        if (currentTeacher.getUserType() != UserTypeEnum.TEACHER) {
+            throw new BusinessException(
+                    ResultCodeEnum.FORBIDDEN,
+                    "只有老师可以继续课次"
+            );
+        }
+
+        if (classroomSessionId == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.PARAM_ERROR,
+                    "课次ID不能为空"
+            );
+        }
+
+        ClassroomSession session = lambdaQuery()
+                .eq(ClassroomSession::getId, classroomSessionId)
+                .eq(ClassroomSession::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
+
+        if (session == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.DATA_NOT_EXIST,
+                    "课次不存在"
+            );
+        }
+
+        if (!session.getTeacherId().equals(currentTeacher.getId())) {
+            throw new BusinessException(
+                    ResultCodeEnum.FORBIDDEN,
+                    "只有本次开课的老师可以继续课次"
+            );
+        }
+
+        Classroom classroom = classroomMapper.selectOne(
+                Wrappers.<Classroom>lambdaQuery()
+                        .eq(Classroom::getId, session.getClassroomId())
+                        .eq(Classroom::getTeacherId, currentTeacher.getId())
+                        .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+        );
+
+        if (classroom == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.DATA_NOT_EXIST,
+                    "课堂不存在"
+            );
+        }
+
+        if (classroom.getStatus() != ClassroomStatusEnum.NORMAL) {
+            throw new BusinessException(
+                    ResultCodeEnum.ILLEGAL_STATE,
+                    "已归档课堂不能继续课次"
+            );
+        }
+
+        if (session.getStatus() != ClassroomSessionStatusEnum.PAUSED) {
+            throw new BusinessException(
+                    ResultCodeEnum.ILLEGAL_STATE,
+                    "只有已暂停的课次可以继续"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean updated = lambdaUpdate()
+                .eq(ClassroomSession::getId, classroomSessionId)
+                .eq(
+                        ClassroomSession::getStatus,
+                        ClassroomSessionStatusEnum.PAUSED
+                )
+                .eq(ClassroomSession::getDeleted, DeletedStatusEnum.NORMAL)
+                .set(
+                        ClassroomSession::getStatus,
+                        ClassroomSessionStatusEnum.IN_PROGRESS
+                )
+                .set(
+                        ClassroomSession::getUpdatedById,
+                        currentTeacher.getId()
+                )
+                .set(ClassroomSession::getUpdateTime, now)
+                .update();
+
+        if (!updated) {
+            throw new BusinessException(
+                    ResultCodeEnum.CONFLICT,
+                    "课次状态已发生变化，请刷新后重试"
+            );
+        }
+
+        return new ClassroomSessionDetailVO(
+                session.getId(),
+                session.getClassroomId(),
+                session.getTeacherId(),
+                session.getSessionName(),
+                ClassroomSessionStatusEnum.IN_PROGRESS,
+                session.getStartTime(),
+                session.getEndTime(),
+                session.getCreateTime(),
+                now
+        );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ClassroomSessionDetailVO endClassroomSession(
+            Long classroomSessionId
+    ) {
+        SysUser currentTeacher = sysUserService.getCurrentUser();
+
+        if (currentTeacher.getUserType() != UserTypeEnum.TEACHER) {
+            throw new BusinessException(
+                    ResultCodeEnum.FORBIDDEN,
+                    "只有老师可以结束课次"
+            );
+        }
+
+        if (classroomSessionId == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.PARAM_ERROR,
+                    "课次ID不能为空"
+            );
+        }
+
+        ClassroomSession session = lambdaQuery()
+                .eq(ClassroomSession::getId, classroomSessionId)
+                .eq(ClassroomSession::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
+
+        if (session == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.DATA_NOT_EXIST,
+                    "课次不存在"
+            );
+        }
+
+        if (!session.getTeacherId().equals(currentTeacher.getId())) {
+            throw new BusinessException(
+                    ResultCodeEnum.FORBIDDEN,
+                    "只有本次开课的老师可以结束课次"
+            );
+        }
+
+        Classroom classroom = classroomMapper.selectOne(
+                Wrappers.<Classroom>lambdaQuery()
+                        .eq(Classroom::getId, session.getClassroomId())
+                        .eq(Classroom::getTeacherId, currentTeacher.getId())
+                        .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+        );
+
+        if (classroom == null) {
+            throw new BusinessException(
+                    ResultCodeEnum.DATA_NOT_EXIST,
+                    "课堂不存在"
+            );
+        }
+
+        if (session.getStatus() == ClassroomSessionStatusEnum.ENDED) {
+            throw new BusinessException(
+                    ResultCodeEnum.ILLEGAL_STATE,
+                    "课次已经结束"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean updated = lambdaUpdate()
+                .eq(ClassroomSession::getId, classroomSessionId)
+                .in(
+                        ClassroomSession::getStatus,
+                        ClassroomSessionStatusEnum.IN_PROGRESS,
+                        ClassroomSessionStatusEnum.PAUSED
+                )
+                .eq(ClassroomSession::getDeleted, DeletedStatusEnum.NORMAL)
+                .set(
+                        ClassroomSession::getStatus,
+                        ClassroomSessionStatusEnum.ENDED
+                )
+                .set(ClassroomSession::getEndTime, now)
+                .set(
+                        ClassroomSession::getUpdatedById,
+                        currentTeacher.getId()
+                )
+                .set(ClassroomSession::getUpdateTime, now)
+                .update();
+
+        if (!updated) {
+            throw new BusinessException(
+                    ResultCodeEnum.CONFLICT,
+                    "课次状态已发生变化，请刷新后重试"
+            );
+        }
+
+        return new ClassroomSessionDetailVO(
+                session.getId(),
+                session.getClassroomId(),
+                session.getTeacherId(),
+                session.getSessionName(),
+                ClassroomSessionStatusEnum.ENDED,
+                session.getStartTime(),
+                now,
+                session.getCreateTime(),
+                now
+        );
+    }
 }
