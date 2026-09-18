@@ -1,9 +1,12 @@
 package com.lucky.server.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lucky.server.domain.dto.ClassroomSessionPageQueryDTO;
 import com.lucky.server.domain.dto.ClassroomSessionStartDTO;
 import com.lucky.server.domain.entity.ClassroomSession;
 import com.lucky.server.domain.vo.ClassroomSessionDetailVO;
+import com.lucky.server.domain.vo.ClassroomSessionListVO;
 
 /**
  * 课堂开课记录 Service 接口
@@ -61,5 +64,32 @@ public interface ClassroomSessionService extends IService<ClassroomSession> {
      */
     ClassroomSessionDetailVO endClassroomSession(
             Long classroomSessionId
+    );
+
+    /**
+     * 获取课次详情
+     *
+     * 课堂所属老师和已加入该课堂的学生可以查看。
+     *
+     * @param classroomSessionId 课次ID
+     * @return 课次详情
+     */
+    ClassroomSessionDetailVO getClassroomSessionDetail(
+            Long classroomSessionId
+    );
+
+    /**
+     * 分页查询课堂课次
+     *
+     * 课堂所属老师和已加入该课堂的学生可以查看，
+     * 支持按课次名称和课次状态筛选。
+     *
+     * @param classroomId 课堂ID
+     * @param dto 分页查询参数
+     * @return 课堂课次分页数据
+     */
+    Page<ClassroomSessionListVO> pageClassroomSessions(
+            Long classroomId,
+            ClassroomSessionPageQueryDTO dto
     );
 }

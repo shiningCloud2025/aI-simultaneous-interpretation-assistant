@@ -8,6 +8,7 @@ com/lucky/server/config/MybatisPlusConfig.class
 com/lucky/server/agent/write/WritingCompositionGenerateAgent.class
 com/lucky/server/domain/vo/SysUserApiKeyVO.class
 com/lucky/server/service/WritingCompositionGenerationFailureService.class
+com/lucky/server/domain/dto/ClassroomSessionPageQueryDTO.class
 com/lucky/server/handler/AuthHandshakeInterceptor.class
 com/lucky/server/model/provider/ProviderModelConfig.class
 com/lucky/server/mapper/SysFileMapper.class
@@ -38,6 +39,7 @@ com/lucky/server/common/enums/UserTypeEnum.class
 com/lucky/server/common/enums/ReadingStageEnum.class
 com/lucky/server/controller/superadmin/SuperAdminUserDashboardController.class
 com/lucky/server/service/impl/WritingCompositionTutorMessageServiceImpl.class
+com/lucky/server/domain/dto/ClassroomSessionPageQueryDTO$Filter.class
 com/lucky/server/filter/JwtAuthFilter.class
 com/lucky/server/service/ReadingWordImageGenerateService.class
 com/lucky/server/agent/listen/TranslateAgent.class
@@ -230,6 +232,7 @@ com/lucky/server/common/tester/LlmApiKeyTester.class
 com/lucky/server/domain/entity/WritingCompositionEvaluationFailure.class
 com/lucky/server/mapper/WritingCompositionEvaluationMapper.class
 com/lucky/server/domain/dto/SuperAdminUserResetPasswordDTO.class
+com/lucky/server/domain/vo/ClassroomSessionListVO.class
 com/lucky/server/common/enums/ClassroomStatusEnum.class
 com/lucky/server/domain/dto/ClassroomCreateDTO.class
 com/lucky/server/common/enums/CompositionSubmitTypeEnum.class
