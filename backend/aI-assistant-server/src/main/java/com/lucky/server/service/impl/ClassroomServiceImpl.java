@@ -5,23 +5,30 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lucky.server.common.basic.BusinessException;
+import com.lucky.server.common.enums.ClassroomMemberJoinTypeEnum;
 import com.lucky.server.common.enums.ClassroomStatusEnum;
 import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.enums.UserTypeEnum;
 import com.lucky.server.domain.dto.ClassroomCreateDTO;
+import com.lucky.server.domain.dto.ClassroomJoinDTO;
 import com.lucky.server.domain.dto.ClassroomPageQueryDTO;
 import com.lucky.server.domain.dto.ClassroomUpdateDTO;
+import com.lucky.server.domain.dto.StudentClassroomPageQueryDTO;
 import com.lucky.server.domain.entity.Classroom;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.ClassroomDetailVO;
 import com.lucky.server.domain.vo.ClassroomInviteVO;
 import com.lucky.server.domain.vo.ClassroomListVO;
+import com.lucky.server.domain.vo.StudentClassroomDetailVO;
+import com.lucky.server.domain.vo.StudentClassroomListVO;
 import com.lucky.server.mapper.ClassroomMapper;
+import com.lucky.server.service.ClassroomMemberService;
 import com.lucky.server.service.ClassroomService;
 import com.lucky.server.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -49,6 +56,8 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
     private static final Pattern ACADEMIC_YEAR_PATTERN = Pattern.compile("^(\\d{4})-(\\d{4})$");
 
     private final SysUserService sysUserService;
+
+    private final ClassroomMemberService classroomMemberService;
 
     @Override
     public ClassroomDetailVO createClassroom(ClassroomCreateDTO dto) {
@@ -204,6 +213,64 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ClassroomDetailVO joinClassroom(ClassroomJoinDTO dto) {
+        SysUser currentStudent = getCurrentStudent();
+        Classroom classroom = getNormalClassroomByInviteCode(dto.inviteCode());
+
+        classroomMemberService.addClassroomMember(
+                classroom.getId(),
+                currentStudent.getId(),
+                dto.studentName().trim(),
+                ClassroomMemberJoinTypeEnum.INVITE_CODE
+        );
+
+        return convertToDetailVO(classroom);
+    }
+
+    @Override
+    public Page<StudentClassroomListVO> pageMyJoinedClassrooms(
+            StudentClassroomPageQueryDTO dto
+    ) {
+        SysUser currentStudent = getCurrentStudent();
+
+        String keyword = null;
+        ClassroomStatusEnum status = null;
+        StudentClassroomPageQueryDTO.Filter filter = dto.filter();
+
+        if (filter != null) {
+            if (filter.keyword() != null && !filter.keyword().isBlank()) {
+                keyword = filter.keyword().trim();
+            }
+
+            status = filter.status();
+        }
+
+        Page<StudentClassroomListVO> page = new Page<>(dto.page(), dto.size());
+        return baseMapper.selectMyJoinedClassroomPage(
+                page,
+                currentStudent.getId(),
+                keyword,
+                status
+        );
+    }
+
+    @Override
+    public StudentClassroomDetailVO getMyJoinedClassroomDetail(Long classroomId) {
+        SysUser currentStudent = getCurrentStudent();
+        StudentClassroomDetailVO detail = baseMapper.selectMyJoinedClassroomDetail(
+                classroomId,
+                currentStudent.getId()
+        );
+
+        if (detail == null) {
+            throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "尚未加入该课堂或课堂不存在");
+        }
+
+        return detail;
+    }
+
+    @Override
     public Classroom getNormalClassroomByInviteCode(String inviteCode) {
         if (inviteCode == null || inviteCode.isBlank()) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "课堂邀请码不能为空");
@@ -238,6 +305,21 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
 
         if (currentUser.getUserType() != UserTypeEnum.TEACHER) {
             throw new BusinessException(ResultCodeEnum.FORBIDDEN, "只有老师可以管理课堂");
+        }
+
+        return currentUser;
+    }
+
+    /**
+     * 获取当前登录学生
+     *
+     * @return 当前登录学生
+     */
+    private SysUser getCurrentStudent() {
+        SysUser currentUser = sysUserService.getCurrentUser();
+
+        if (currentUser.getUserType() != UserTypeEnum.STUDENT) {
+            throw new BusinessException(ResultCodeEnum.FORBIDDEN, "只有学生可以执行此操作");
         }
 
         return currentUser;

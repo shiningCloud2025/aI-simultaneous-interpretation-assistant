@@ -3,12 +3,16 @@ package com.lucky.server.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lucky.server.domain.dto.ClassroomCreateDTO;
+import com.lucky.server.domain.dto.ClassroomJoinDTO;
 import com.lucky.server.domain.dto.ClassroomPageQueryDTO;
 import com.lucky.server.domain.dto.ClassroomUpdateDTO;
+import com.lucky.server.domain.dto.StudentClassroomPageQueryDTO;
 import com.lucky.server.domain.entity.Classroom;
 import com.lucky.server.domain.vo.ClassroomDetailVO;
 import com.lucky.server.domain.vo.ClassroomInviteVO;
 import com.lucky.server.domain.vo.ClassroomListVO;
+import com.lucky.server.domain.vo.StudentClassroomDetailVO;
+import com.lucky.server.domain.vo.StudentClassroomListVO;
 
 /**
  * 课堂 Service 接口
@@ -71,6 +75,34 @@ public interface ClassroomService extends IService<Classroom> {
      */
     Page<ClassroomListVO> pageMyClassrooms(
             ClassroomPageQueryDTO dto
+    );
+
+    /**
+     * 使用邀请码加入课堂
+     *
+     * @param dto 加入课堂参数
+     * @return 加入后的课堂详情
+     */
+    ClassroomDetailVO joinClassroom(ClassroomJoinDTO dto);
+
+    /**
+     * 分页查询当前学生加入的课堂
+     *
+     * @param dto 分页查询参数
+     * @return 学生课堂分页数据
+     */
+    Page<StudentClassroomListVO> pageMyJoinedClassrooms(
+            StudentClassroomPageQueryDTO dto
+    );
+
+    /**
+     * 获取当前学生加入的课堂详情
+     *
+     * @param classroomId 课堂ID
+     * @return 学生课堂详情
+     */
+    StudentClassroomDetailVO getMyJoinedClassroomDetail(
+            Long classroomId
     );
 
     /**

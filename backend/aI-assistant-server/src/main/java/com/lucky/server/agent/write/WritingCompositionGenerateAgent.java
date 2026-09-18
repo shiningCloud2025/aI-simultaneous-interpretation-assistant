@@ -3,6 +3,7 @@ package com.lucky.server.agent.write;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
+import com.lucky.server.agent.mymodel.header.OpenCodeModelHeaders;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.CompositionSceneEnum;
@@ -173,8 +174,11 @@ public class WritingCompositionGenerateAgent {
                 .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
-                        GenerateOptions.builder()
-                                .temperature(0.7)
+                        OpenCodeModelHeaders.apply(
+                                        GenerateOptions.builder().temperature(0.7),
+                                        provider,
+                                        "writing-generate:" + userId
+                                )
                                 .build()
                 )
                 .build();

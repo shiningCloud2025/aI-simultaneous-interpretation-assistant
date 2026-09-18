@@ -3,6 +3,7 @@ package com.lucky.server.agent.speak;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
+import com.lucky.server.agent.mymodel.header.OpenCodeModelHeaders;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
@@ -153,7 +154,14 @@ public class SpeakingMaterialGenerateAgent {
                 .nativeStructuredOutput(false)
                 .nativeStructuredOutputWithTools(false)
                 .stream(false)
-                .generateOptions(GenerateOptions.builder().temperature(0.7).build())
+                .generateOptions(
+                        OpenCodeModelHeaders.apply(
+                                        GenerateOptions.builder().temperature(0.7),
+                                        provider,
+                                        "speaking-material:" + userId
+                                )
+                                .build()
+                )
                 .build();
 
         String sysPrompt = """

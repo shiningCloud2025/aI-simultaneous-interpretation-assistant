@@ -2,6 +2,7 @@ package com.lucky.server.agent.read;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucky.server.agent.middleware.TimingMiddleware;
+import com.lucky.server.agent.mymodel.header.OpenCodeModelHeaders;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.ReadingWordMaterialFailureStageEnum;
@@ -211,8 +212,11 @@ public class ReadingWordMaterialGenerateAgent {
                 .nativeStructuredOutputWithTools(false)
                 .stream(false)
                 .generateOptions(
-                        GenerateOptions.builder()
-                                .temperature(0.6)
+                        OpenCodeModelHeaders.apply(
+                                        GenerateOptions.builder().temperature(0.6),
+                                        provider,
+                                        "reading-word:" + userId
+                                )
                                 .build()
                 )
                 .build();

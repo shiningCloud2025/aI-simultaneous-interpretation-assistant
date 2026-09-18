@@ -112,6 +112,7 @@ com/lucky/server/domain/vo/SuperAdminLogFileVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardTrendVO.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardRecentRegisterVO.class
 com/lucky/server/mapper/WritingCompositionTutorMessageMapper.class
+com/lucky/server/domain/vo/StudentClassroomListVO.class
 com/lucky/server/mapper/SysUserShortcutConfigMapper.class
 com/lucky/server/agent/write/WritingCompositionTutorAgent$1.class
 com/lucky/server/domain/dto/SysUserTermEntrySaveDTO.class
@@ -178,6 +179,7 @@ com/lucky/server/agent/middleware/StopOnAllDeniedMiddleware.class
 com/lucky/server/mapper/SysUserFeedbackMapper.class
 com/lucky/server/mapper/ReadingWordMaterialMapper.class
 com/lucky/server/asr/stream/AsrConfig.class
+com/lucky/server/domain/dto/StudentClassroomPageQueryDTO$Filter.class
 com/lucky/server/mapper/SysUserTermEntryMapper.class
 com/lucky/server/common/enums/ReadingWordMaterialFailureStageEnum.class
 com/lucky/server/service/impl/ClassroomMemberServiceImpl.class
@@ -259,6 +261,7 @@ com/lucky/server/domain/dto/ClassroomMemberUpdateDTO.class
 com/lucky/server/asr/AsrFactory$1.class
 com/lucky/server/asr/stream/AsrConfig$AsrConfigBuilder.class
 com/lucky/server/domain/vo/ClassroomListVO.class
+com/lucky/server/domain/dto/ClassroomJoinDTO.class
 com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO$Filter.class
 com/lucky/server/domain/entity/SysUserModelPreference.class
 com/lucky/server/agent/listen/CorrectionAgent.class
@@ -317,6 +320,7 @@ com/lucky/server/agent/middleware/DynamicContextMiddleware.class
 com/lucky/server/service/impl/ReadingWordMaterialFailureServiceImpl.class
 com/lucky/server/common/enums/AsrModelProviderEnum.class
 com/lucky/server/common/storage/FileStorageService.class
+com/lucky/server/domain/vo/StudentClassroomDetailVO.class
 com/lucky/server/domain/dto/FeedbackPageQueryDTO.class
 com/lucky/server/domain/vo/SpeakingMaterialPracticeSentenceVO.class
 com/lucky/server/controller/api/SysFileController.class
@@ -332,6 +336,7 @@ com/lucky/server/asr/AsrFactory.class
 com/lucky/server/service/impl/SysUserServiceImpl.class
 com/lucky/server/service/SpeakingEvaluationRecordService.class
 com/lucky/server/config/SpeakingEvaluationProperties.class
+com/lucky/server/domain/dto/StudentClassroomPageQueryDTO.class
 com/lucky/server/common/jwt/JwtUserInfo.class
 com/lucky/server/config/LlmModelConfig$ModelInfo.class
 com/lucky/server/domain/vo/ClassroomMemberDetailVO.class

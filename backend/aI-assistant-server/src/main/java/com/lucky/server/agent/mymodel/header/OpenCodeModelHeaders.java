@@ -26,11 +26,29 @@ public final class OpenCodeModelHeaders {
                 .build();
     }
 
+    /**
+     * 在既有生成参数上追加 OpenCode 专属请求头。
+     *
+     * @param builder   生成参数构造器
+     * @param provider  LLM厂商标识
+     * @param sessionId OpenCode稳定会话ID
+     * @return 原构造器，便于链式设置
+     */
+    public static GenerateOptions.Builder apply(GenerateOptions.Builder builder, String provider, String sessionId) {
+        GenerateOptions.Builder target = builder == null ? GenerateOptions.builder() : builder;
+        GenerateOptions options = build(provider, sessionId);
+        if (options != null) {
+            target.additionalHeaders(options.getAdditionalHeaders());
+        }
+        return target;
+    }
+
     private static boolean isOpenCodeProvider(String provider) {
         return "opencode".equalsIgnoreCase(provider)
                 || "zhiyu-opencode".equalsIgnoreCase(provider)
                 || "zhiyutonghang".equalsIgnoreCase(provider)
-                || "zhiyu".equalsIgnoreCase(provider);
+                || "zhiyu".equalsIgnoreCase(provider)
+                || "智语同航".equalsIgnoreCase(provider);
     }
 
 }

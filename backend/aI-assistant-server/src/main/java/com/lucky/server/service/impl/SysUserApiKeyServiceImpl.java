@@ -107,7 +107,7 @@ public class SysUserApiKeyServiceImpl extends ServiceImpl<SysUserApiKeyMapper, S
             if (provider == null) {
                 throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "不支持的厂商: " + entity.getProvider());
             }
-            success = llmApiKeyTester.test(provider.getName(),provider.getEndpoint(), entity.getApiKey(), provider.getTestModel());
+            success = llmApiKeyTester.test(entity.getProvider(),provider.getEndpoint(), entity.getApiKey(), provider.getTestModel());
         } else {
             // ASR 暂不实现真实测试，直接标可用
             success = true;
