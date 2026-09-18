@@ -35,13 +35,14 @@ interface ToolbarProps {
   onOpenPanel: (panel: PlatformPanel) => void;
 }
 
-type ToolMode = 'translate' | 'vocab' | 'writing' | 'writing-review';
+type ToolMode = 'translate' | 'vocab' | 'writing' | 'writing-review' | 'writing-tutor';
 
 const MODES: Array<{ id: ToolMode; icon: string; label: string }> = [
   { id: 'translate', icon: '🎧', label: '听力' },
   { id: 'vocab', icon: '📖', label: '阅读' },
   { id: 'writing', icon: '✍️', label: '写作' },
   { id: 'writing-review', icon: '📝', label: '批阅' },
+  { id: 'writing-tutor', icon: '💬', label: '答疑' },
 ];
 
 export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarProps) {
@@ -70,8 +71,6 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  // 展开后显示当前模式的完整选项（语言、场景等），收起时只留核心控件
-  const [expanded, setExpanded] = useState(false);
   const [showModels, setShowModels] = useState(false);
 
   useEffect(() => {
@@ -162,7 +161,15 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
 
         {mode === 'vocab' && (
           <>
-            <ToolInput value={word.word} onChange={word.setWord} placeholder="输入单词" width={120} />
+            <ToolSelect
+              id="vocab-lang"
+              label="语言"
+              value={word.language}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={READING_LANGUAGES.map((i) => ({ value: i.code, label: i.desc }))}
+              onChange={word.setLanguage}
+            />
             <ToolSelect
               id="vocab-stage"
               label="学段"
@@ -172,17 +179,7 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
               options={READING_STAGES.map((i) => ({ value: i.code, label: i.desc }))}
               onChange={word.setStage}
             />
-            {expanded && (
-              <ToolSelect
-                id="vocab-lang"
-                label="语言"
-                value={word.language}
-                open={openDropdown}
-                setOpen={setOpenDropdown}
-                options={READING_LANGUAGES.map((i) => ({ value: i.code, label: i.desc }))}
-                onChange={word.setLanguage}
-              />
-            )}
+            <ToolInput value={word.word} onChange={word.setWord} placeholder="输入单词" width={120} />
             <ToolButton onClick={word.generate} disabled={word.loading}>
               {word.loading ? '生成中' : '生成'}
             </ToolButton>
@@ -191,6 +188,15 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
 
         {mode === 'writing' && (
           <>
+            <ToolSelect
+              id="w-lang"
+              label="语言"
+              value={topic.language}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={WRITING_LANGUAGES.map((i) => ({ value: i.code, label: i.desc }))}
+              onChange={topic.setLanguage}
+            />
             <ToolSelect
               id="w-stage"
               label="学段"
@@ -224,35 +230,22 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
               options={DIFFICULTIES.map((i) => ({ value: i.code, label: i.desc }))}
               onChange={topic.setDifficulty}
             />
-            {expanded && (
-              <>
-                <ToolSelect
-                  id="w-scene"
-                  label="场景"
-                  value={topic.scene}
-                  open={openDropdown}
-                  setOpen={setOpenDropdown}
-                  options={SCENES.map((i) => ({ value: i.code, label: i.desc }))}
-                  onChange={topic.setScene}
-                />
-                {topic.scene === 'custom' && (
-                  <ToolInput
-                    value={topic.customScene}
-                    onChange={topic.setCustomScene}
-                    placeholder="自定义场景"
-                    width={110}
-                  />
-                )}
-                <ToolSelect
-                  id="w-lang"
-                  label="语言"
-                  value={topic.language}
-                  open={openDropdown}
-                  setOpen={setOpenDropdown}
-                  options={WRITING_LANGUAGES.map((i) => ({ value: i.code, label: i.desc }))}
-                  onChange={topic.setLanguage}
-                />
-              </>
+            <ToolSelect
+              id="w-scene"
+              label="场景"
+              value={topic.scene}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={SCENES.map((i) => ({ value: i.code, label: i.desc }))}
+              onChange={topic.setScene}
+            />
+            {topic.scene === 'custom' && (
+              <ToolInput
+                value={topic.customScene}
+                onChange={topic.setCustomScene}
+                placeholder="自定义场景"
+                width={110}
+              />
             )}
             <ToolButton onClick={topic.generate} disabled={topic.loading}>
               {topic.loading ? '出题' : '出题'}
@@ -262,6 +255,51 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
 
         {mode === 'writing-review' && (
           <>
+            <ToolSelect
+              id="r-lang"
+              label="语言"
+              value={review.language}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={WRITING_LANGUAGES.map((i) => ({ value: i.code, label: i.desc }))}
+              onChange={review.setLanguage}
+            />
+            <ToolSelect
+              id="r-stage"
+              label="学段"
+              value={review.stage}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={WRITING_STAGES.map((i) => ({ value: i.code, label: i.desc }))}
+              onChange={(v) => {
+                review.setStage(v);
+                review.setGenre(WRITING_GENRES.find((g) => g.stage === v)?.code || '');
+              }}
+            />
+            <ToolSelect
+              id="r-genre"
+              label="题型"
+              value={review.genre}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={WRITING_GENRES.filter((g) => g.stage === review.stage).map((i) => ({
+                value: i.code,
+                label: i.desc,
+              }))}
+              onChange={review.setGenre}
+            />
+            <ToolSelect
+              id="r-type"
+              label="提交"
+              value={review.submitType}
+              open={openDropdown}
+              setOpen={setOpenDropdown}
+              options={[
+                { value: 'text', label: '文本' },
+                { value: 'image', label: '图片' },
+              ]}
+              onChange={(v) => review.setSubmitType(v as 'text' | 'image')}
+            />
             <ToolInput value={review.prompt} onChange={review.setPrompt} placeholder="作文题干" width={150} />
             <ToolInput
               value={review.scoringCriteria}
@@ -269,46 +307,6 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
               placeholder="评分标准"
               width={80}
             />
-            {expanded && (
-              <>
-                <ToolSelect
-                  id="r-type"
-                  label="提交"
-                  value={review.submitType}
-                  open={openDropdown}
-                  setOpen={setOpenDropdown}
-                  options={[
-                    { value: 'text', label: '文本' },
-                    { value: 'image', label: '图片' },
-                  ]}
-                  onChange={(v) => review.setSubmitType(v as 'text' | 'image')}
-                />
-                <ToolSelect
-                  id="r-stage"
-                  label="学段"
-                  value={review.stage}
-                  open={openDropdown}
-                  setOpen={setOpenDropdown}
-                  options={WRITING_STAGES.map((i) => ({ value: i.code, label: i.desc }))}
-                  onChange={(v) => {
-                    review.setStage(v);
-                    review.setGenre(WRITING_GENRES.find((g) => g.stage === v)?.code || '');
-                  }}
-                />
-                <ToolSelect
-                  id="r-genre"
-                  label="题型"
-                  value={review.genre}
-                  open={openDropdown}
-                  setOpen={setOpenDropdown}
-                  options={WRITING_GENRES.filter((g) => g.stage === review.stage).map((i) => ({
-                    value: i.code,
-                    label: i.desc,
-                  }))}
-                  onChange={review.setGenre}
-                />
-              </>
-            )}
             <ToolButton onClick={review.evaluate} disabled={review.loading}>
               {review.loading ? '批阅' : '批阅'}
             </ToolButton>
@@ -325,13 +323,6 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
         >
           ⚙
         </button>
-        {/* 展开/收起当前模式的完整选项 */}
-        {mode !== 'translate' && (
-          <button className="tb-btn" onClick={() => setExpanded((v) => !v)} title="展开更多选项">
-            {expanded ? '⌃' : '⌄'}
-          </button>
-        )}
-
         {/* 进入桌面平台（补充：历史/详细配置） */}
         <button className="tb-btn" onClick={() => onOpenPanel(mode)} title="打开桌面平台查看历史与详细配置">
           🖥
@@ -363,7 +354,7 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
         <div className="transcript-box">
           <div className="transcript-row">
             <span className="lang-tag">提示</span>
-            <span className="transcript-text">请先登录后再使用{mode === 'vocab' ? '阅读' : mode === 'writing' ? '写作' : '批阅'}功能</span>
+            <span className="transcript-text">请先登录后再使用{mode === 'vocab' ? '阅读' : mode === 'writing' ? '写作' : mode === 'writing-tutor' ? '答疑' : '批阅'}功能</span>
           </div>
         </div>
       ) : (
@@ -480,6 +471,15 @@ export function Toolbar({ token, config, onConfigChange, onOpenPanel }: ToolbarP
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {mode === 'writing-tutor' && (
+            <div className="transcript-box">
+              <div className="transcript-row">
+                <span className="lang-tag">答疑</span>
+                <span className="transcript-text">作文答疑需要选择已批阅记录，请打开桌面平台继续。</span>
+              </div>
             </div>
           )}
         </>

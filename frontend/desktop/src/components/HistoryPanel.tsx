@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { PageResult } from '../lib/api';
 
 /**
@@ -15,12 +16,14 @@ export function HistoryPanel<T>(props: {
   renderSummary?: (item: T) => string;
   /** 点击某条记录时回显到主区域 */
   onSelect: (item: T) => void;
+  /** 每条记录右侧的额外操作 */
+  renderActions?: (item: T) => ReactNode;
   /** 当前是否正在生成新内容（生成中隐藏加载更多，避免误触） */
   busy?: boolean;
   /** 外部数据版本号，变化时自动重新加载（如生成成功后 +1） */
   refreshKey?: number;
 }) {
-  const { title, fetcher, renderTitle, renderSummary, onSelect, busy, refreshKey } = props;
+  const { title, fetcher, renderTitle, renderSummary, onSelect, renderActions, busy, refreshKey } = props;
 
   const [items, setItems] = useState<T[]>([]);
   const [page, setPage] = useState(1);
@@ -81,18 +84,20 @@ export function HistoryPanel<T>(props: {
           {error && <div className="desktop-error">{error}</div>}
           <div className="history-list">
             {items.map((item, index) => (
-              <button
-                className="history-item"
-                key={(item as { id?: number })?.id ?? index}
-                onClick={() => onSelect(item)}
-                title="点击查看这条记录"
-              >
-                <span className="history-item-title">{renderTitle(item)}</span>
-                {renderSummary && <span className="history-item-summary">{renderSummary(item)}</span>}
-                <span className="history-item-time">
-                  {formatTime((item as { createTime?: string })?.createTime)}
-                </span>
-              </button>
+              <div className="history-item-wrap" key={(item as { id?: number })?.id ?? index}>
+                <button
+                  className="history-item"
+                  onClick={() => onSelect(item)}
+                  title="点击查看这条记录"
+                >
+                  <span className="history-item-title">{renderTitle(item)}</span>
+                  {renderSummary && <span className="history-item-summary">{renderSummary(item)}</span>}
+                  <span className="history-item-time">
+                    {formatTime((item as { createTime?: string })?.createTime)}
+                  </span>
+                </button>
+                {renderActions && <div className="history-item-actions">{renderActions(item)}</div>}
+              </div>
             ))}
           </div>
           {hasMore && (

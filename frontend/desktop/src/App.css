@@ -1010,6 +1010,467 @@ html, body {
   cursor: not-allowed;
 }
 
+.history-item-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: stretch;
+}
+
+.history-item-wrap .history-item {
+  min-width: 0;
+}
+
+.history-item-actions {
+  display: flex;
+  align-items: center;
+}
+
+.history-action-btn,
+.desktop-ghost {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e3ded5;
+  border-radius: 8px;
+  background: #fff;
+  color: #173f3b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-action-btn:hover:not(:disabled),
+.desktop-ghost:hover:not(:disabled) {
+  border-color: #173f3b;
+}
+
+.desktop-ghost:disabled,
+.desktop-ghost.disabled,
+.history-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============ 作文答疑 ============ */
+.tutor-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+.tutor-records,
+.tutor-chat {
+  min-height: 620px;
+}
+
+.tutor-section-head,
+.tutor-chat-head,
+.skill-modal-head,
+.skill-toolbar,
+.skill-pager,
+.tutor-pager,
+.tutor-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutor-section-head,
+.tutor-chat-head,
+.skill-modal-head {
+  justify-content: space-between;
+}
+
+.tutor-section-head strong,
+.tutor-chat-head strong {
+  display: block;
+  font-size: 14px;
+  color: #173f3b;
+}
+
+.tutor-section-head span,
+.tutor-chat-head span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #918a7e;
+}
+
+.tutor-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 480px;
+}
+
+.tutor-record {
+  padding: 12px;
+  border: 1px solid #f0ece4;
+  border-radius: 10px;
+  background: #faf8f3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tutor-record.active,
+.tutor-record:hover {
+  border-color: #c99a3a;
+  background: #fff;
+}
+
+.tutor-record strong {
+  display: block;
+  font-size: 13px;
+  color: #2c2c2c;
+}
+
+.tutor-record span,
+.tutor-record p,
+.tutor-pager,
+.skill-pager {
+  font-size: 11px;
+  color: #918a7e;
+}
+
+.tutor-record span {
+  display: block;
+  margin-top: 6px;
+}
+
+.tutor-record p {
+  margin-top: 8px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tutor-pager,
+.skill-pager {
+  justify-content: space-between;
+}
+
+.tutor-pager button,
+.skill-pager button {
+  min-height: 30px;
+}
+
+.tutor-chat {
+  overflow: hidden;
+}
+
+.tutor-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tutor-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #faf8f3;
+}
+
+.tutor-summary span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e8f4ee;
+  color: #173f3b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tutor-summary p {
+  font-size: 12px;
+  color: #7d766b;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tutor-chat-body {
+  flex: 1;
+  min-height: 300px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid #f0ece4;
+  border-radius: 11px;
+  background: #fbfaf7;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutor-empty {
+  margin: auto;
+  text-align: center;
+  color: #9c958a;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.tutor-empty strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #173f3b;
+  font-size: 15px;
+}
+
+.tutor-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  min-width: 420px;
+}
+
+.tutor-quick-grid button {
+  padding: 9px 10px;
+  border: 1px solid #e3ded5;
+  border-radius: 9px;
+  background: #fff;
+  color: #4f4941;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tutor-bubble {
+  max-width: min(760px, 86%);
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tutor-bubble.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: #173f3b;
+  color: #f7f0dd;
+}
+
+.tutor-bubble.assistant {
+  align-self: flex-start;
+  border: 1px solid #ebe6dd;
+  border-bottom-left-radius: 4px;
+  background: #fff;
+  color: #3c3833;
+}
+
+.tutor-bubble-images,
+.tutor-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tutor-bubble-images img,
+.tutor-image-list img {
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tutor-thinking {
+  align-self: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff8e1;
+  color: #9a7113;
+  font-size: 12px;
+}
+
+.tutor-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.tutor-composer textarea {
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid #e3ded5;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+}
+
+.tutor-composer textarea:focus {
+  border-color: #173f3b;
+}
+
+.tutor-composer label input {
+  display: none;
+}
+
+.tutor-image-list {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.tutor-image-list span {
+  position: relative;
+}
+
+.tutor-image-list button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: #c0392b;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ============ 平台 Skill 只读弹窗 ============ */
+.desktop-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  padding: 26px;
+  background: rgba(23, 31, 28, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skill-modal {
+  width: min(860px, 94vw);
+  max-height: min(720px, 90vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e3ded5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 22px 70px rgba(29, 33, 31, 0.18);
+}
+
+.skill-modal-head,
+.skill-toolbar,
+.skill-pager {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f0ece4;
+}
+
+.skill-modal-head h3 {
+  font-size: 18px;
+  color: #173f3b;
+}
+
+.skill-modal-head p {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #918a7e;
+}
+
+.skill-modal-head button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e3ded5;
+  border-radius: 10px;
+  background: #fff;
+  color: #7d766b;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.skill-toolbar {
+  flex-wrap: wrap;
+}
+
+.skill-toolbar input {
+  flex: 1;
+  min-width: 220px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e3ded5;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.skill-toolbar span {
+  margin-left: auto;
+  font-size: 12px;
+  color: #918a7e;
+}
+
+.skill-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.skill-card {
+  padding: 14px;
+  border: 1px solid #f0ece4;
+  border-radius: 12px;
+  background: #faf8f3;
+}
+
+.skill-card > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skill-card strong {
+  font-size: 14px;
+  color: #173f3b;
+}
+
+.skill-card div span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8f4ee;
+  color: #27615b;
+  font-size: 11px;
+}
+
+.skill-card p {
+  margin-top: 9px;
+  color: #5b554d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.skill-card footer {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  color: #aaa297;
+  font-size: 11px;
+}
+
+.skill-pager {
+  justify-content: flex-end;
+  border-top: 1px solid #f0ece4;
+  border-bottom: none;
+}
+
 /* ============ resize 边框 ============ */
 .resize-edge {
   position: absolute;

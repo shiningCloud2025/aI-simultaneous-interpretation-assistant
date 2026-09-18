@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Toolbar } from './components/Toolbar';
-import { api, clearToken, getToken, setToken as persistToken } from './lib/api';
-import type { ReviewResult, UserInfo, WritingTopic } from './lib/api';
+import { api, clearToken, getToken, setToken as persistToken, uploadFile } from './lib/api';
+import type {
+  EvaluationRecord,
+  PlatformSkill,
+  ReviewResult,
+  TutorHistoryMessage,
+  UserInfo,
+  WritingTopic,
+} from './lib/api';
 import { TranscribeSession, type AudioSource } from './lib/asr';
 import { HistoryPanel } from './components/HistoryPanel';
 import { useDesktopStore, type SegItem as StoreSegItem } from './stores/desktopStore';
@@ -21,11 +28,18 @@ import {
 import './App.css';
 
 type DesktopMode = 'toolbar' | 'platform';
-export type PlatformPanel = 'translate' | 'vocab' | 'writing' | 'writing-review';
+export type PlatformPanel = 'translate' | 'vocab' | 'writing' | 'writing-review' | 'writing-tutor';
+
+const getLastDesktopPanel = (): PlatformPanel => {
+  const saved = localStorage.getItem('desktop-tool-mode') as PlatformPanel | null;
+  return saved && ['translate', 'vocab', 'writing', 'writing-review', 'writing-tutor'].includes(saved)
+    ? saved
+    : 'translate';
+};
 
 function App() {
   const [mode, setMode] = useState<DesktopMode>('toolbar');
-  const [panel, setPanel] = useState<PlatformPanel>('translate');
+  const [panel, setPanel] = useState<PlatformPanel>(getLastDesktopPanel);
   const [token, setToken] = useState(getToken());
   const [user, setUser] = useState<UserInfo | null>(null);
 
@@ -63,6 +77,9 @@ function App() {
   // 避免窗口已切到大尺寸但渲染层仍是悬浮条，导致大片空白。
   useEffect(() => {
     window.electronAPI?.onAppModeChanged?.((next) => {
+      if (next === 'platform') {
+        setPanel(getLastDesktopPanel());
+      }
       setMode(next === 'platform' ? 'platform' : 'toolbar');
     });
   }, []);
@@ -227,7 +244,17 @@ function DesktopShell(props: {
     vocab: '阅读 · 单词素材',
     writing: '写作 · 题目生成',
     'writing-review': '写作 · 作文批阅',
+    'writing-tutor': '写作 · 批阅答疑',
   }[activePanel];
+  const [showSkills, setShowSkills] = useState(false);
+  const [pendingTutorRecord, setPendingTutorRecord] = useState<EvaluationRecord | null>(null);
+  const openTutorWithRecord = useCallback(
+    (record: EvaluationRecord) => {
+      setPendingTutorRecord(record);
+      onPanelChange('writing-tutor');
+    },
+    [onPanelChange]
+  );
 
   return (
     <div className="desktop-shell">
@@ -240,7 +267,11 @@ function DesktopShell(props: {
         <NavButton active={activePanel === 'vocab'} onClick={() => onPanelChange('vocab')} icon="📖" label="阅读" />
         <NavButton active={activePanel === 'writing'} onClick={() => onPanelChange('writing')} icon="✍️" label="写作" />
         <NavButton active={activePanel === 'writing-review'} onClick={() => onPanelChange('writing-review')} icon="📝" label="批阅" />
+        <NavButton active={activePanel === 'writing-tutor'} onClick={() => onPanelChange('writing-tutor')} icon="💬" label="答疑" />
         <div className="desktop-sidebar-spacer" />
+        <button className="desktop-link-btn" onClick={() => setShowSkills(true)}>
+          平台 Skill
+        </button>
         <button className="desktop-link-btn" onClick={onBackToToolbar}>
           悬浮模式
         </button>
@@ -285,11 +316,15 @@ function DesktopShell(props: {
               )}
               {activePanel === 'vocab' && <WordPanel />}
               {activePanel === 'writing' && <WritingPanel />}
-              {activePanel === 'writing-review' && <WritingReviewPanel />}
+              {activePanel === 'writing-review' && <WritingReviewPanel onOpenTutor={openTutorWithRecord} />}
+              {activePanel === 'writing-tutor' && (
+                <WritingTutorPanel initialRecord={pendingTutorRecord} onInitialRecordUsed={() => setPendingTutorRecord(null)} />
+              )}
             </>
           )}
         </section>
       </main>
+      {showSkills && <PlatformSkillModal onClose={() => setShowSkills(false)} />}
     </div>
   );
 }
@@ -611,7 +646,7 @@ function WritingPanel() {
  * 批阅面板：与悬浮条「批阅」模式复用同一个 hook，
  * 这里作为补充，额外提供正文输入、图片上传与历史记录。
  */
-function WritingReviewPanel() {
+function WritingReviewPanel({ onOpenTutor }: { onOpenTutor: (record: EvaluationRecord) => void }) {
   const {
     submitType, setSubmitType, language, setLanguage, stage, setStage, genre, setGenre,
     title, setTitle, prompt, setPrompt, scoringCriteria, setScoringCriteria,
@@ -702,11 +737,381 @@ function WritingReviewPanel() {
         }
         renderSummary={(item) => (item.score != null ? `得分 ${item.score} · ${item.feedback || ''}` : item.feedback || '')}
         onSelect={restore}
+        renderActions={(item) => (
+          item.success ? (
+            <button className="history-action-btn" onClick={() => onOpenTutor(item)}>
+              答疑
+            </button>
+          ) : null
+        )}
         busy={loading || uploading}
         refreshKey={refreshKey}
       />
     </div>
   );
+}
+
+interface TutorMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  imageUrls?: string[];
+}
+
+function WritingTutorPanel({
+  initialRecord,
+  onInitialRecordUsed,
+}: {
+  initialRecord: EvaluationRecord | null;
+  onInitialRecordUsed: () => void;
+}) {
+  const [records, setRecords] = useState<EvaluationRecord[]>([]);
+  const [selected, setSelected] = useState<EvaluationRecord | null>(null);
+  const [messages, setMessages] = useState<TutorMessage[]>([]);
+  const [question, setQuestion] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const loadRecords = useCallback(async (nextPage = 1) => {
+    setLoadingRecords(true);
+    setError('');
+    try {
+      const data = await api.pageEvaluationHistory(nextPage, 6, { success: true });
+      setRecords(data.records || []);
+      setPage(data.current || nextPage);
+      setPages(data.pages || 1);
+      setTotal(data.total || 0);
+    } catch (e: any) {
+      setError(e?.message || '已批阅作文加载失败');
+    } finally {
+      setLoadingRecords(false);
+    }
+  }, []);
+
+  const loadMessages = useCallback(async (evaluationId: number) => {
+    setLoadingMessages(true);
+    setError('');
+    try {
+      const data = await api.listTutorMessages(evaluationId);
+      setMessages((data || []).map(toTutorMessage));
+    } catch (e: any) {
+      setMessages([]);
+      setError(e?.message || '答疑历史加载失败');
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
+
+  const selectRecord = useCallback((record: EvaluationRecord) => {
+    setSelected(record);
+    setQuestion('');
+    setImageUrls([]);
+    setMessages([]);
+    loadMessages(record.id);
+  }, [loadMessages]);
+
+  useEffect(() => {
+    loadRecords(1);
+  }, [loadRecords]);
+
+  useEffect(() => {
+    if (!initialRecord?.id) return;
+    selectRecord(initialRecord);
+    onInitialRecordUsed();
+  }, [initialRecord, onInitialRecordUsed, selectRecord]);
+
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, chatLoading, selected?.id]);
+
+  const handleQuestionUpload = async (files: File[]) => {
+    if (files.length === 0) return;
+    if (imageUrls.length + files.length > 5) {
+      setError('提问图片最多上传 5 张');
+      return;
+    }
+    setUploading(true);
+    try {
+      const uploaded = await Promise.all(files.map((file) => uploadFile<{ url: string }>(file)));
+      setImageUrls((prev) => [...prev, ...uploaded.map((file) => file.url).filter(Boolean)].slice(0, 5));
+    } catch (e: any) {
+      setError(e?.message || '图片上传失败');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const sendQuestion = async () => {
+    if (!selected) {
+      setError('请先选择一条已批阅作文');
+      return;
+    }
+    const text = question.trim();
+    if (!text) {
+      setError('请输入要咨询的问题');
+      return;
+    }
+    const images = imageUrls.slice();
+    setMessages((prev) => [...prev, { role: 'user', text, imageUrls: images }]);
+    setQuestion('');
+    setImageUrls([]);
+    setChatLoading(true);
+    setError('');
+    try {
+      const result = await api.chatWithWritingTutor({
+        evaluationId: selected.id,
+        question: text,
+        imageUrls: images.length > 0 ? images : undefined,
+      });
+      setMessages((prev) => [...prev, { role: 'assistant', text: result.answer || '这次答疑没有返回内容' }]);
+    } catch (e: any) {
+      setMessages((prev) => [...prev, { role: 'assistant', text: e?.message || 'AI 答疑失败，请稍后再试' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  return (
+    <div className="tutor-layout">
+      <aside className="tutor-records desktop-card">
+        <div className="tutor-section-head">
+          <div>
+            <strong>已批阅作文</strong>
+            <span>只显示成功批阅记录</span>
+          </div>
+          <button className="desktop-ghost" onClick={() => loadRecords(1)} disabled={loadingRecords}>
+            {loadingRecords ? '刷新中' : '刷新'}
+          </button>
+        </div>
+        <div className="tutor-record-list">
+          {records.length === 0 ? (
+            <div className="tutor-empty">{loadingRecords ? '正在加载...' : '暂无可答疑的批阅记录'}</div>
+          ) : (
+            records.map((record) => (
+              <button
+                key={record.id}
+                className={`tutor-record ${selected?.id === record.id ? 'active' : ''}`}
+                onClick={() => selectRecord(record)}
+              >
+                <strong>{record.title || record.prompt?.slice(0, 18) || '作文批阅'}</strong>
+                <span>{record.score ?? '-'} 分 · {stageLabel(record.stageCode)} · {formatDesktopTime(record.createTime)}</span>
+                <p>{record.suggestion || record.feedback || '进入后围绕本次评阅继续追问。'}</p>
+              </button>
+            ))
+          )}
+        </div>
+        <div className="tutor-pager">
+          <button disabled={page <= 1 || loadingRecords} onClick={() => loadRecords(page - 1)}>上一页</button>
+          <span>{page} / {Math.max(1, pages)} · 共 {total} 条</span>
+          <button disabled={page >= pages || loadingRecords} onClick={() => loadRecords(page + 1)}>下一页</button>
+        </div>
+      </aside>
+
+      <section className="tutor-chat desktop-card">
+        <div className="tutor-chat-head">
+          <div>
+            <strong>作文答疑</strong>
+            <span>{selected ? `围绕「${selected.title || '作文批阅'}」继续追问` : '选择左侧记录后开始'}</span>
+          </div>
+          <div className="tutor-head-actions">
+            <button className="desktop-ghost" disabled={!selected || loadingMessages} onClick={() => selected && loadMessages(selected.id)}>
+              {loadingMessages ? '刷新中' : '刷新历史'}
+            </button>
+            <button className="desktop-ghost" disabled={messages.length === 0 || chatLoading} onClick={() => setMessages([])}>
+              清空本页
+            </button>
+          </div>
+        </div>
+        {selected && (
+          <div className="tutor-summary">
+            <span>{selected.score ?? '-'} 分</span>
+            <p>{selected.feedback || selected.suggestion || selected.prompt || '暂无摘要'}</p>
+          </div>
+        )}
+        {error && <div className="desktop-error">{error}</div>}
+        <div className="tutor-chat-body" ref={bodyRef}>
+          {!selected ? (
+            <div className="tutor-empty">从左侧选一条批阅记录，桌面平台会进入连续答疑空间。</div>
+          ) : loadingMessages ? (
+            <div className="tutor-empty">正在读取历史答疑...</div>
+          ) : messages.length === 0 ? (
+            <div className="tutor-empty">
+              <strong>这次评阅还没有历史答疑</strong>
+              <div className="tutor-quick-grid">
+                {['这篇作文主要为什么扣分？', '帮我把修改建议拆成三步。', '第二段怎么写更自然？', '这次评分合理吗？'].map((text) => (
+                  <button key={text} onClick={() => setQuestion(text)}>{text}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            messages.map((message, index) => <TutorBubble key={index} message={message} />)
+          )}
+          {chatLoading && <div className="tutor-thinking">AI 正在整理回答...</div>}
+        </div>
+        <div className="tutor-composer">
+          {imageUrls.length > 0 && (
+            <div className="tutor-image-list">
+              {imageUrls.map((url, index) => (
+                <span key={url}>
+                  <img src={url} alt={`提问图片${index + 1}`} />
+                  <button onClick={() => setImageUrls((prev) => prev.filter((_, i) => i !== index))}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            disabled={!selected || chatLoading}
+            placeholder="继续追问这次批阅，例如：这句为什么不自然？"
+          />
+          <div className="tutor-composer-actions">
+            <label className={`desktop-ghost ${uploading || imageUrls.length >= 5 ? 'disabled' : ''}`}>
+              {uploading ? '上传中' : '+ 图片'}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={uploading || imageUrls.length >= 5}
+                onChange={(e) => handleQuestionUpload(Array.from(e.target.files || []))}
+              />
+            </label>
+            <button className="desktop-primary" onClick={sendQuestion} disabled={!selected || chatLoading || !question.trim()}>
+              发送
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PlatformSkillModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [skills, setSkills] = useState<PlatformSkill[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async (nextPage = 1, keyword = '') => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.pagePlatformSkills(nextPage, 8, keyword);
+      setSkills(data.records || []);
+      setPage(data.current || nextPage);
+      setPages(data.pages || 1);
+      setTotal(data.total || 0);
+    } catch (e: any) {
+      setSkills([]);
+      setError(e?.message || '平台 Skill 加载失败');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(1, '');
+  }, [load]);
+
+  return (
+    <div className="desktop-modal-mask" onClick={onClose}>
+      <div className="skill-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="skill-modal-head">
+          <div>
+            <h3>平台 Skill 配置</h3>
+            <p>只读查看当前智能体可调用的外语学习 Skill。</p>
+          </div>
+          <button onClick={onClose}>×</button>
+        </div>
+        <div className="skill-toolbar">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') load(1); }}
+            placeholder="按 Skill 名称查询"
+          />
+          <button className="desktop-primary" disabled={loading} onClick={() => load(1, name)}>查询</button>
+          <button className="desktop-ghost" disabled={loading} onClick={() => { setName(''); load(1, ''); }}>清空</button>
+          <button className="desktop-ghost" disabled={loading} onClick={() => load(page, name)}>刷新</button>
+          <span>共 {total} 条</span>
+        </div>
+        {error && <div className="desktop-error">{error}</div>}
+        <div className="skill-list">
+          {loading ? (
+            <div className="tutor-empty">正在加载平台 Skill...</div>
+          ) : skills.length === 0 ? (
+            <div className="tutor-empty">暂无平台 Skill</div>
+          ) : (
+            skills.map((skill) => (
+              <article className="skill-card" key={skill.id}>
+                <div>
+                  <strong>{skill.name}</strong>
+                  <span>{skill.sourceText || skill.source || '平台配置'}</span>
+                </div>
+                <p>{skill.description || '暂无 Skill 描述'}</p>
+                <footer>
+                  <span>创建：{formatDesktopTime(skill.createdAt)}</span>
+                  <span>更新：{formatDesktopTime(skill.updatedAt)}</span>
+                </footer>
+              </article>
+            ))
+          )}
+        </div>
+        <div className="skill-pager">
+          <button className="desktop-ghost" disabled={page <= 1 || loading} onClick={() => load(page - 1, name)}>上一页</button>
+          <span>{page} / {Math.max(1, pages)}</span>
+          <button className="desktop-ghost" disabled={page >= pages || loading} onClick={() => load(page + 1, name)}>下一页</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TutorBubble({ message }: { message: TutorMessage }) {
+  const isUser = message.role === 'user';
+  return (
+    <div className={`tutor-bubble ${isUser ? 'user' : 'assistant'}`}>
+      <div>{message.text}</div>
+      {message.imageUrls && message.imageUrls.length > 0 && (
+        <div className="tutor-bubble-images">
+          {message.imageUrls.map((url) => <img key={url} src={url} alt="提问图片" />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function toTutorMessage(message: TutorHistoryMessage): TutorMessage {
+  return {
+    role: String(message.role).toLowerCase() === 'assistant' ? 'assistant' : 'user',
+    text: message.content || '',
+    imageUrls: message.imageUrls || [],
+  };
+}
+
+function stageLabel(code?: string) {
+  return WRITING_STAGES.find((item) => item.code === code)?.desc || code || '—';
+}
+
+function formatDesktopTime(value?: string) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.replace('T', ' ').slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function ResizeHandles({ onResize }: { onResize: (edge: string) => (e: React.MouseEvent) => void }) {

@@ -201,6 +201,33 @@ export interface ReviewResult {
   improvedVersion?: string;
 }
 
+export interface TutorAnswer {
+  evaluationId: number;
+  question: string;
+  imageUrls?: string[];
+  answer: string;
+}
+
+export interface TutorHistoryMessage {
+  id: number;
+  evaluationId: number;
+  role: 'user' | 'assistant' | string;
+  roleName?: string;
+  content: string;
+  imageUrls?: string[];
+  createTime?: string;
+}
+
+export interface PlatformSkill {
+  id: number;
+  name: string;
+  description?: string;
+  source?: string;
+  sourceText?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ============ 接口封装 ============
 
 export const api = {
@@ -310,4 +337,25 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ page, size, filter }),
     }),
+
+  listTutorMessages: (evaluationId: number) =>
+    request<TutorHistoryMessage[]>(
+      `/writing/composition/tutor/messages?evaluationId=${encodeURIComponent(evaluationId)}&_t=${Date.now()}`,
+      { cache: 'no-store' }
+    ),
+
+  chatWithWritingTutor: (payload: { evaluationId: number; question: string; imageUrls?: string[] }) =>
+    request<TutorAnswer>('/writing/composition/tutor/chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  pagePlatformSkills: (pageNum = 1, pageSize = 8, name?: string) => {
+    const params = new URLSearchParams({
+      pageNum: String(pageNum),
+      pageSize: String(pageSize),
+    });
+    if (name?.trim()) params.set('name', name.trim());
+    return request<PageResult<PlatformSkill>>(`/sys/user/skills/page?${params.toString()}`);
+  },
 };
