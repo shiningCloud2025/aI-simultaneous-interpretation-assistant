@@ -22,6 +22,7 @@ import com.lucky.server.mapper.ClassroomMapper;
 import com.lucky.server.mapper.ClassroomMemberMapper;
 import com.lucky.server.mapper.ClassroomSessionMapper;
 import com.lucky.server.service.ClassroomSessionService;
+import com.lucky.server.service.ClassroomSessionStudentService;
 import com.lucky.server.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,8 @@ public class ClassroomSessionServiceImpl
     private final ClassroomMapper classroomMapper;
 
     private final ClassroomMemberMapper classroomMemberMapper;
+
+    private final ClassroomSessionStudentService classroomSessionStudentService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -110,6 +113,11 @@ public class ClassroomSessionServiceImpl
                     "开课失败"
             );
         }
+
+        classroomSessionStudentService.createClassroomSessionStudents(
+                classroomId,
+                session.getId()
+        );
 
         return new ClassroomSessionDetailVO(
                 session.getId(),

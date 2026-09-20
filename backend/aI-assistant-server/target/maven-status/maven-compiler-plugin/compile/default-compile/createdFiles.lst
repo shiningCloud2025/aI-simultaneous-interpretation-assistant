@@ -205,6 +205,7 @@ com/lucky/server/service/impl/WritingCompositionEvaluationFailureServiceImpl.cla
 com/lucky/server/service/superadmin/impl/SuperAdminLogDashboardServiceImpl$LogEntry.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardSummaryVO$ActiveMetric.class
 com/lucky/server/domain/vo/SuperAdminUserDashboardStructureVO$StatusItem.class
+com/lucky/server/service/ClassroomSessionStudentService.class
 com/lucky/server/service/SpeakingEvaluationService.class
 com/lucky/server/domain/dto/SpeakingMaterialPageQueryDTO.class
 com/lucky/server/domain/entity/SysUserShortcutConfig.class
@@ -350,6 +351,7 @@ com/lucky/server/asr/AsrFactory.class
 com/lucky/server/service/impl/SysUserServiceImpl.class
 com/lucky/server/service/SpeakingEvaluationRecordService.class
 com/lucky/server/config/SpeakingEvaluationProperties.class
+com/lucky/server/service/impl/ClassroomSessionStudentServiceImpl.class
 com/lucky/server/domain/dto/StudentClassroomPageQueryDTO.class
 com/lucky/server/common/jwt/JwtUserInfo.class
 com/lucky/server/config/LlmModelConfig$ModelInfo.class
