@@ -106,6 +106,7 @@ com/lucky/server/domain/vo/SysUserTermLibraryVO.class
 com/lucky/server/AiAssistantServerApplication.class
 com/lucky/server/domain/entity/SpeakingMaterialSentence.class
 com/lucky/server/controller/api/SysUserTermEntryController.class
+com/lucky/server/domain/entity/ClassroomSessionStudent.class
 com/lucky/server/agent/speak/SpeakingMaterialAgentResult.class
 com/lucky/server/agent/listen/CorrectionAgent$CorrectionResult.class
 com/lucky/server/mapper/WritingCompositionGenerationMapper.class
@@ -268,6 +269,7 @@ com/lucky/server/service/ClassroomService.class
 com/lucky/server/domain/entity/SpeakingMaterialGenerationFailure.class
 com/lucky/server/common/util/RedisCacheUtil.class
 com/lucky/server/service/impl/SpeakingEvaluationServiceImpl$1.class
+com/lucky/server/mapper/ClassroomSessionStudentMapper.class
 com/lucky/server/domain/dto/ClassroomMemberUpdateDTO.class
 com/lucky/server/asr/AsrFactory$1.class
 com/lucky/server/asr/stream/AsrConfig$AsrConfigBuilder.class
