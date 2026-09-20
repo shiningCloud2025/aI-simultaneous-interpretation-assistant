@@ -38,6 +38,7 @@ com/lucky/server/controller/api/SysUserAiModelController.class
 com/lucky/server/common/enums/UserTypeEnum.class
 com/lucky/server/common/enums/ReadingStageEnum.class
 com/lucky/server/controller/superadmin/SuperAdminUserDashboardController.class
+com/lucky/server/common/enums/ClassroomSessionStudentCheckInStatusEnum.class
 com/lucky/server/service/impl/WritingCompositionTutorMessageServiceImpl.class
 com/lucky/server/domain/dto/ClassroomSessionPageQueryDTO$Filter.class
 com/lucky/server/filter/JwtAuthFilter.class
