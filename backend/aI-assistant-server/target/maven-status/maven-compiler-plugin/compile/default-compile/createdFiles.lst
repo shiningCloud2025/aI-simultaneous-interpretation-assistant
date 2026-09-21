@@ -22,6 +22,7 @@ com/lucky/server/controller/api/SpeakingMaterialController.class
 com/lucky/server/domain/entity/SysUserApiKey.class
 com/lucky/server/common/enums/UserTypeEnum.class
 com/lucky/server/controller/superadmin/SuperAdminUserDashboardController.class
+com/lucky/server/controller/api/TeacherClassroomSessionController.class
 com/lucky/server/common/enums/ClassroomSessionStudentCheckInStatusEnum.class
 com/lucky/server/filter/JwtAuthFilter.class
 com/lucky/server/agent/listen/TranslateAgent.class
@@ -299,8 +300,10 @@ com/lucky/server/controller/api/SysUserFeedbackController.class
 com/lucky/server/domain/vo/SuperAdminSkillVO.class
 com/lucky/server/controller/api/TeacherClassroomMemberController.class
 com/lucky/server/common/tester/LlmApiKeyTester.class
+com/lucky/server/controller/api/StudentClassroomSessionStudentController.class
 com/lucky/server/domain/vo/ClassroomSessionListVO.class
 com/lucky/server/common/enums/CompositionSubmitTypeEnum.class
+com/lucky/server/controller/api/StudentClassroomSessionController.class
 com/lucky/server/domain/vo/WritingCompositionEvaluateResultVO$SentenceFeedback.class
 com/lucky/server/service/impl/SpeakingMaterialGenerationFailureServiceImpl.class
 com/lucky/server/domain/dto/ClassroomMemberPageQueryDTO.class
@@ -322,6 +325,7 @@ com/lucky/server/domain/vo/SpeakingEvaluationResultVO.class
 com/lucky/server/service/impl/SpeakingTtsGenerateServiceImpl.class
 com/lucky/server/service/ClassroomService.class
 com/lucky/server/mapper/ClassroomSessionStudentMapper.class
+com/lucky/server/controller/api/TeacherClassroomSessionStudentController.class
 com/lucky/server/domain/dto/ClassroomMemberUpdateDTO.class
 com/lucky/server/domain/dto/ClassroomJoinDTO.class
 com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO$Filter.class
