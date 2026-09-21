@@ -20,6 +20,7 @@ export function OfficialSitePage() {
           <a href="#audience" onClick={() => setNavOpen(false)}>适用人群</a>
           <a href="#workflow" onClick={() => setNavOpen(false)}>课堂流程</a>
           <Link to="/api-key-guide" onClick={() => setNavOpen(false)}>模型支持</Link>
+          <Link to="/games" onClick={() => setNavOpen(false)}>趣味练习</Link>
           <Link to="/desktop" onClick={() => setNavOpen(false)}>桌面端</Link>
           <Link to="/admin/login" onClick={() => setNavOpen(false)}>管理平台</Link>
         </nav>
@@ -45,6 +46,7 @@ export function OfficialSitePage() {
             <div className="official-actions">
               <Link to={token ? '/dashboard' : '/login'} className="official-action-main">{token ? '进入平台' : '登录平台'}</Link>
               <Link to="/register" className="official-action-sub">注册账号</Link>
+              <Link to="/games" className="official-action-sub">趣味练习</Link>
             </div>
           </div>
 
@@ -110,6 +112,27 @@ export function OfficialSitePage() {
                 <strong>{item}</strong>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="official-section official-games-entry">
+          <div className="official-section-title">课后放松</div>
+          <div className="official-game-band">
+            <div>
+              <span>Language Arcade</span>
+              <h2>用一局小游戏轻松复习</h2>
+              <p>语境跑酷练自然表达，单词星舰练同义词反应。两款游戏都有本地排行，适合课后放松时顺手巩固一下。</p>
+            </div>
+            <div className="official-game-cards">
+              <Link to="/games" className="official-game-card">
+                <strong>语境跑酷</strong>
+                <small>表达选择 · 连击 · 本地排行</small>
+              </Link>
+              <Link to="/games" className="official-game-card">
+                <strong>单词星舰</strong>
+                <small>词义匹配 · 同义词 · 护盾挑战</small>
+              </Link>
+            </div>
           </div>
         </section>
       </main>
@@ -364,6 +387,76 @@ export function OfficialSitePage() {
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 14px;
         }
+        .official-games-entry {
+          padding-top: 0;
+        }
+        .official-game-band {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+          gap: 24px;
+          align-items: center;
+          border: 1px solid #e4dacb;
+          border-radius: 22px;
+          padding: 26px;
+          background:
+            radial-gradient(circle at 92% 12%, rgba(111,125,255,.13), transparent 28%),
+            linear-gradient(135deg, rgba(35,75,73,.08), rgba(181,138,72,.08)),
+            #fffdf8;
+          box-shadow: 0 16px 42px rgba(45,54,49,.09);
+        }
+        .official-game-band span {
+          color: #8a6b35;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+        .official-game-band h2 {
+          margin: 8px 0 10px;
+          color: #172726;
+          font-size: 28px;
+          letter-spacing: 0;
+        }
+        .official-game-band p {
+          margin: 0;
+          color: #66706d;
+          line-height: 1.8;
+          font-size: 15px;
+        }
+        .official-game-cards {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .official-game-card {
+          min-height: 118px;
+          border: 1px solid #e6ddcf;
+          border-radius: 18px;
+          padding: 18px;
+          color: #172726;
+          background: rgba(255,255,255,.82);
+          text-decoration: none;
+          box-shadow: 0 12px 28px rgba(45,54,49,.08);
+          transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+        .official-game-card:hover {
+          transform: translateY(-2px);
+          border-color: #c8bba8;
+          box-shadow: 0 18px 38px rgba(45,54,49,.12);
+        }
+        .official-game-card strong,
+        .official-game-card small {
+          display: block;
+        }
+        .official-game-card strong {
+          font-size: 18px;
+          margin-bottom: 10px;
+        }
+        .official-game-card small {
+          color: #6a716d;
+          line-height: 1.65;
+          font-weight: 700;
+        }
         .official-feature {
           background: #fff;
           border: 1px solid #e8e2d8;
@@ -489,6 +582,8 @@ export function OfficialSitePage() {
             place-items: center;
           }
           .official-hero,
+          .official-game-band,
+          .official-game-cards,
           .official-feature-grid,
           .official-audience-grid,
           .official-flow {

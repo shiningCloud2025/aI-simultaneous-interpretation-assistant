@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智语同航 · 语境跑酷</title>
+  <style>
+    :root {
+      --ink: #142321;
+      --green: #234b49;
+      --mint: #46e3a2;
+      --gold: #ffd36e;
+      --red: #ff695f;
+      --blue: #7285ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #eef8ff;
+      background: #070f1d;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(70, 227, 162, .16), transparent 26%),
+        radial-gradient(circle at 82% 10%, rgba(114, 133, 255, .18), transparent 28%),
+        linear-gradient(135deg, #07111f 0%, #121b31 55%, #26183e 100%);
+    }
+
+    .stage {
+      position: relative;
+      min-width: 0;
+      min-height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .hud {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 20px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 950;
+      text-shadow: 0 12px 28px rgba(0,0,0,.35);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--green);
+      box-shadow: 0 0 28px rgba(70, 227, 162, .32);
+    }
+
+    .pills {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pill {
+      min-width: 86px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,.1);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(14px);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .pill strong {
+      color: var(--gold);
+      font-size: 16px;
+    }
+
+    .prompt-card {
+      position: absolute;
+      left: 50%;
+      top: 84px;
+      z-index: 4;
+      width: min(650px, calc(100% - 48px));
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 15px 18px;
+      background: rgba(7,15,29,.68);
+      box-shadow: 0 22px 60px rgba(0,0,0,.28);
+      backdrop-filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .prompt-card small {
+      color: rgba(238,248,255,.62);
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .prompt-card h1 {
+      margin: 7px 0 0;
+      font-size: clamp(22px, 4vw, 38px);
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .side {
+      z-index: 5;
+      min-height: 100vh;
+      border-left: 1px solid rgba(255,255,255,.12);
+      padding: 26px;
+      background: rgba(255,255,255,.08);
+      box-shadow: -20px 0 60px rgba(0,0,0,.24);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side p {
+      margin: 0;
+      color: rgba(238,248,255,.68);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .side h2 {
+      margin: 6px 0 0;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    .card {
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(238,248,255,.72);
+      line-height: 1.85;
+      font-size: 13px;
+    }
+
+    .name-field {
+      width: 100%;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding: 0 14px;
+      color: #eef8ff;
+      background: rgba(255,255,255,.1);
+      outline: none;
+      font-weight: 850;
+    }
+
+    .name-field::placeholder { color: rgba(238,248,255,.45); }
+
+    .meter {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.14);
+    }
+
+    .meter i {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--mint), var(--gold));
+      transition: width .2s ease;
+    }
+
+    .leaderboard {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .leaderboard li {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,.06);
+      color: rgba(238,248,255,.82);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .leaderboard span:first-child { color: var(--gold); }
+    .leaderboard b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #fff;
+    }
+    .leaderboard small { color: rgba(238,248,255,.54); }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn {
+      min-height: 46px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 15px;
+      color: #fff;
+      background: rgba(255,255,255,.1);
+      font-weight: 950;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.16);
+    }
+
+    .btn.primary {
+      color: #0c211d;
+      background: var(--mint);
+      border-color: var(--mint);
+      box-shadow: 0 0 28px rgba(70,227,162,.32);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: radial-gradient(circle at center, rgba(7,15,29,.18), rgba(7,15,29,.76));
+      backdrop-filter: blur(4px);
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 28px;
+      padding: 28px;
+      background: rgba(16,27,47,.84);
+      box-shadow: 0 30px 90px rgba(0,0,0,.38);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 56px);
+      letter-spacing: 0;
+    }
+
+    .modal p {
+      max-width: 440px;
+      margin: 16px auto 0;
+      color: rgba(238,248,255,.72);
+      line-height: 1.8;
+    }
+
+    .modal .name-field {
+      max-width: 320px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .modal-rank {
+      display: none;
+      max-width: 420px;
+      margin: 22px auto 0;
+      text-align: left;
+    }
+
+    .modal-rank.show { display: block; }
+    .modal-rank strong {
+      display: block;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 36px;
+      z-index: 7;
+      max-width: min(520px, calc(100% - 48px));
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: rgba(7,15,29,.72);
+      box-shadow: 0 16px 36px rgba(0,0,0,.28);
+      backdrop-filter: blur(14px);
+      font-weight: 900;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .mobile-controls {
+      position: absolute;
+      left: 50%;
+      bottom: 88px;
+      z-index: 5;
+      display: none;
+      gap: 12px;
+      transform: translateX(-50%);
+    }
+
+    .mobile-controls button {
+      width: 70px;
+      height: 52px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      font-size: 22px;
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .page { grid-template-columns: 1fr; }
+      .stage { min-height: 70vh; }
+      canvas { height: 70vh; }
+      .side { min-height: auto; border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
+      .hud { left: 14px; right: 14px; top: 14px; }
+      .pills { gap: 6px; }
+      .pill { min-width: 68px; padding: 8px 9px; font-size: 12px; }
+      .prompt-card { top: 72px; }
+      .mobile-controls { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="stage">
+      <canvas id="canvas" aria-label="语境跑酷小游戏画布"></canvas>
+
+      <div class="hud">
+        <div class="brand"><span class="brand-mark">语</span><span>智语同航 · 语境跑酷</span></div>
+        <div class="pills">
+          <div class="pill">分数 <strong id="score">0</strong></div>
+          <div class="pill">连击 <strong id="combo">0</strong></div>
+          <div class="pill">速度 <strong id="speed">1</strong></div>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <small>Pick a natural expression</small>
+        <h1 id="prompt">我想提升我的发音。</h1>
+      </div>
+
+      <div class="mobile-controls">
+        <button type="button" id="leftBtn">←</button>
+        <button type="button" id="upBtn">↑</button>
+        <button type="button" id="rightBtn">→</button>
+      </div>
+
+      <div class="toast" id="toast">准备开跑</div>
+
+      <div class="overlay" id="overlay">
+        <div class="modal">
+          <h2>语境跑酷</h2>
+          <p>在三条赛道里选择最自然的英文表达。撞到正确表达加速连击，撞到错误表达会扣体力，体力归零就结束。</p>
+          <input class="name-field" id="playerName" maxlength="12" placeholder="输入玩家名，例如 汤姆猫" />
+          <div class="modal-rank" id="modalRank">
+            <strong>本地排行榜</strong>
+            <ol class="leaderboard" id="modalLeaderboard"></ol>
+          </div>
+          <div class="modal-actions">
+            <button class="btn primary" type="button" id="startBtn">开始游戏</button>
+            <button class="btn" type="button" id="demoBtn">自动演示</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div>
+        <p>Language Runner</p>
+        <h2>语境跑酷</h2>
+      </div>
+
+      <div class="card">
+        <strong>玩家名</strong>
+        <input class="name-field" id="sideName" maxlength="12" placeholder="和弹窗同步" />
+      </div>
+
+      <div class="card">
+        <strong>游戏引导</strong>
+        <p id="guideText">看左侧中文提示，在三条赛道里撞到任意一句自然英文表达。同一个意思可能有多个正确说法。</p>
+      </div>
+
+      <div class="card">
+        <strong>操作方式</strong>
+        <ul>
+          <li>← / → 或 A / D 切换赛道</li>
+          <li>↑ / W 小跳，可躲开不想撞的词牌</li>
+          <li>撞正确表达加分，错误表达扣体力</li>
+          <li>连击越高，速度和得分越高</li>
+          <li>每 4 连击会恢复少量体力</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <strong>体力</strong>
+        <div class="meter"><i id="healthMeter"></i></div>
+      </div>
+
+      <div class="card">
+        <strong>本地用户排行榜</strong>
+        <ol class="leaderboard" id="leaderboard"></ol>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" type="button" id="restartBtn">重新开始</button>
+        <button class="btn" type="button" id="pauseBtn">暂停 / 继续</button>
+        <button class="btn" type="button" id="clearSaveBtn">清空本地存档</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const speedEl = document.getElementById("speed");
+    const promptEl = document.getElementById("prompt");
+    const healthMeter = document.getElementById("healthMeter");
+    const guideText = document.getElementById("guideText");
+    const overlay = document.getElementById("overlay");
+    const modalRank = document.getElementById("modalRank");
+    const modalLeaderboard = document.getElementById("modalLeaderboard");
+    const leaderboard = document.getElementById("leaderboard");
+    const toast = document.getElementById("toast");
+    const playerNameEl = document.getElementById("playerName");
+    const sideNameEl = document.getElementById("sideName");
+    const saveKey = "zhiyu-context-runner-save-v1";
+
+    const rounds = [
+      {
+        prompt: "我想提升我的发音。",
+        correct: [
+          "I want to improve my pronunciation.",
+          "I would like to work on my pronunciation.",
+          "I want to make my pronunciation better."
+        ],
+        wrong: [
+          "I want make my pronunciation high.",
+          "My speak sound become good.",
+          "I want my pronunciation become tall."
+        ]
+      },
+      {
+        prompt: "这个句子听起来更自然。",
+        correct: [
+          "This sentence sounds more natural.",
+          "This sentence feels more natural.",
+          "This version sounds smoother."
+        ],
+        wrong: [
+          "This sentence hears more nature.",
+          "This word is more naturaling.",
+          "This sentence listens more natural."
+        ]
+      },
+      {
+        prompt: "你能再慢一点说一遍吗？",
+        correct: [
+          "Could you say that again more slowly?",
+          "Could you repeat that a little more slowly?",
+          "Would you mind saying that again more slowly?"
+        ],
+        wrong: [
+          "Can you again slow speak?",
+          "Please say one more slow.",
+          "Can you speak again slow one?"
+        ]
+      },
+      {
+        prompt: "我今天有点跟不上老师的语速。",
+        correct: [
+          "I had trouble keeping up with the teacher today.",
+          "It was a bit hard to follow the teacher today.",
+          "The teacher spoke a little too fast for me today."
+        ],
+        wrong: [
+          "I cannot follow teacher speed today a little.",
+          "Teacher speed makes me lose today.",
+          "Today I follow teacher speed not enough."
+        ]
+      },
+      {
+        prompt: "这个单词在这里是什么意思？",
+        correct: [
+          "What does this word mean here?",
+          "What does this word mean in this context?",
+          "How should I understand this word here?"
+        ],
+        wrong: [
+          "What meaning this word is in here?",
+          "This word here is what meaning?",
+          "What is this word meaning at here?"
+        ]
+      },
+      {
+        prompt: "我不太确定这个表达是否礼貌。",
+        correct: [
+          "I am not sure if this expression is polite.",
+          "I am not sure whether this sounds polite.",
+          "I wonder if this expression sounds polite enough."
+        ],
+        wrong: [
+          "I not sure this expression polite or not.",
+          "This expression is polite I do not know.",
+          "I am not surely this polite expression."
+        ]
+      },
+      {
+        prompt: "能不能帮我换一种说法？",
+        correct: [
+          "Could you help me say it another way?",
+          "Could you help me rephrase it?",
+          "Can you help me put it differently?"
+        ],
+        wrong: [
+          "Can you change another saying for me?",
+          "Help me make another speak.",
+          "Can you replace one saying?"
+        ]
+      },
+      {
+        prompt: "我需要一点时间想一想。",
+        correct: [
+          "I need a moment to think.",
+          "Let me think about it for a moment.",
+          "Could I have a moment to think?"
+        ],
+        wrong: [
+          "I need time to think thinking.",
+          "Give me one time for think.",
+          "I need a little time for thinking it."
+        ]
+      },
+      {
+        prompt: "这个回答很清楚。",
+        correct: [
+          "This answer is very clear.",
+          "That is a clear answer.",
+          "Your answer is easy to understand."
+        ],
+        wrong: [
+          "This answer is very clearly.",
+          "The answer very understand.",
+          "This answer makes clear itself."
+        ]
+      },
+      {
+        prompt: "我可以用更简单的词说吗？",
+        correct: [
+          "Can I say it in simpler words?",
+          "Could I use simpler words?",
+          "Can I put it more simply?"
+        ],
+        wrong: [
+          "Can I use more simple words to say?",
+          "May I say by easy words?",
+          "Can I simple words it?"
+        ]
+      }
+    ];
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let roadY = 0;
+    let stars = [];
+    let cards = [];
+    let particles = [];
+    let keys = {};
+    let lane = 1;
+    let targetLane = 1;
+    let runnerY = 0;
+    let jumpV = 0;
+    let groundOffset = 0;
+    let score = 0;
+    let combo = 0;
+    let bestCombo = 0;
+    let health = 100;
+    let speed = 1;
+    let running = false;
+    let paused = false;
+    let demo = false;
+    let spawnTimer = 0;
+    let lastTick = performance.now();
+    let currentRound = rounds[0];
+    let savedThisRun = false;
+    let toastTimer = null;
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 900);
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.floor(rect.width);
+      height = Math.floor(rect.height);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      roadY = height * .62;
+      runnerY = roadY + 100;
+      stars = Array.from({ length: Math.floor(width * height / 8200) }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 1.7 + .4,
+        a: Math.random() * .65 + .25,
+        s: Math.random() * .6 + .2
+      }));
+    }
+
+    function getPlayerName() {
+      return (playerNameEl.value || sideNameEl.value || "").trim() || "游客";
+    }
+
+    function syncNames(value) {
+      playerNameEl.value = value;
+      sideNameEl.value = value;
+      const save = getSave();
+      save.currentUser = getPlayerName();
+      writeSave(save);
+      renderRanks();
+    }
+
+    function getSave() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(saveKey) || "{}");
+        return {
+          currentUser: parsed.currentUser || "",
+          users: parsed.users && typeof parsed.users === "object" ? parsed.users : {}
+        };
+      } catch (error) {
+        return { currentUser: "", users: {} };
+      }
+    }
+
+    function writeSave(save) {
+      localStorage.setItem(saveKey, JSON.stringify(save));
+    }
+
+    function ensureUser() {
+      const name = getPlayerName();
+      const save = getSave();
+      if (!save.users[name]) {
+        const now = new Date().toLocaleString("zh-CN", { hour12: false });
+        save.users[name] = { name, records: [], bestScore: 0, bestCombo: 0, createdAt: now, updatedAt: now };
+      }
+      save.currentUser = name;
+      writeSave(save);
+      return save.users[name];
+    }
+
+    function getLeaderboard() {
+      return Object.values(getSave().users)
+        .filter((user) => user.bestScore > 0)
+        .sort((a, b) => b.bestScore - a.bestScore || b.bestCombo - a.bestCombo || String(a.name).localeCompare(String(b.name), "zh-CN"))
+        .slice(0, 8);
+    }
+
+    function renderRanks() {
+      const ranks = getLeaderboard();
+      if (!ranks.length) {
+        const empty = "<li><span>-</span><b>暂无排行</b><small>打一局就会上榜</small></li>";
+        leaderboard.innerHTML = empty;
+        modalLeaderboard.innerHTML = empty;
+        return;
+      }
+      const html = ranks.map((item, index) => (
+        `<li><span>${index + 1}</span><b>${escapeHtml(item.name)}</b><small>${item.bestScore} 分 · ${item.bestCombo || 0} 连</small></li>`
+      )).join("");
+      leaderboard.innerHTML = html;
+      modalLeaderboard.innerHTML = html;
+    }
+
+    function chooseRound() {
+      currentRound = rounds[Math.floor(Math.random() * rounds.length)];
+      promptEl.textContent = currentRound.prompt;
+      guideText.textContent = "当前中文提示可能对应多个自然英文表达，撞到任意正确说法都算通过。";
+    }
+
+    function shuffle(items) {
+      return items.map((value) => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map((item) => item.value);
+    }
+
+    function spawnCards() {
+      chooseRound();
+      const correctCount = Math.random() < .55 ? 2 : 1;
+      const correctOptions = shuffle(currentRound.correct)
+        .slice(0, correctCount)
+        .map((text) => ({ text, correct: true }));
+      const wrongOptions = shuffle(currentRound.wrong)
+        .slice(0, 3 - correctOptions.length)
+        .map((text) => ({ text, correct: false }));
+      const options = shuffle([...correctOptions, ...wrongOptions]);
+      cards = options.map((option, index) => ({
+        ...option,
+        lane: index,
+        x: width + 160,
+        y: roadY + index * 76 - 10,
+        w: 250,
+        h: 56,
+        hit: false
+      }));
+    }
+
+    function resetGame(autoDemo = false) {
+      const user = ensureUser();
+      score = 0;
+      combo = 0;
+      bestCombo = 0;
+      health = 100;
+      speed = 1;
+      lane = 1;
+      targetLane = 1;
+      jumpV = 0;
+      cards = [];
+      particles = [];
+      spawnTimer = 0;
+      savedThisRun = false;
+      running = true;
+      paused = false;
+      demo = autoDemo;
+      chooseRound();
+      updateHud();
+      overlay.style.display = "none";
+      modalRank.classList.remove("show");
+      showToast(autoDemo ? "自动演示开始" : `${user.name} 开跑！`);
+      spawnCards();
+    }
+
+    function saveResult(reason) {
+      if (savedThisRun || demo || score <= 0) return;
+      savedThisRun = true;
+      const name = getPlayerName();
+      const save = getSave();
+      const now = new Date().toLocaleString("zh-CN", { hour12: false });
+      const user = save.users[name] || { name, records: [], bestScore: 0, bestCombo: 0, createdAt: now };
+      const record = { score, combo: bestCombo, reason, time: now };
+      user.records = [record, ...(user.records || [])].sort((a, b) => b.score - a.score || b.combo - a.combo).slice(0, 12);
+      user.bestScore = Math.max(user.bestScore || 0, score);
+      user.bestCombo = Math.max(user.bestCombo || 0, bestCombo);
+      user.updatedAt = now;
+      save.users[name] = user;
+      save.currentUser = name;
+      writeSave(save);
+      renderRanks();
+    }
+
+    function endGame(reason) {
+      if (!running) return;
+      running = false;
+      paused = false;
+      demo = false;
+      saveResult(reason);
+      renderRanks();
+      overlay.style.display = "grid";
+      modalRank.classList.add("show");
+      overlay.querySelector("h2").textContent = reason;
+      overlay.querySelector("p").textContent = `本轮得分 ${score}，最高连击 ${bestCombo}。下方是当前浏览器离线存档里的本地排行榜。`;
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(score);
+      comboEl.textContent = String(combo);
+      speedEl.textContent = speed.toFixed(1);
+      healthMeter.style.width = `${Math.max(0, health)}%`;
+    }
+
+    function laneY(index) {
+      return roadY + index * 76;
+    }
+
+    function runnerX() {
+      return width * .22;
+    }
+
+    function addParticles(x, y, color, count = 18) {
+      for (let i = 0; i < count; i += 1) {
+        particles.push({ x, y, vx: (Math.random() - .5) * 7, vy: (Math.random() - .7) * 6, life: 34 + Math.random() * 18, color });
+      }
+    }
+
+    function update(dt) {
+      if (!running || paused) return;
+      if (keys.ArrowLeft || keys.KeyA) targetLane = Math.max(0, targetLane - .08);
+      if (keys.ArrowRight || keys.KeyD) targetLane = Math.min(2, targetLane + .08);
+      if ((keys.ArrowUp || keys.KeyW) && runnerY >= laneY(Math.round(lane)) + 95) jumpV = -13;
+      if (demo) {
+        const correct = cards.find((card) => card.correct);
+        if (correct) targetLane += (correct.lane - targetLane) * .045;
+      }
+
+      lane += (targetLane - lane) * .18;
+      const ground = laneY(Math.round(lane)) + 100;
+      runnerY += jumpV;
+      jumpV += .62;
+      if (runnerY > ground) {
+        runnerY = ground;
+        jumpV = 0;
+      }
+
+      const pace = 5.2 + speed * 1.3;
+      groundOffset += pace;
+      stars.forEach((star) => {
+        star.x -= star.s * speed;
+        if (star.x < -5) {
+          star.x = width + 5;
+          star.y = Math.random() * height;
+        }
+      });
+
+      spawnTimer += dt;
+      if (spawnTimer > Math.max(1500, 2700 - speed * 180) && cards.length === 0) {
+        spawnTimer = 0;
+        spawnCards();
+      }
+
+      cards.forEach((card) => card.x -= pace);
+      for (let i = cards.length - 1; i >= 0; i -= 1) {
+        const card = cards[i];
+        const rx = runnerX();
+        const ry = runnerY - 36;
+        const hit = Math.abs(card.x - rx) < 105 && Math.abs(card.y - ry) < 42;
+        if (hit && !card.hit) {
+          card.hit = true;
+          if (card.correct) {
+            combo += 1;
+            bestCombo = Math.max(bestCombo, combo);
+            score += 35 + Math.min(120, combo * 8);
+            speed = Math.min(5, speed + .16);
+            addParticles(rx, ry, "#46e3a2", 24);
+            if (combo % 4 === 0) {
+              health = Math.min(100, health + 10);
+              showToast(`连击 ${combo}！体力恢复`);
+            } else {
+              showToast(combo >= 3 ? `连击 ${combo}！` : "自然表达！");
+            }
+          } else {
+            combo = 0;
+            health -= 26;
+            speed = Math.max(1, speed - .35);
+            addParticles(rx, ry, "#ff695f", 20);
+            showToast("这个表达不自然");
+          }
+          cards = [];
+          spawnTimer = 0;
+          setTimeout(() => running && spawnCards(), 520);
+          break;
+        }
+        if (card.x < -320) {
+          if (card.correct) {
+            combo = 0;
+            health -= 20;
+            showToast("错过正确表达");
+          }
+          cards.splice(i, 1);
+        }
+      }
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += .12;
+        p.life -= 1;
+      });
+      particles = particles.filter((p) => p.life > 0);
+      if (health <= 0) endGame("体力耗尽");
+      updateHud();
+    }
+
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, width, height);
+      g.addColorStop(0, "#07111f");
+      g.addColorStop(.55, "#121b31");
+      g.addColorStop(1, "#26183e");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      stars.forEach((star) => {
+        ctx.globalAlpha = star.a;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawRoad() {
+      ctx.save();
+      ctx.translate(0, roadY - 34);
+      const road = ctx.createLinearGradient(0, 0, 0, 300);
+      road.addColorStop(0, "rgba(255,255,255,.08)");
+      road.addColorStop(1, "rgba(255,255,255,.02)");
+      ctx.fillStyle = road;
+      ctx.beginPath();
+      ctx.moveTo(width * .1, 0);
+      ctx.lineTo(width * .9, 0);
+      ctx.lineTo(width, 300);
+      ctx.lineTo(0, 300);
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 0; i < 3; i += 1) {
+        const y = 34 + i * 76;
+        ctx.strokeStyle = i === Math.round(lane) ? "rgba(70,227,162,.72)" : "rgba(255,255,255,.18)";
+        ctx.lineWidth = i === Math.round(lane) ? 3 : 1;
+        ctx.beginPath();
+        ctx.moveTo(30, y);
+        ctx.lineTo(width - 30, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(255,211,110,.4)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([34, 30]);
+      ctx.lineDashOffset = -groundOffset;
+      ctx.beginPath();
+      ctx.moveTo(0, 148);
+      ctx.lineTo(width, 148);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawCard(card) {
+      ctx.save();
+      const color = "rgba(255,255,255,.92)";
+      const glow = ctx.createRadialGradient(card.x, card.y, 10, card.x, card.y, 110);
+      glow.addColorStop(0, "rgba(114,133,255,.18)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(card.x, card.y, 110, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.lineWidth = 1;
+      roundRect(card.x - card.w / 2, card.y - card.h / 2, card.w, card.h, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#102420";
+      ctx.font = "900 15px Inter, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      wrapText(card.text, card.x, card.y, card.w - 28, 20);
+      ctx.restore();
+    }
+
+    function wrapText(text, x, y, maxWidth, lineHeight) {
+      const words = text.split(" ");
+      let line = "";
+      const lines = [];
+      words.forEach((word) => {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      });
+      lines.push(line);
+      const start = y - (lines.length - 1) * lineHeight / 2;
+      lines.forEach((item, index) => ctx.fillText(item, x, start + index * lineHeight));
+    }
+
+    function drawRunner() {
+      const x = runnerX();
+      const y = runnerY - 34;
+      ctx.save();
+      ctx.translate(x, y);
+      const glow = ctx.createRadialGradient(0, 8, 10, 0, 8, 78);
+      glow.addColorStop(0, "rgba(70,227,162,.34)");
+      glow.addColorStop(1, "rgba(70,227,162,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 8, 78, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d7f7ea";
+      roundRect(-30, -34, 60, 64, 18);
+      ctx.fill();
+      ctx.fillStyle = "#234b49";
+      ctx.font = "950 24px Inter, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("语", 0, -3);
+
+      ctx.fillStyle = "#ffd36e";
+      ctx.beginPath();
+      ctx.moveTo(-16, 28);
+      ctx.lineTo(-34, 46 + Math.sin(performance.now() / 90) * 6);
+      ctx.lineTo(-4, 32);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 45);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      drawBackground();
+      drawRoad();
+      cards.forEach(drawCard);
+      drawParticles();
+      drawRunner();
+
+      if (paused && running) {
+        ctx.save();
+        ctx.fillStyle = "rgba(7,15,29,.56)";
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#eef8ff";
+        ctx.font = "950 42px Inter, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("已暂停", width / 2, height / 2);
+        ctx.restore();
+      }
+    }
+
+    function loop(now) {
+      const dt = Math.min(32, now - lastTick);
+      lastTick = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function setLaneKey(code, value) {
+      keys[code] = value;
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", (event) => {
+      keys[event.code] = true;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(event.code)) event.preventDefault();
+    });
+    window.addEventListener("keyup", (event) => {
+      keys[event.code] = false;
+    });
+    document.getElementById("leftBtn").addEventListener("pointerdown", () => setLaneKey("ArrowLeft", true));
+    document.getElementById("leftBtn").addEventListener("pointerup", () => setLaneKey("ArrowLeft", false));
+    document.getElementById("rightBtn").addEventListener("pointerdown", () => setLaneKey("ArrowRight", true));
+    document.getElementById("rightBtn").addEventListener("pointerup", () => setLaneKey("ArrowRight", false));
+    document.getElementById("upBtn").addEventListener("pointerdown", () => setLaneKey("ArrowUp", true));
+    document.getElementById("upBtn").addEventListener("pointerup", () => setLaneKey("ArrowUp", false));
+    document.getElementById("startBtn").addEventListener("click", () => resetGame(false));
+    document.getElementById("demoBtn").addEventListener("click", () => resetGame(true));
+    document.getElementById("restartBtn").addEventListener("click", () => resetGame(false));
+    document.getElementById("pauseBtn").addEventListener("click", () => {
+      if (!running) return;
+      paused = !paused;
+      showToast(paused ? "暂停" : "继续");
+    });
+    document.getElementById("clearSaveBtn").addEventListener("click", () => {
+      localStorage.removeItem(saveKey);
+      renderRanks();
+      showToast("本地存档已清空");
+    });
+    playerNameEl.addEventListener("input", () => syncNames(playerNameEl.value.trim()));
+    sideNameEl.addEventListener("input", () => syncNames(sideNameEl.value.trim()));
+
+    const save = getSave();
+    syncNames(save.currentUser || "");
+    resize();
+    chooseRound();
+    updateHud();
+    renderRanks();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

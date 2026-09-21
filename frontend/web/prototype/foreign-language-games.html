@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智语同航 · 单词星舰</title>
+  <style>
+    :root {
+      --ink: #142321;
+      --muted: #7a817c;
+      --green: #234b49;
+      --mint: #45e0a2;
+      --gold: #ffd16d;
+      --red: #ff6b5f;
+      --blue: #7485ff;
+      --paper: #fffdf8;
+      --line: #e5dccd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--ink);
+      background: #07111f;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .game-page {
+      position: relative;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(69, 224, 162, .12), transparent 28%),
+        radial-gradient(circle at 80% 12%, rgba(116, 133, 255, .18), transparent 32%),
+        linear-gradient(135deg, #07111f 0%, #121a33 52%, #23183d 100%);
+    }
+
+    .game-shell {
+      position: relative;
+      min-width: 0;
+      min-height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .top-hud {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      top: 22px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #edf8ff;
+      font-weight: 900;
+      text-shadow: 0 8px 24px rgba(0,0,0,.28);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--green);
+      box-shadow: 0 0 28px rgba(69, 224, 162, .32);
+    }
+
+    .hud-pills {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .pill {
+      min-width: 92px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 9px 13px;
+      color: #edf8ff;
+      background: rgba(255,255,255,.1);
+      box-shadow: 0 12px 26px rgba(0,0,0,.18);
+      backdrop-filter: blur(12px);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .pill strong {
+      color: var(--gold);
+      font-size: 16px;
+    }
+
+    .target-card {
+      position: absolute;
+      left: 50%;
+      top: 88px;
+      z-index: 4;
+      width: min(560px, calc(100% - 52px));
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 16px 18px;
+      color: #edf8ff;
+      background: rgba(7,17,31,.58);
+      box-shadow: 0 22px 54px rgba(0,0,0,.24);
+      backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .target-card small {
+      display: block;
+      color: rgba(237,248,255,.64);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .target-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 7px;
+    }
+
+    .target-row h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 40px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .target-row span {
+      flex: 0 0 auto;
+      color: var(--mint);
+      font-weight: 950;
+    }
+
+    .side-panel {
+      z-index: 5;
+      min-height: 100vh;
+      border-left: 1px solid rgba(255,255,255,.12);
+      padding: 26px;
+      color: #edf8ff;
+      background: rgba(255,255,255,.08);
+      box-shadow: -20px 0 60px rgba(0,0,0,.22);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .side-panel h2 {
+      margin: 8px 0 0;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    .side-panel p {
+      margin: 0;
+      color: rgba(237,248,255,.68);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .rule-card,
+    .rank-card {
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .rule-card strong,
+    .rank-card strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .rule-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(237,248,255,.72);
+      line-height: 1.9;
+      font-size: 13px;
+    }
+
+    .name-field {
+      width: 100%;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding: 0 14px;
+      color: #edf8ff;
+      background: rgba(255,255,255,.1);
+      outline: none;
+      font-weight: 850;
+    }
+
+    .name-field::placeholder {
+      color: rgba(237,248,255,.42);
+    }
+
+    .leaderboard {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .leaderboard li {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,.06);
+      color: rgba(237,248,255,.82);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .leaderboard b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #fff;
+    }
+
+    .leaderboard span:first-child {
+      color: var(--gold);
+    }
+
+    .leaderboard small {
+      color: rgba(237,248,255,.52);
+      font-weight: 800;
+    }
+
+    .mini-action {
+      margin-top: 10px;
+      border: 0;
+      padding: 0;
+      color: rgba(237,248,255,.62);
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .meter {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.14);
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--mint), var(--gold));
+      transition: width .2s ease;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn {
+      min-height: 46px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 15px;
+      color: #fff;
+      background: rgba(255,255,255,.1);
+      font-weight: 950;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.16);
+    }
+
+    .btn.primary {
+      color: #0c211d;
+      background: var(--mint);
+      border-color: var(--mint);
+      box-shadow: 0 0 26px rgba(69,224,162,.32);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: radial-gradient(circle at center, rgba(7,17,31,.16), rgba(7,17,31,.72));
+      backdrop-filter: blur(4px);
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 28px;
+      padding: 28px;
+      color: #edf8ff;
+      background: rgba(15,27,45,.82);
+      box-shadow: 0 28px 80px rgba(0,0,0,.34);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 54px);
+      letter-spacing: 0;
+    }
+
+    .modal p {
+      margin: 16px auto 0;
+      max-width: 430px;
+      color: rgba(237,248,255,.72);
+      line-height: 1.8;
+    }
+
+    .modal .name-field {
+      max-width: 320px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .modal-rank {
+      display: none;
+      margin: 22px auto 0;
+      max-width: 420px;
+      text-align: left;
+    }
+
+    .modal-rank.show {
+      display: block;
+    }
+
+    .modal-rank strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #fff;
+      text-align: center;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 42px;
+      z-index: 6;
+      min-width: 220px;
+      max-width: min(520px, calc(100% - 52px));
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 12px 18px;
+      color: #edf8ff;
+      background: rgba(7,17,31,.7);
+      box-shadow: 0 16px 36px rgba(0,0,0,.28);
+      backdrop-filter: blur(14px);
+      text-align: center;
+      font-weight: 900;
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .mobile-controls {
+      position: absolute;
+      left: 50%;
+      bottom: 96px;
+      z-index: 5;
+      display: none;
+      gap: 14px;
+      transform: translateX(-50%);
+    }
+
+    .mobile-controls button {
+      width: 76px;
+      height: 54px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      font-size: 24px;
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .game-page {
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+      .game-shell { min-height: 70vh; }
+      canvas { height: 70vh; }
+      .side-panel {
+        min-height: auto;
+        border-left: 0;
+        border-top: 1px solid rgba(255,255,255,.12);
+      }
+      .top-hud {
+        left: 14px;
+        right: 14px;
+        top: 14px;
+      }
+      .hud-pills {
+        gap: 6px;
+      }
+      .pill {
+        min-width: 72px;
+        padding: 8px 9px;
+        font-size: 12px;
+      }
+      .target-card {
+        top: 74px;
+      }
+      .mobile-controls { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-page">
+    <section class="game-shell">
+      <canvas id="gameCanvas" aria-label="单词星舰小游戏画布"></canvas>
+
+      <div class="top-hud">
+        <div class="brand"><span class="brand-mark">语</span><span>智语同航 · 单词星舰</span></div>
+        <div class="hud-pills">
+          <div class="pill">分数 <strong id="score">0</strong></div>
+          <div class="pill">连击 <strong id="combo">0</strong></div>
+          <div class="pill">时间 <strong id="time">45</strong></div>
+        </div>
+      </div>
+
+      <div class="target-card">
+        <small>Catch the word that means</small>
+        <div class="target-row">
+          <h1 id="targetMeaning">自信的</h1>
+          <span id="targetStage">Level 1</span>
+        </div>
+      </div>
+
+      <div class="mobile-controls">
+        <button type="button" id="leftBtn">←</button>
+        <button type="button" id="rightBtn">→</button>
+      </div>
+
+      <div class="toast" id="toast">准备起飞</div>
+
+      <div class="overlay" id="overlay">
+        <div class="modal">
+          <h2>单词星舰</h2>
+          <p>操控飞船接住目标释义对应的英文单词。接对加分、连击会提高倍率；接错或漏掉目标词会扣护盾，护盾归零就会坠毁。</p>
+          <input class="name-field" id="playerName" maxlength="12" placeholder="输入玩家名，例如 汤姆猫" />
+          <div class="modal-rank" id="modalRank">
+            <strong>本地排行榜</strong>
+            <ol class="leaderboard" id="modalLeaderboard"></ol>
+          </div>
+          <div class="modal-actions">
+            <button class="btn primary" type="button" id="startBtn">开始游戏</button>
+            <button class="btn" type="button" id="demoBtn">自动演示</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div>
+        <p>Word Starship</p>
+        <h2>单词星舰</h2>
+      </div>
+      <p>
+        看上方中文含义，接住任意同义英文单词。不同单词可以表达同一个意思，接错或漏掉目标含义都会扣护盾。
+      </p>
+
+      <div class="rule-card">
+        <strong>新手引导</strong>
+        <ul>
+          <li>电脑：方向键或 A / D 移动飞船</li>
+          <li>移动端：点底部左右按钮</li>
+          <li>同一个中文含义可能对应多个英文词</li>
+          <li>接住 3 个目标含义后自动换题</li>
+          <li>漏掉目标含义会大量扣护盾，归零死亡</li>
+        </ul>
+      </div>
+
+      <div class="rank-card">
+        <strong>护盾</strong>
+        <div class="meter"><i id="energyMeter"></i></div>
+      </div>
+
+      <div class="rank-card">
+        <strong>本轮结果</strong>
+        <p id="resultText">输入玩家名后开始游戏，本地存档会记录每个玩家的最高分。</p>
+      </div>
+
+      <div class="rank-card">
+        <strong>本地用户排行榜</strong>
+        <ol class="leaderboard" id="leaderboard"></ol>
+        <button class="mini-action" type="button" id="clearRankBtn">清空本地存档</button>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" type="button" id="restartBtn">重新开始</button>
+        <button class="btn" type="button" id="pauseBtn">暂停 / 继续</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const timeEl = document.getElementById("time");
+    const targetMeaningEl = document.getElementById("targetMeaning");
+    const targetStageEl = document.getElementById("targetStage");
+    const energyMeter = document.getElementById("energyMeter");
+    const overlay = document.getElementById("overlay");
+    const toast = document.getElementById("toast");
+    const resultText = document.getElementById("resultText");
+    const playerNameEl = document.getElementById("playerName");
+    const leaderboardEl = document.getElementById("leaderboard");
+    const modalRank = document.getElementById("modalRank");
+    const modalLeaderboardEl = document.getElementById("modalLeaderboard");
+    const clearRankBtn = document.getElementById("clearRankBtn");
+    const saveStorageKey = "zhiyu-word-starship-save-v2";
+
+    const words = [
+      { word: "confident", meaning: "自信的" },
+      { word: "assured", meaning: "自信的" },
+      { word: "self-assured", meaning: "自信的" },
+      { word: "accurate", meaning: "准确的" },
+      { word: "precise", meaning: "准确的" },
+      { word: "exact", meaning: "准确的" },
+      { word: "polite", meaning: "礼貌的" },
+      { word: "courteous", meaning: "礼貌的" },
+      { word: "respectful", meaning: "礼貌的" },
+      { word: "summarize", meaning: "总结" },
+      { word: "recap", meaning: "总结" },
+      { word: "outline", meaning: "总结" },
+      { word: "improve", meaning: "提升" },
+      { word: "enhance", meaning: "提升" },
+      { word: "boost", meaning: "提升" },
+      { word: "natural", meaning: "自然的" },
+      { word: "smooth", meaning: "自然的" },
+      { word: "idiomatic", meaning: "自然的" },
+      { word: "context", meaning: "语境" },
+      { word: "setting", meaning: "语境" },
+      { word: "fluent", meaning: "流利的" },
+      { word: "smooth-spoken", meaning: "流利的" },
+      { word: "practice", meaning: "练习" },
+      { word: "drill", meaning: "练习" },
+      { word: "journey", meaning: "旅程" },
+      { word: "trip", meaning: "旅程" },
+      { word: "explain", meaning: "解释" },
+      { word: "clarify", meaning: "解释" },
+      { word: "listen", meaning: "听" },
+      { word: "hear", meaning: "听" }
+    ];
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let stars = [];
+    let particles = [];
+    let drops = [];
+    let keys = {};
+    let player = { x: 0, y: 0, w: 86, h: 42, speed: 7 };
+    let target = words[0];
+    let score = 0;
+    let combo = 0;
+    let bestCombo = 0;
+    let energy = 100;
+    let timeLeft = 45;
+    let running = false;
+    let paused = false;
+    let demo = false;
+    let spawnTimer = 0;
+    let targetTimer = 0;
+    let targetHits = 0;
+    let lastTick = performance.now();
+    let secondAcc = 0;
+    let toastTimer = null;
+    let savedThisRun = false;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.floor(rect.width);
+      height = Math.floor(rect.height);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      player.x = player.x || width / 2;
+      player.y = height - 92;
+      stars = Array.from({ length: Math.floor(width * height / 7500) }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 1.8 + .4,
+        speed: Math.random() * .8 + .25,
+        alpha: Math.random() * .7 + .25
+      }));
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 900);
+    }
+
+    function getPlayerName() {
+      const value = playerNameEl.value.trim();
+      return value || "游客";
+    }
+
+    function getSave() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(saveStorageKey) || "{}");
+        return {
+          currentUser: parsed.currentUser || "",
+          users: parsed.users && typeof parsed.users === "object" ? parsed.users : {}
+        };
+      } catch (error) {
+        return { currentUser: "", users: {} };
+      }
+    }
+
+    function writeSave(data) {
+      localStorage.setItem(saveStorageKey, JSON.stringify(data));
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function ensureUser() {
+      const name = getPlayerName();
+      const save = getSave();
+      if (!save.users[name]) {
+        const now = new Date().toLocaleString("zh-CN", { hour12: false });
+        save.users[name] = {
+          name,
+          records: [],
+          bestScore: 0,
+          bestCombo: 0,
+          createdAt: now,
+          updatedAt: now
+        };
+      }
+      save.currentUser = name;
+      writeSave(save);
+      return save.users[name];
+    }
+
+    function getLeaderboard() {
+      const save = getSave();
+      return Object.values(save.users)
+        .filter((user) => user.bestScore > 0)
+        .sort((a, b) => b.bestScore - a.bestScore || b.bestCombo - a.bestCombo || String(a.name).localeCompare(String(b.name), "zh-CN"))
+        .slice(0, 8);
+    }
+
+    function saveRank(reason) {
+      if (savedThisRun || demo || score <= 0) return;
+      savedThisRun = true;
+      const name = getPlayerName();
+      const save = getSave();
+      const now = new Date().toLocaleString("zh-CN", { hour12: false });
+      const user = save.users[name] || {
+        name,
+        records: [],
+        bestScore: 0,
+        bestCombo: 0,
+        createdAt: now
+      };
+      const record = {
+        score,
+        combo: bestCombo,
+        reason,
+        time: now
+      };
+      user.records = [record, ...(user.records || [])]
+        .sort((a, b) => b.score - a.score || b.combo - a.combo)
+        .slice(0, 12);
+      user.bestScore = Math.max(user.bestScore || 0, score);
+      user.bestCombo = Math.max(user.bestCombo || 0, bestCombo);
+      user.updatedAt = now;
+      save.users[name] = user;
+      save.currentUser = name;
+      writeSave(save);
+      renderRanks();
+    }
+
+    function renderRanks() {
+      const ranks = getLeaderboard();
+      if (!ranks.length) {
+        const empty = "<li><span>-</span><b>暂无排行</b><small>打一局就会上榜</small></li>";
+        leaderboardEl.innerHTML = empty;
+        modalLeaderboardEl.innerHTML = empty;
+        return;
+      }
+      const html = ranks.map((item, index) => (
+        `<li><span>${index + 1}</span><b>${escapeHtml(item.name)}</b><small>${item.bestScore} 分 · ${item.bestCombo || 0} 连</small></li>`
+      )).join("");
+      leaderboardEl.innerHTML = html;
+      modalLeaderboardEl.innerHTML = html;
+    }
+
+    function chooseTarget(forceDifferent = true) {
+      const pool = forceDifferent ? words.filter((item) => item.meaning !== target.meaning) : words;
+      target = pool[Math.floor(Math.random() * pool.length)];
+      targetHits = 0;
+      drops.forEach((drop) => {
+        drop.match = drop.meaning === target.meaning;
+      });
+      targetMeaningEl.textContent = target.meaning;
+      const level = Math.min(5, 1 + Math.floor(score / 120));
+      targetStageEl.textContent = `Level ${level}`;
+      showToast(`目标变更：${target.meaning}`);
+    }
+
+    function resetGame(autoDemo = false) {
+      const user = ensureUser();
+      score = 0;
+      combo = 0;
+      bestCombo = 0;
+      energy = 100;
+      timeLeft = 45;
+      drops = [];
+      particles = [];
+      spawnTimer = 0;
+      targetTimer = 0;
+      targetHits = 0;
+      secondAcc = 0;
+      running = true;
+      paused = false;
+      demo = autoDemo;
+      savedThisRun = false;
+      player.x = width / 2;
+      chooseTarget(false);
+      updateHud();
+      overlay.style.display = "none";
+      modalRank.classList.remove("show");
+      resultText.textContent = "游戏进行中，注意目标含义变化。";
+      showToast(autoDemo ? "自动演示开始" : `${user.name} 起飞！`);
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(score);
+      comboEl.textContent = String(combo);
+      timeEl.textContent = String(Math.max(0, timeLeft));
+      energyMeter.style.width = `${Math.max(0, energy)}%`;
+    }
+
+    function spawnDrop() {
+      const level = Math.min(5, 1 + Math.floor(score / 120));
+      const shouldMatch = Math.random() < Math.min(.5, .32 + level * .03);
+      const matchPool = words.filter((item) => item.meaning === target.meaning);
+      const missPool = words.filter((item) => item.meaning !== target.meaning);
+      const word = shouldMatch ? matchPool[Math.floor(Math.random() * matchPool.length)] : missPool[Math.floor(Math.random() * missPool.length)];
+      drops.push({
+        ...word,
+        x: 60 + Math.random() * Math.max(120, width - 120),
+        y: -40,
+        vy: 1.5 + level * .22 + Math.random() * 1.2,
+        vx: (Math.random() - .5) * 1.2,
+        r: 30 + Math.random() * 8,
+        spin: Math.random() * Math.PI,
+        match: word.meaning === target.meaning
+      });
+    }
+
+    function addParticles(x, y, color, count = 16) {
+      for (let i = 0; i < count; i += 1) {
+        particles.push({
+          x,
+          y,
+          vx: (Math.random() - .5) * 6,
+          vy: (Math.random() - .5) * 6,
+          life: 28 + Math.random() * 18,
+          color
+        });
+      }
+    }
+
+    function endGame(reason) {
+      if (!running) return;
+      running = false;
+      paused = false;
+      demo = false;
+      saveRank(reason);
+      renderRanks();
+      overlay.style.display = "grid";
+      modalRank.classList.add("show");
+      overlay.querySelector("h2").textContent = reason;
+      overlay.querySelector("p").textContent = `本轮得分 ${score}，最高连击 ${bestCombo}。下方是当前浏览器离线存档里的本地用户排行榜。`;
+      resultText.textContent = `本轮得分 ${score}，结束原因：${reason}。记录已保存到玩家「${getPlayerName()}」的本地档案。`;
+    }
+
+    function update(dt) {
+      if (!running || paused) return;
+
+      if (keys.ArrowLeft || keys.KeyA) player.x -= player.speed;
+      if (keys.ArrowRight || keys.KeyD) player.x += player.speed;
+      if (demo) {
+        const nearest = drops.filter((drop) => drop.match).sort((a, b) => b.y - a.y)[0];
+        if (nearest) player.x += (nearest.x - player.x) * .04;
+      }
+      player.x = Math.max(player.w / 2 + 12, Math.min(width - player.w / 2 - 12, player.x));
+
+      stars.forEach((star) => {
+        star.y += star.speed;
+        if (star.y > height) {
+          star.y = -4;
+          star.x = Math.random() * width;
+        }
+      });
+
+      spawnTimer += dt;
+      targetTimer += dt;
+      secondAcc += dt;
+      const level = Math.min(5, 1 + Math.floor(score / 120));
+      if (spawnTimer > Math.max(460, 920 - level * 80)) {
+        spawnTimer = 0;
+        spawnDrop();
+      }
+      if (targetTimer > 6500) {
+        targetTimer = 0;
+        chooseTarget();
+      }
+      if (secondAcc > 1000) {
+        secondAcc -= 1000;
+        timeLeft -= 1;
+        if (timeLeft <= 0) endGame("时间到");
+      }
+
+      drops.forEach((drop) => {
+        drop.x += drop.vx;
+        drop.y += drop.vy;
+        drop.spin += .03;
+      });
+
+      for (let i = drops.length - 1; i >= 0; i -= 1) {
+        const drop = drops[i];
+        const hitX = Math.abs(drop.x - player.x) < (player.w / 2 + drop.r * .75);
+        const hitY = Math.abs(drop.y - player.y) < (player.h / 2 + drop.r * .75);
+        if (hitX && hitY) {
+          drops.splice(i, 1);
+          if (drop.match) {
+            combo += 1;
+            bestCombo = Math.max(bestCombo, combo);
+            targetHits += 1;
+            score += 20 + Math.min(80, combo * 4);
+            addParticles(drop.x, drop.y, "#45e0a2", 22);
+            showToast(combo >= 3 ? `连击 ${combo}！` : "接对了");
+            if (targetHits >= 3) {
+              targetTimer = 0;
+              chooseTarget();
+            }
+          } else {
+            combo = 0;
+            energy -= 18;
+            addParticles(drop.x, drop.y, "#ff6b5f", 18);
+            showToast(`${drop.word} 是“${drop.meaning}”`);
+          }
+        } else if (drop.y > height + 70) {
+          drops.splice(i, 1);
+          if (drop.match) {
+            combo = 0;
+            energy -= 34;
+            showToast(`漏掉目标词：${drop.word}`);
+          }
+        }
+      }
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += .08;
+        p.life -= 1;
+      });
+      particles = particles.filter((p) => p.life > 0);
+
+      if (energy <= 0) endGame("能量耗尽");
+      updateHud();
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, width, height);
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#07111f");
+      gradient.addColorStop(.55, "#121a33");
+      gradient.addColorStop(1, "#23183d");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      stars.forEach((star) => {
+        ctx.globalAlpha = star.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = .18;
+      ctx.strokeStyle = "#ffffff";
+      for (let i = 0; i < 4; i += 1) {
+        ctx.beginPath();
+        ctx.ellipse(width / 2, height * .54, 180 + i * 120, 72 + i * 44, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      const glow = ctx.createRadialGradient(0, 6, 8, 0, 6, 80);
+      glow.addColorStop(0, "rgba(69,224,162,.35)");
+      glow.addColorStop(1, "rgba(69,224,162,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 8, 80, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d7f7ea";
+      ctx.beginPath();
+      ctx.moveTo(0, -30);
+      ctx.lineTo(48, 28);
+      ctx.quadraticCurveTo(0, 10, -48, 28);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#234b49";
+      ctx.beginPath();
+      ctx.arc(0, -4, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffd16d";
+      ctx.beginPath();
+      ctx.moveTo(-14, 24);
+      ctx.lineTo(0, 52 + Math.sin(performance.now() / 80) * 7);
+      ctx.lineTo(14, 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawDrop(drop) {
+      ctx.save();
+      ctx.translate(drop.x, drop.y);
+      ctx.rotate(Math.sin(drop.spin) * .08);
+
+      const color = drop.match ? "rgba(69,224,162,.95)" : "rgba(116,133,255,.92)";
+      const glow = ctx.createRadialGradient(0, 0, 8, 0, 0, 70);
+      glow.addColorStop(0, color);
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, 70, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = drop.match ? "rgba(215,247,234,.96)" : "rgba(229,233,255,.96)";
+      ctx.strokeStyle = "rgba(255,255,255,.42)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, -58, -24, 116, 48, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#102320";
+      ctx.font = "900 16px Inter, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(drop.word, 0, -2);
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 40);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function roundRect(context, x, y, w, h, r) {
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + w, y, x + w, y + h, r);
+      context.arcTo(x + w, y + h, x, y + h, r);
+      context.arcTo(x, y + h, x, y, r);
+      context.arcTo(x, y, x + w, y, r);
+      context.closePath();
+    }
+
+    function draw() {
+      drawBackground();
+      drops.forEach(drawDrop);
+      drawParticles();
+      drawPlayer();
+      if (paused && running) {
+        ctx.save();
+        ctx.fillStyle = "rgba(7,17,31,.55)";
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#edf8ff";
+        ctx.font = "950 42px Inter, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("已暂停", width / 2, height / 2);
+        ctx.restore();
+      }
+    }
+
+    function loop(now) {
+      const dt = Math.min(32, now - lastTick);
+      lastTick = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", (event) => {
+      keys[event.code] = true;
+      if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
+    });
+    window.addEventListener("keyup", (event) => {
+      keys[event.code] = false;
+    });
+    document.getElementById("leftBtn").addEventListener("pointerdown", () => keys.ArrowLeft = true);
+    document.getElementById("leftBtn").addEventListener("pointerup", () => keys.ArrowLeft = false);
+    document.getElementById("rightBtn").addEventListener("pointerdown", () => keys.ArrowRight = true);
+    document.getElementById("rightBtn").addEventListener("pointerup", () => keys.ArrowRight = false);
+    document.getElementById("startBtn").addEventListener("click", () => resetGame(false));
+    document.getElementById("demoBtn").addEventListener("click", () => resetGame(true));
+    document.getElementById("restartBtn").addEventListener("click", () => resetGame(false));
+    document.getElementById("pauseBtn").addEventListener("click", () => {
+      if (!running) return;
+      paused = !paused;
+      showToast(paused ? "暂停" : "继续");
+    });
+    clearRankBtn.addEventListener("click", () => {
+      localStorage.removeItem(saveStorageKey);
+      renderRanks();
+      showToast("本地存档已清空");
+    });
+    playerNameEl.value = getSave().currentUser || "";
+    playerNameEl.addEventListener("input", () => {
+      const save = getSave();
+      save.currentUser = getPlayerName();
+      writeSave(save);
+      renderRanks();
+    });
+
+    resize();
+    chooseTarget();
+    updateHud();
+    renderRanks();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

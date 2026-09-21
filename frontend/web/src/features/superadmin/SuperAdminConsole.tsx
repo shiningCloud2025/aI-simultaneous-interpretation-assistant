@@ -29,6 +29,7 @@ type AdminPanelKey =
   | 'feedback'
   | 'skills'
   | 'system'
+  | 'nacos-console'
   | 'admin-account';
 
 type UserManageTabKey = 'all-users' | 'online-users' | 'disabled-users' | 'operation-records';
@@ -36,12 +37,17 @@ type AdminAccountModalType = 'profile' | 'password' | 'phone' | 'email' | null;
 type AllUsersBatchModalType = 'status' | 'type' | null;
 type AdminMode = 'classic' | 'star' | 'star-content';
 type StarNavigationLevel = 'primary' | 'secondary';
+type AdminNavInternalItem = { key: AdminPanelKey; icon: string; name: string; desc: string; iframeUrl?: string };
+type AdminNavExternalItem = { key: string; icon: string; name: string; desc: string; href: string };
+type AdminNavItem = AdminNavInternalItem | AdminNavExternalItem;
+
+const isInternalNavItem = (item: AdminNavItem): item is AdminNavInternalItem => !('href' in item);
 
 const navGroups: Array<{
   key: string;
   icon: string;
   name: string;
-  children: Array<{ key: AdminPanelKey; icon: string; name: string; desc: string }>;
+  children: AdminNavItem[];
 }> = [
   {
     key: 'boards',
@@ -79,17 +85,35 @@ const navGroups: Array<{
       { key: 'system', icon: '⚙', name: '系统配置', desc: '固定配置后续扩展' },
     ],
   },
+  {
+    key: 'governance',
+    icon: '⛭',
+    name: '治理平台',
+    children: [
+      {
+        key: 'nacos-console',
+        icon: '◎',
+        name: 'Nacos 配置与服务发现平台',
+        desc: '配置中心、服务发现与注册治理',
+        iframeUrl: 'http://49.235.190.40:35003/nacos/#/login',
+      },
+    ],
+  },
 ];
 
 const panelMeta = Object.fromEntries(
   [
-    ...navGroups.flatMap((group) => group.children.map((item) => [item.key, item])),
+    ...navGroups.flatMap((group) => group.children.filter(isInternalNavItem).map((item) => [item.key, item])),
     ['admin-account', { key: 'admin-account', icon: '👤', name: '账号中心', desc: '管理员基础信息、资料维护与安全设置' }],
   ]
-) as Record<AdminPanelKey, { key: AdminPanelKey; icon: string; name: string; desc: string }>;
+) as Record<AdminPanelKey, AdminNavInternalItem>;
 
 function findPanelGroup(key: AdminPanelKey) {
-  return navGroups.find((group) => group.children.some((child) => child.key === key));
+  return navGroups.find((group) => group.children.some((child) => isInternalNavItem(child) && child.key === key));
+}
+
+function openExternalAdminLink(href: string) {
+  window.open(href, '_blank', 'noopener,noreferrer');
 }
 
 function formatNumber(value?: number | null) {
@@ -379,7 +403,7 @@ export function SuperAdminConsole() {
         </div>
         <div className="admin-nav">
           {navGroups.map((group) => {
-            const activeGroup = group.children.some((item) => item.key === panel);
+            const activeGroup = group.children.some((item) => isInternalNavItem(item) && item.key === panel);
             const open = activeMenu === group.key;
             return (
               <div className="admin-nav-group" key={group.key}>
@@ -395,11 +419,12 @@ export function SuperAdminConsole() {
                   {group.children.map((item) => (
                     <button
                       key={item.key}
-                      className={`admin-nav-secondary ${panel === item.key ? 'active' : ''}`}
-                      onClick={() => changePanel(item.key)}
+                      className={`admin-nav-secondary ${isInternalNavItem(item) && panel === item.key ? 'active' : ''} ${!isInternalNavItem(item) ? 'external' : ''}`}
+                      onClick={() => isInternalNavItem(item) ? changePanel(item.key) : openExternalAdminLink(item.href)}
                     >
                       <span>{item.icon}</span>
                       <span>{item.name}</span>
+                      {!isInternalNavItem(item) && <span className="admin-nav-external-mark">↗</span>}
                     </button>
                   ))}
                 </div>
@@ -501,11 +526,42 @@ export function SuperAdminConsole() {
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+              {panel === 'nacos-console' && <GovernanceFramePanel item={meta} />}
               {panel === 'admin-account' && <AdminAccountPanel />}
             </>
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function GovernanceFramePanel({ item }: { item: AdminNavInternalItem }) {
+  const [frameKey, setFrameKey] = useState(0);
+  const url = item.iframeUrl || '';
+
+  return (
+    <div className="admin-governance-frame-panel">
+      <div className="admin-governance-frame-head">
+        <div>
+          <span>治理平台</span>
+          <h2>{item.icon} {item.name}</h2>
+          <p>{item.desc}。如果目标平台限制 iframe 嵌入，可以使用右侧按钮在新窗口打开。</p>
+        </div>
+        <div>
+          <button className="admin-btn" onClick={() => setFrameKey((key) => key + 1)}>刷新</button>
+          <button className="admin-btn primary" onClick={() => openExternalAdminLink(url)}>新窗口打开</button>
+        </div>
+      </div>
+      <div className="admin-governance-frame-wrap">
+        <iframe
+          key={frameKey}
+          title={item.name}
+          src={url}
+          referrerPolicy="no-referrer"
+          sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-downloads"
+        />
+      </div>
     </div>
   );
 }
@@ -769,7 +825,7 @@ function StarModePanel({
   onSelect: (key: AdminPanelKey) => void;
 }) {
   const [activeGroupKey, setActiveGroupKey] = useState(() => {
-    return initialGroupKey || navGroups.find((group) => group.children.some((child) => child.key === activePanel))?.key || navGroups[0].key;
+    return initialGroupKey || navGroups.find((group) => group.children.some((child) => isInternalNavItem(child) && child.key === activePanel))?.key || navGroups[0].key;
   });
   const [level, setLevel] = useState<StarNavigationLevel>(initialLevel);
   const activeGroup = navGroups.find((group) => group.key === activeGroupKey) || navGroups[0];
@@ -779,8 +835,12 @@ function StarModePanel({
     setLevel('secondary');
   };
 
-  const openPanel = (key: AdminPanelKey) => {
-    onSelect(key);
+  const openPanel = (item: AdminNavItem) => {
+    if (isInternalNavItem(item)) {
+      onSelect(item.key);
+      return;
+    }
+    openExternalAdminLink(item.href);
   };
 
   return (
@@ -836,9 +896,9 @@ function StarModePanel({
           <div className="admin-satellite-grid">
             {activeGroup.children.map((item, index) => (
               <button
-                className={`admin-satellite admin-satellite-${index + 1} ${activePanel === item.key ? 'active' : ''}`}
+                className={`admin-satellite admin-satellite-${index + 1} ${isInternalNavItem(item) && activePanel === item.key ? 'active' : ''} ${!isInternalNavItem(item) ? 'external' : ''}`}
                 key={item.key}
-                onClick={() => openPanel(item.key)}
+                onClick={() => openPanel(item)}
               >
                 <span className="admin-orbit-label">
                   <span>{item.icon}</span>

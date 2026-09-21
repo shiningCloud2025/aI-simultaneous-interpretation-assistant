@@ -1,5 +1,6 @@
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AppWindow, AudioLines, Cloud, MonitorUp, Settings2, Sparkles } from 'lucide-react';
+import { AppWindow, AudioLines, Cloud, Download, Laptop, MonitorUp, Settings2, Sparkles } from 'lucide-react';
 
 const desktopFeatures = [
   { icon: AudioLines, title: '轻量悬浮工具栏', text: '悬浮在桌面上方，随时开始或停止课堂音频采集，不必频繁切换浏览器窗口。' },
@@ -8,8 +9,65 @@ const desktopFeatures = [
   { icon: Cloud, title: '同一账号与数据', text: '桌面端复用平台账号和后端服务，让模型配置与业务结果在不同使用方式间保持一致。' },
 ];
 
+const WINDOWS_INSTALLER_URL = '/downloads/zhiyu-desktop-1.0.0-x64.exe';
+const MAC_ARM64_INSTALLER_URL = '/downloads/zhiyu-desktop-1.0.0-arm64.dmg';
+const LINUX_APPIMAGE_URL = '/downloads/zhiyu-desktop-1.0.0-x86_64.AppImage';
+
+type DesktopPlatformFilter = 'all' | 'windows' | 'macos' | 'linux';
+
+const desktopPlatformFilters: Array<{ value: DesktopPlatformFilter; label: string }> = [
+  { value: 'all', label: '全部平台' },
+  { value: 'windows', label: 'Windows' },
+  { value: 'macos', label: 'macOS' },
+  { value: 'linux', label: 'Linux' },
+];
+
+const desktopDownloads = [
+  {
+    version: '1.0.0',
+    platform: 'windows',
+    platformLabel: 'Windows',
+    arch: 'x64',
+    size: '约 96MB',
+    date: '2026-09-18',
+    status: 'available',
+    statusLabel: '可下载',
+    href: WINDOWS_INSTALLER_URL,
+    notes: ['悬浮工具栏与桌面平台', '听力、阅读、写作、作文批阅与答疑', '复用平台账号与模型配置'],
+  },
+  {
+    version: '1.0.0',
+    platform: 'macos',
+    platformLabel: 'macOS',
+    arch: 'Apple Silicon',
+    size: '约 114MB',
+    date: '2026-09-18',
+    status: 'available',
+    statusLabel: '可下载',
+    href: MAC_ARM64_INSTALLER_URL,
+    notes: ['适用于 M 系列 Mac', '已临时签名，未 Apple 公证，首次打开可能需要在隐私与安全中允许', '若仍提示已损坏，可先移除下载隔离标记后再打开'],
+  },
+  {
+    version: '1.0.0',
+    platform: 'linux',
+    platformLabel: 'Linux',
+    arch: 'x64 AppImage',
+    size: '约 123MB',
+    date: '2026-09-18',
+    status: 'available',
+    statusLabel: '可下载',
+    href: LINUX_APPIMAGE_URL,
+    notes: ['面向 Ubuntu、Debian、Fedora 等主流发行版', 'AppImage 版本下载后赋予执行权限即可运行', '功能口径与 Windows/macOS 版本一致'],
+  },
+] as const;
+
 export function DesktopAppPage() {
   const navigate = useNavigate();
+  const [platformFilter, setPlatformFilter] = useState<DesktopPlatformFilter>('all');
+  const visibleDownloads = useMemo(
+    () => desktopDownloads.filter((item) => platformFilter === 'all' || item.platform === platformFilter),
+    [platformFilter],
+  );
 
   return (
     <div className="desktop-site-page">
@@ -29,8 +87,9 @@ export function DesktopAppPage() {
             <h1>把语言辅助，放在桌面最顺手的位置</h1>
             <p>智语同航桌面端面向课堂、会议与自主学习场景，将实时转译和常用语言能力收进一条轻量悬浮工具栏，并可随时展开完整工作区。</p>
             <div className="desktop-site-actions">
-              <span><i />安装包正在研发与测试</span>
-              <small>计划支持 macOS 与 Windows</small>
+              <a href={WINDOWS_INSTALLER_URL} download className="desktop-site-download-primary">下载 Windows 版</a>
+              <span><i />Windows x64 · 约 96MB</span>
+              <small>macOS 版本完成稳定性检查后开放</small>
             </div>
           </div>
 
@@ -70,8 +129,66 @@ export function DesktopAppPage() {
         </section>
 
         <section className="desktop-site-release">
-          <div><span>EARLY ACCESS</span><h2>桌面端安装包正在研发</h2><p>我们正在完善跨平台打包、安装体验、权限提示和稳定性测试。正式版本准备完成后，将在这里提供 macOS 与 Windows 安装包。</p></div>
-          <div className="desktop-site-release-status"><MonitorUp size={26} /><strong>研发与测试中</strong><small>下载入口即将开放</small><button disabled>敬请期待</button></div>
+          <div><span>EARLY ACCESS</span><h2>桌面端安装包开放下载</h2><p>Windows 用户可以先下载 x64 安装包体验悬浮工具栏与桌面平台。桌面端复用同一账号体系，登录后即可使用已配置的模型和学习数据。</p></div>
+          <div className="desktop-site-release-status">
+            <MonitorUp size={26} />
+            <strong>Windows x64</strong>
+            <small>版本 1.0.0 · 约 96MB</small>
+            <a href={WINDOWS_INSTALLER_URL} download>下载安装包</a>
+            <p>未签名版本可能出现系统安全提醒，请确认来源后安装。</p>
+          </div>
+        </section>
+
+        <section className="desktop-site-downloads" id="desktop-downloads">
+          <div className="desktop-site-downloads-head">
+            <div>
+              <span>DOWNLOAD CENTER</span>
+              <h2>选择平台与版本</h2>
+              <p>快捷下载保留当前推荐版本，下面按平台整理可用安装包和后续版本，方便用户确认版本号后再下载。</p>
+            </div>
+            <div className="desktop-site-platform-tabs" role="tablist" aria-label="选择桌面端平台">
+              {desktopPlatformFilters.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={platformFilter === item.value ? 'active' : ''}
+                  onClick={() => setPlatformFilter(item.value)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="desktop-site-download-table">
+            <div className="desktop-site-download-table-head">
+              <span>版本</span><span>平台</span><span>内容</span><span>操作</span>
+            </div>
+            {visibleDownloads.map((item) => (
+              <article key={`${item.platform}-${item.version}`} className={`desktop-site-download-row ${item.status}`}>
+                <div className="desktop-site-version-cell">
+                  <strong>v{item.version}</strong>
+                  <small>{item.date}</small>
+                </div>
+                <div className="desktop-site-platform-cell">
+                  <Laptop size={18} />
+                  <div>
+                    <strong>{item.platformLabel}</strong>
+                    <small>{item.arch} · {item.size}</small>
+                  </div>
+                  <em>{item.statusLabel}</em>
+                </div>
+                <ul>
+                  {item.notes.map((note) => <li key={note}>{note}</li>)}
+                </ul>
+                {item.status === 'available' ? (
+                  <a href={item.href} download><Download size={16} />下载</a>
+                ) : (
+                  <button type="button" disabled>暂未开放</button>
+                )}
+              </article>
+            ))}
+          </div>
         </section>
       </main>
 
@@ -91,6 +208,8 @@ export function DesktopAppPage() {
         .desktop-site-copy h1 { max-width: 580px; margin: 0; color: #172726; font-size: 49px; line-height: 1.16; }
         .desktop-site-copy > p { max-width: 610px; margin: 23px 0 0; color: #606a66; font-size: 17px; line-height: 1.85; }
         .desktop-site-actions { margin-top: 31px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .desktop-site-download-primary { min-height: 47px; padding: 0 23px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #234b49; color: #fff; text-decoration: none; font-size: 13px; font-weight: 900; box-shadow: 0 13px 25px rgba(35,75,73,.18); }
+        .desktop-site-download-primary:hover { background: #193d3a; }
         .desktop-site-actions > span { padding: 11px 15px; display: flex; align-items: center; gap: 8px; border: 1px solid #d7c7ac; border-radius: 999px; background: #fffaf1; color: #765c2f; font-size: 12px; font-weight: 800; }
         .desktop-site-actions i { width: 7px; height: 7px; border-radius: 50%; background: #b58a48; box-shadow: 0 0 0 4px rgba(181,138,72,.12); }
         .desktop-site-actions small { color: #8c928e; font-size: 11px; }
@@ -106,10 +225,37 @@ export function DesktopAppPage() {
         .desktop-site-feature-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }.desktop-site-feature-grid article { min-height: 220px; padding: 24px; border: 1px solid #e5dfd5; border-radius: 17px; background: #fff; }.desktop-site-feature-grid article > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: #eaf1ed; color: #234b49; }.desktop-site-feature-grid h3 { margin: 26px 0 10px; font-size: 16px; }.desktop-site-feature-grid p { margin: 0; color: #747d79; font-size: 12px; line-height: 1.8; }
         .desktop-site-modes { margin: 34px 0 82px; padding: 42px; display: grid; grid-template-columns: minmax(0,.8fr) minmax(460px,1.2fr); align-items: center; gap: 54px; overflow: hidden; border: 1px solid #dfd5c5; border-radius: 24px; background: linear-gradient(130deg,#fffdf8,#ece8df); }.desktop-site-mode-copy > span { color: #8a6b35; font-size: 11px; font-weight: 800; }.desktop-site-mode-copy > p { margin: 16px 0 25px; color: #68716d; font-size: 13px; line-height: 1.8; }.desktop-site-mode-copy > div { min-height: 51px; display: grid; grid-template-columns: 30px 105px 1fr; align-items: center; border-top: 1px solid #e7e1d7; }.desktop-site-mode-copy em { color: #b58a48; font-size: 10px; font-style: normal; }.desktop-site-mode-copy strong { font-size: 12px; }.desktop-site-mode-copy small { color: #888e8a; font-size: 10px; }
         .desktop-site-toolbar-demo { min-height: 280px; display: flex; align-items: center; position: relative; border-radius: 18px; background: #d7d4cc; box-shadow: inset 0 0 0 1px rgba(49,54,51,.08); }.desktop-site-screen-line { position: absolute; inset: 20px; border-radius: 11px; background: repeating-linear-gradient(0deg,#e4e2dc,#e4e2dc 26px,#dedbd4 27px); }.desktop-site-floating-bar { width: calc(100% - 36px); min-height: 61px; margin: auto 18px; padding: 9px; display: flex; align-items: center; gap: 11px; position: relative; z-index: 1; border: 1px solid #d6d2ca; border-radius: 13px; background: rgba(255,255,255,.96); box-shadow: 0 16px 36px rgba(38,43,40,.18); }.desktop-site-mini-brand { width: 32px; height: 32px; display: grid; place-items: center; flex-shrink: 0; border-radius: 9px; background: #234b49; color: #fff; font-weight: 800; }.desktop-site-floating-bar > span:not(.desktop-site-mini-brand) { display: flex; flex-direction: column; min-width: 57px; }.desktop-site-floating-bar small { color: #a0a39f; font-size: 7px; }.desktop-site-floating-bar strong { margin-top: 3px; font-size: 10px; }.desktop-site-floating-bar > span:nth-last-child(2) { padding-left: 10px; flex-direction: row; align-items: center; gap: 5px; border-left: 1px solid #e6e3dc; color: #65706b; font-size: 8px; }.desktop-site-floating-bar button { height: 34px; margin-left: auto; padding: 0 11px; display: flex; align-items: center; gap: 5px; border: 0; border-radius: 8px; background: #234b49; color: #fff; font-size: 8px; }.desktop-site-caption { position: absolute; right: 16px; bottom: 12px; display: flex; align-items: center; gap: 6px; color: #747a76; font-size: 8px; }.desktop-site-caption i { width: 6px; height: 6px; border-radius: 50%; background: #3aa074; }
-        .desktop-site-release { padding: 42px; display: grid; grid-template-columns: 1fr 280px; align-items: center; gap: 50px; border-radius: 24px; background: #234b49; color: #fff; }.desktop-site-release h2 { color: #fff; }.desktop-site-release p { max-width: 670px; margin: 17px 0 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.9; }.desktop-site-release-status { padding: 24px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,.15); border-radius: 17px; background: rgba(255,255,255,.08); text-align: center; }.desktop-site-release-status svg { color: #d3b579; }.desktop-site-release-status strong { margin-top: 11px; font-size: 13px; }.desktop-site-release-status small { margin: 5px 0 15px; color: rgba(255,255,255,.55); font-size: 9px; }.desktop-site-release-status button { width: 100%; height: 37px; border: 1px solid rgba(255,255,255,.15); border-radius: 9px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); font-size: 10px; }
+        .desktop-site-release { padding: 42px; display: grid; grid-template-columns: 1fr 280px; align-items: center; gap: 50px; border-radius: 24px; background: #234b49; color: #fff; }.desktop-site-release h2 { color: #fff; }.desktop-site-release p { max-width: 670px; margin: 17px 0 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.9; }.desktop-site-release-status { padding: 24px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,.15); border-radius: 17px; background: rgba(255,255,255,.08); text-align: center; }.desktop-site-release-status svg { color: #d3b579; }.desktop-site-release-status strong { margin-top: 11px; font-size: 13px; }.desktop-site-release-status small { margin: 5px 0 15px; color: rgba(255,255,255,.55); font-size: 9px; }.desktop-site-release-status a { width: 100%; height: 37px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.28); border-radius: 9px; background: rgba(255,255,255,.92); color: #234b49; text-decoration: none; font-size: 11px; font-weight: 900; }.desktop-site-release-status a:hover { background: #fff; }.desktop-site-release-status p { margin-top: 12px; color: rgba(255,255,255,.56); font-size: 9px; line-height: 1.6; }
+        .desktop-site-downloads { margin-top: 18px; padding: 32px; border: 1px solid #e1d7c8; border-radius: 24px; background: #fffdf8; box-shadow: 0 18px 46px rgba(41,49,45,.08); }
+        .desktop-site-downloads-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: end; margin-bottom: 22px; }
+        .desktop-site-downloads-head span { color: #8a6b35; font-size: 11px; font-weight: 900; letter-spacing: .1em; }
+        .desktop-site-downloads-head h2 { margin: 9px 0 0; color: #1b2b29; font-size: 30px; }
+        .desktop-site-downloads-head p { max-width: 680px; margin: 10px 0 0; color: #707a75; font-size: 13px; line-height: 1.8; }
+        .desktop-site-platform-tabs { padding: 5px; display: flex; gap: 5px; border: 1px solid #e6ded2; border-radius: 13px; background: #f7f3ec; }
+        .desktop-site-platform-tabs button { height: 35px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: #767d78; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .desktop-site-platform-tabs button.active { background: #234b49; color: #fff; box-shadow: 0 8px 18px rgba(35,75,73,.18); }
+        .desktop-site-download-table { overflow: hidden; border: 1px solid #e5ded4; border-radius: 17px; background: #fff; }
+        .desktop-site-download-table-head, .desktop-site-download-row { display: grid; grid-template-columns: 135px minmax(210px,.75fr) minmax(0,1.25fr) 118px; gap: 18px; align-items: center; }
+        .desktop-site-download-table-head { min-height: 42px; padding: 0 20px; background: #f3eee6; color: #81786a; font-size: 11px; font-weight: 900; }
+        .desktop-site-download-row { min-height: 116px; padding: 18px 20px; border-top: 1px solid #eee8df; }
+        .desktop-site-download-row:hover { background: #fffaf1; }
+        .desktop-site-version-cell strong { display: block; color: #1f2e2c; font-size: 22px; }
+        .desktop-site-version-cell small, .desktop-site-platform-cell small { display: block; margin-top: 5px; color: #8e958f; font-size: 11px; }
+        .desktop-site-platform-cell { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; align-items: center; }
+        .desktop-site-platform-cell > svg { width: 34px; height: 34px; padding: 8px; border-radius: 11px; background: #eaf1ed; color: #234b49; }
+        .desktop-site-platform-cell strong { color: #24312f; font-size: 14px; }
+        .desktop-site-platform-cell em { padding: 6px 9px; border-radius: 999px; background: #e7f4ed; color: #2f7756; font-size: 10px; font-style: normal; font-weight: 900; white-space: nowrap; }
+        .desktop-site-download-row.coming .desktop-site-platform-cell em { background: #f2eee8; color: #9a8160; }
+        .desktop-site-download-row ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; color: #65706b; font-size: 12px; line-height: 1.5; }
+        .desktop-site-download-row li { display: flex; align-items: center; gap: 8px; }
+        .desktop-site-download-row li::before { content: ""; width: 5px; height: 5px; flex: 0 0 auto; border-radius: 50%; background: #c8a869; }
+        .desktop-site-download-row > a, .desktop-site-download-row > button { height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 12px; font-weight: 900; text-decoration: none; }
+        .desktop-site-download-row > a { border: 0; background: #234b49; color: #fff; box-shadow: 0 9px 18px rgba(35,75,73,.15); }
+        .desktop-site-download-row > a:hover { background: #193d3a; }
+        .desktop-site-download-row > button { border: 1px solid #e5ded4; background: #f4f1ec; color: #969086; cursor: not-allowed; }
         .desktop-site-footer { max-width: 1124px; margin: 0 auto; padding: 22px 0 35px; display: flex; justify-content: space-between; border-top: 1px solid #e3ded5; color: #8b918d; font-size: 11px; }.desktop-site-footer a { color: #234b49; text-decoration: none; font-weight: 800; }
-        @media(max-width:1020px) { .desktop-site-hero, .desktop-site-modes { grid-template-columns: 1fr; }.desktop-site-hero { gap: 42px; }.desktop-site-feature-grid { grid-template-columns: repeat(2,1fr); }.desktop-site-release { grid-template-columns: 1fr; }.desktop-site-release-status { max-width: 320px; }.desktop-site-footer { margin: 0 28px; }.desktop-site-modes { padding: 32px; } }
-        @media(max-width:620px) { .desktop-site-main { padding: 34px 18px 55px; }.desktop-site-header { padding: 0 18px; }.desktop-site-copy h1 { font-size: 36px; }.desktop-site-hero { min-height: auto; grid-template-columns: minmax(0,1fr); }.desktop-site-preview { padding: 12px; }.desktop-site-window { height: 320px; }.desktop-site-window-body { grid-template-columns: 55px 1fr; }.desktop-site-preview-content { padding: 13px; }.desktop-site-feature-grid { grid-template-columns: 1fr; }.desktop-site-section { padding: 60px 0 45px; }.desktop-site-section-title h2, .desktop-site-modes h2, .desktop-site-release h2 { font-size: 28px; }.desktop-site-modes, .desktop-site-release { padding: 25px 20px; }.desktop-site-modes { grid-template-columns: minmax(0,1fr); }.desktop-site-toolbar-demo { min-height: 220px; }.desktop-site-floating-bar > span:nth-of-type(3), .desktop-site-floating-bar > b { display: none; }.desktop-site-mode-copy > div { grid-template-columns: 27px 90px 1fr; }.desktop-site-footer { margin: 0 18px; flex-direction: column; gap: 7px; } }
+        @media(max-width:1020px) { .desktop-site-hero, .desktop-site-modes { grid-template-columns: 1fr; }.desktop-site-hero { gap: 42px; }.desktop-site-feature-grid { grid-template-columns: repeat(2,1fr); }.desktop-site-release, .desktop-site-downloads-head { grid-template-columns: 1fr; }.desktop-site-release-status { max-width: 320px; }.desktop-site-download-table-head { display: none; }.desktop-site-download-row { grid-template-columns: 1fr; gap: 13px; align-items: start; }.desktop-site-download-row > a, .desktop-site-download-row > button { width: 170px; }.desktop-site-footer { margin: 0 28px; }.desktop-site-modes { padding: 32px; } }
+        @media(max-width:620px) { .desktop-site-main { padding: 34px 18px 55px; }.desktop-site-header { padding: 0 18px; }.desktop-site-copy h1 { font-size: 36px; }.desktop-site-hero { min-height: auto; grid-template-columns: minmax(0,1fr); }.desktop-site-preview { padding: 12px; }.desktop-site-window { height: 320px; }.desktop-site-window-body { grid-template-columns: 55px 1fr; }.desktop-site-preview-content { padding: 13px; }.desktop-site-feature-grid { grid-template-columns: 1fr; }.desktop-site-section { padding: 60px 0 45px; }.desktop-site-section-title h2, .desktop-site-modes h2, .desktop-site-release h2, .desktop-site-downloads-head h2 { font-size: 28px; }.desktop-site-modes, .desktop-site-release, .desktop-site-downloads { padding: 25px 20px; }.desktop-site-modes { grid-template-columns: minmax(0,1fr); }.desktop-site-toolbar-demo { min-height: 220px; }.desktop-site-floating-bar > span:nth-of-type(3), .desktop-site-floating-bar > b { display: none; }.desktop-site-mode-copy > div { grid-template-columns: 27px 90px 1fr; }.desktop-site-platform-tabs { overflow-x: auto; }.desktop-site-platform-tabs button { flex: 0 0 auto; }.desktop-site-platform-cell { grid-template-columns: 34px minmax(0,1fr); }.desktop-site-platform-cell em { grid-column: 2; justify-self: start; }.desktop-site-download-row > a, .desktop-site-download-row > button { width: 100%; }.desktop-site-footer { margin: 0 18px; flex-direction: column; gap: 7px; } }
       `}</style>
     </div>
   );
