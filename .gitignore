@@ -20,6 +20,11 @@ Thumbs.db
 .codebuddy/
 .agentscope/
 
+# Desktop release installers
+frontend/web/public/downloads/*.exe
+frontend/web/public/downloads/*.dmg
+frontend/web/public/downloads/*.AppImage
+
 # ═══ 超管端业务代码（不公开，仅保留在本地，不推送到 GitHub）═══
 # 注意：规则只对「未被 git 跟踪」的文件生效。若某个文件已被 git add 过，需先执行
 #   git rm -r --cached <路径>
