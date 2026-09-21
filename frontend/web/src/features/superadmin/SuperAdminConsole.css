@@ -171,6 +171,20 @@
   font-weight: 700;
 }
 
+.admin-nav-secondary.external {
+  color: #625f57;
+}
+
+.admin-nav-external-mark {
+  margin-left: auto;
+  color: #aaa49a;
+  font-size: 11px;
+}
+
+.admin-nav-secondary.external:hover .admin-nav-external-mark {
+  color: #234b49;
+}
+
 .admin-nav-secondary.active::before {
   background: #234b49;
 }
@@ -1436,6 +1450,69 @@
 
 .admin-panel-embedded {
   min-height: 0;
+}
+
+.admin-governance-frame-panel {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.admin-governance-frame-head {
+  border: 1px solid #e6dfd2;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 10px 28px rgba(67, 56, 38, .07);
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-governance-frame-head span {
+  color: #958d82;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-governance-frame-head h2 {
+  margin: 5px 0 5px;
+  color: #1f2d2b;
+  font-size: 18px;
+}
+
+.admin-governance-frame-head p {
+  margin: 0;
+  color: #827c72;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.admin-governance-frame-head > div:last-child {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-governance-frame-wrap {
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid #e1d8c8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(67, 56, 38, .1);
+}
+
+.admin-governance-frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  border: 0;
+  background: #fff;
+  display: block;
 }
 
 .admin-page-tabs {

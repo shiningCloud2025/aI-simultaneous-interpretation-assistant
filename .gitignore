@@ -19,3 +19,21 @@ Thumbs.db
 # AI 本地记忆（不提交）
 .codebuddy/
 .agentscope/
+
+# Desktop release installers
+frontend/web/public/downloads/*.exe
+frontend/web/public/downloads/*.dmg
+frontend/web/public/downloads/*.AppImage
+
+# ═══ 超管端业务代码（不公开，仅保留在本地，不推送到 GitHub）═══
+# 注意：规则只对「未被 git 跟踪」的文件生效。若某个文件已被 git add 过，需先执行
+#   git rm -r --cached <路径>
+# 再提交一次，之后才会被忽略。
+#
+# 约定：超管相关文件统一命名 SuperAdminXxx，集中放在下面两个包内。
+# 下面两条是「目录级」忽略（推荐，新增文件自动生效），
+# 最后一条是「文件名级」兜底，防止有人把文件放到别的目录。
+
+backend/aI-assistant-server/src/main/java/com/lucky/server/controller/superadmin/
+backend/aI-assistant-server/src/main/java/com/lucky/server/service/superadmin/
+**/SuperAdmin*Service.java

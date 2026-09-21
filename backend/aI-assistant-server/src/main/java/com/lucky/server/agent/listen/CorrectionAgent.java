@@ -1,6 +1,7 @@
 package com.lucky.server.agent.listen;
 
 import com.lucky.server.agent.middleware.TimingMiddleware;
+import com.lucky.server.agent.mymodel.header.OpenCodeModelHeaders;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ApiKeyTypeEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
@@ -183,8 +184,11 @@ public class CorrectionAgent {
                 .baseUrl(baseUrl)
                 .stream(true)
                 .generateOptions(
-                        GenerateOptions.builder()
-                                .temperature(0.3)
+                        OpenCodeModelHeaders.apply(
+                                        GenerateOptions.builder().temperature(0.3),
+                                        provider,
+                                        "listen-correction:" + userId
+                                )
                                 .build()
                 )
                 .build();

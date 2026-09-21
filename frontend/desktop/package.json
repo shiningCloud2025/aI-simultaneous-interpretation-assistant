@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "智语同航桌面端",
+  "desktopName": "zhiyu-tonghang",
   "main": "dist-electron/main.js",
   "type": "module",
   "author": "shiningCloud2025",
@@ -14,6 +15,9 @@
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
+    "dist:mac:arm64": "npm run build && electron-builder --mac dmg --arm64",
+    "dist:mac:x64": "npm run build && electron-builder --mac dmg --x64",
+    "dist:linux": "npm run build && electron-builder --linux",
     "dist:win": "npm run build && electron-builder --win",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -40,7 +44,9 @@
     },
     "mac": {
       "category": "public.app-category.utilities",
-      "identity": null,
+      "identity": "-",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
@@ -72,13 +78,25 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "public/icon.png",
+      "icon": "public/icon.ico",
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "public/icon.png"
+      "installerIcon": "public/icon.ico"
+    },
+    "linux": {
+      "category": "Utility",
+      "syncDesktopName": true,
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },
   "dependencies": {
