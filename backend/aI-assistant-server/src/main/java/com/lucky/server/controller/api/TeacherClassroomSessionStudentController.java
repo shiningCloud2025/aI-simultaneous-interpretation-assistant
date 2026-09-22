@@ -31,31 +31,15 @@ public class TeacherClassroomSessionStudentController {
 
     @GetMapping("/{classroomSessionStudentId}")
     @Operation(summary = "获取课次学生记录详情")
-    public BaseResult<ClassroomSessionStudentDetailVO> detail(
-            @PathVariable Long classroomSessionStudentId
-    ) {
-        return BaseResult.ok(
-                classroomSessionStudentService
-                        .getClassroomSessionStudentDetail(
-                                classroomSessionStudentId
-                        )
-        );
+    public BaseResult<ClassroomSessionStudentDetailVO> detail(@PathVariable Long classroomSessionStudentId) {
+        return BaseResult.ok(classroomSessionStudentService.getClassroomSessionStudentDetail(classroomSessionStudentId));
     }
 
     @PostMapping("/{classroomSessionId}/page")
     @Operation(summary = "分页查询课次学生记录")
-    public BaseResult<Page<ClassroomSessionStudentListVO>> page(
-            @PathVariable Long classroomSessionId,
-            @Valid
-            @RequestBody
-            ClassroomSessionStudentPageQueryDTO dto
+    public BaseResult<Page<ClassroomSessionStudentListVO>> page(@PathVariable Long classroomSessionId, @Valid
+            @RequestBody ClassroomSessionStudentPageQueryDTO dto
     ) {
-        return BaseResult.ok(
-                classroomSessionStudentService
-                        .pageClassroomSessionStudents(
-                                classroomSessionId,
-                                dto
-                        )
-        );
+        return BaseResult.ok(classroomSessionStudentService.pageClassroomSessionStudents(classroomSessionId, dto));
     }
 }
