@@ -19,12 +19,24 @@ interface TeacherClassroomListProps {
 
 const languages: Record<string, string> = { english: '英语', japanese: '日语', korean: '韩语' };
 const semesters: Record<string, string> = { FIRST: '上学期', SECOND: '下学期' };
+const grades: Record<string, string> = Object.fromEntries([
+  ...Array.from({ length: 6 }, (_, i) => [`primary_${i + 1}`, `小学${i + 1}年级`]),
+  ...Array.from({ length: 3 }, (_, i) => [`junior_${i + 1}`, `初中${i + 1}年级`]),
+  ...Array.from({ length: 3 }, (_, i) => [`senior_${i + 1}`, `高中${i + 1}年级`]),
+  ...Array.from({ length: 4 }, (_, i) => [`university_${i + 1}`, `大学${i + 1}年级`]),
+  ...Array.from({ length: 3 }, (_, i) => [`postgraduate_${i + 1}`, `研究生${i + 1}年级`]),
+]);
 
 function classroomMeta(item: ClassroomList) {
-  const pieces = [languages[item.languageCode] || item.languageCode];
+  const pieces = [languages[item.languageCode] || item.languageCode, item.stageCode ? grades[item.stageCode] || item.stageCode : '未设置阶段'];
   if (item.academicYear) pieces.push(`${item.academicYear} 学年`);
   if (item.semesterCode) pieces.push(semesters[item.semesterCode] || item.semesterCode);
   return pieces.join(' · ');
+}
+
+function createdTime(value: string) {
+  const parsed = new Date(value.replace(' ', 'T'));
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function TeacherClassroomList({
@@ -58,7 +70,7 @@ export function TeacherClassroomList({
       {records.length > 0 ? <div className="teacher-rooms-list">
         {records.map(item => <button className="teacher-rooms-row" key={item.id} onClick={() => onOpen(item.id)}>
           <span className="teacher-rooms-row-icon"><BookOpen size={21} /></span>
-          <span className="teacher-rooms-row-main"><strong>{item.name}</strong><small>{classroomMeta(item)}</small></span>
+          <span className="teacher-rooms-row-main"><strong>{item.name}</strong><small>{classroomMeta(item)}</small><small>创建于 {createdTime(item.createTime)}</small></span>
           <span className={`teacher-rooms-status ${item.status === 0 ? 'archived' : ''}`}>{item.status === 1 ? '进行中' : '已归档'}</span>
           <span className="teacher-rooms-enter">进入课堂 <ArrowRight size={16} /></span>
         </button>)}
