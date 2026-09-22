@@ -1,0 +1,85 @@
+.student-rooms { max-width: 1120px; margin: 0 auto; color: #283a32; }
+.student-rooms-head { margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.student-rooms-head > div > span { color: #59816d; font-size: 12px; font-weight: 700; }
+.student-rooms-head h1 { margin: 5px 0 7px; font-size: 28px; }
+.student-rooms-head p { margin: 0; color: #7b8980; font-size: 13px; }
+.student-rooms-head-actions { display: flex; align-items: center; gap: 9px; }
+.student-rooms-primary { min-height: 40px; padding: 0 17px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; background: #244c47; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.student-rooms-primary:hover { background: #315e57; }
+.student-rooms-primary:disabled { opacity: .5; cursor: default; }
+.student-rooms-back, .student-rooms-text-button { margin-bottom: 18px; padding: 0; border: 0; background: transparent; color: #3d6b57; font-size: 13px; cursor: pointer; }
+.student-rooms-text-button { margin: 18px 0 0; font-weight: 600; }
+.student-rooms-toolbar { margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+.student-rooms-toolbar label { max-width: 390px; min-height: 40px; padding: 0 12px; flex: 1; display: flex; align-items: center; gap: 8px; border: 1px solid #e1e7df; border-radius: 9px; background: #fff; color: #7b8980; }
+.student-rooms-toolbar input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: inherit; font-size: 13px; }
+.student-rooms-toolbar > div { margin-left: auto; padding: 3px; display: flex; border-radius: 9px; background: #f2f3ef; }
+.student-rooms-toolbar > div button { padding: 7px 12px; border: 0; border-radius: 7px; background: transparent; color: #778079; font-size: 12px; cursor: pointer; }
+.student-rooms-toolbar > div button.active { background: #fff; color: #244c47; box-shadow: 0 1px 5px #dce2da; }
+.student-rooms-refresh { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #e1e7df; border-radius: 9px; background: #fff; color: #536b5c; cursor: pointer; }
+.student-rooms-list, .student-rooms-panel { border: 1px solid #e4e9e2; border-radius: 13px; background: #fff; }
+.student-rooms-list { overflow: hidden; }
+.student-rooms-list > button { width: 100%; min-height: 91px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; border: 0; border-bottom: 1px solid #e9eee8; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.student-rooms-list > button:last-child { border-bottom: 0; }
+.student-rooms-list > button:hover, .student-rooms-session:hover { background: #f6faf6; }
+.student-rooms-list-icon { width: 42px; height: 42px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px; background: #edf4ed; color: #3d7253; }
+.student-rooms-list-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.student-rooms-list-main strong { font-size: 15px; }
+.student-rooms-list-main small { color: #7d8980; font-size: 12px; }
+.student-rooms-badge { padding: 5px 9px; flex-shrink: 0; border-radius: 7px; background: #e9f3e9; color: #35734e; font-size: 12px; }
+.student-rooms-badge.state-2 { background: #faf0d9; color: #88691d; }
+.student-rooms-badge.state-3 { background: #f1f1ed; color: #777f77; }
+.student-rooms-panel { padding: 21px 23px; margin-bottom: 16px; }
+.student-rooms-panel h2 { margin: 0 0 14px; font-size: 17px; }
+.student-rooms-panel h2 small { margin-left: 6px; color: #8a978e; font-size: 12px; font-weight: 400; }
+.student-rooms-panel > p { color: #68796d; font-size: 13px; line-height: 1.8; }
+.student-rooms-overview { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(230px, 1fr); gap: 16px; }
+.student-rooms-facts { display: flex; flex-wrap: wrap; gap: 10px 22px; color: #7f8a81; font-size: 12px; }
+.student-rooms-facts strong { margin-left: 5px; color: #304538; font-weight: 600; }
+.student-rooms-summary { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; color: #42705a; }
+.student-rooms-summary strong { color: #304538; font-size: 14px; }
+.student-rooms-summary p { margin: 0; }
+.student-rooms-tabs { margin: 6px 0 16px; display: flex; gap: 20px; border-bottom: 1px solid #e2e8df; }
+.student-rooms-tabs button { padding: 10px 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #718076; font-size: 14px; cursor: pointer; }
+.student-rooms-tabs button.active { border-color: #315d4b; color: #315d4b; font-weight: 600; }
+.student-rooms-session { width: 100%; min-height: 68px; display: flex; align-items: center; gap: 14px; border: 0; border-top: 1px solid #edf0eb; background: transparent; color: #3d6952; text-align: left; cursor: pointer; }
+.student-rooms-session > span { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.student-rooms-session strong { color: #344338; font-size: 13px; }
+.student-rooms-session small, .student-rooms-session em { color: #849088; font-size: 12px; font-style: normal; }
+.student-rooms-person { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #edf0eb; font-size: 13px; }
+.student-rooms-person > span:last-child { color: #89948b; font-size: 12px; }
+.student-rooms-person .present { color: #397650 !important; }
+.student-rooms-attendance { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.student-rooms-attendance > div { display: flex; align-items: center; gap: 12px; color: #49745b; }
+.student-rooms-attendance strong { color: #324839; font-size: 14px; }
+.student-rooms-attendance p { margin: 5px 0 0; color: #829087; font-size: 12px; }
+.student-rooms-empty { padding: 55px 20px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; color: #849187; }
+.student-rooms-empty h2 { margin: 13px 0 0; color: #3c4b40; }
+.student-rooms-empty p { margin: 8px 0 18px; }
+.student-rooms-pager { margin-top: 15px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: #819087; font-size: 12px; }
+.student-rooms-pager button { padding: 6px 10px; border: 1px solid #e2e8e0; border-radius: 7px; background: #fff; cursor: pointer; }
+.student-rooms-pager button:disabled { opacity: .4; cursor: default; }
+.student-rooms-message { margin-bottom: 15px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-radius: 9px; font-size: 13px; }
+.student-rooms-message.error { background: #fff0ec; color: #9a4837; }
+.student-rooms-message.success { background: #ecf5ed; color: #386f4f; }
+.student-rooms-message button { margin-left: auto; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.student-rooms-mask { position: fixed; inset: 0; z-index: 110; padding: 16px; display: grid; place-items: center; background: #202d2580; }
+.student-rooms-modal { width: min(480px, 100%); border: 1px solid #e3e8df; border-radius: 17px; background: #fff; box-shadow: 0 25px 70px #1b312830; }
+.student-rooms-modal header { padding: 20px 23px 17px; display: flex; justify-content: space-between; gap: 15px; border-bottom: 1px solid #eef1eb; }
+.student-rooms-modal h2 { margin: 0; font-size: 19px; }
+.student-rooms-modal header p { margin: 5px 0 0; color: #839087; font-size: 12px; }
+.student-rooms-modal header button { width: 31px; height: 31px; display: grid; place-items: center; border: 0; border-radius: 8px; background: #f1f4ef; cursor: pointer; }
+.student-rooms-modal-body { padding: 22px 23px; }
+.student-rooms-join-tabs { margin-bottom: 20px; padding: 4px; display: flex; gap: 4px; border-radius: 9px; background: #f1f3ef; }
+.student-rooms-join-tabs button { height: 36px; flex: 1; border: 0; border-radius: 7px; background: transparent; color: #77867b; font-size: 13px; cursor: pointer; }
+.student-rooms-join-tabs button.active { background: #fff; color: #265147; box-shadow: 0 1px 5px #dce4db; font-weight: 600; }
+.student-rooms-modal-error { margin: 15px 23px 0; padding: 10px 12px; border-radius: 8px; background: #fff0ec; color: #9a4837; font-size: 12px; }
+.student-rooms-modal-body > p { margin: 0 0 25px; color: #64766a; font-size: 13px; line-height: 1.8; }
+.student-rooms-modal-body label { margin-bottom: 16px; display: block; color: #596b5f; font-size: 12px; font-weight: 600; }
+.student-rooms-modal-body input { width: 100%; height: 41px; margin-top: 7px; padding: 0 11px; border: 1px solid #dfe7dd; border-radius: 8px; background: #fff; color: #304839; font-size: 14px; }
+.student-rooms-modal-actions { display: flex; justify-content: flex-end; gap: 9px; }
+.student-rooms-modal-actions > button:first-child { padding: 0 15px; border: 1px solid #dfe7dd; border-radius: 8px; background: #fff; color: #4d6253; cursor: pointer; }
+[data-theme="dark"] .student-rooms { color: #e7ece6; }
+[data-theme="dark"] .student-rooms-panel, [data-theme="dark"] .student-rooms-list, [data-theme="dark"] .student-rooms-toolbar label, [data-theme="dark"] .student-rooms-refresh, [data-theme="dark"] .student-rooms-modal { background: #29332c; border-color: #435145; color: #e7ece6; }
+[data-theme="dark"] .student-rooms-list > button, [data-theme="dark"] .student-rooms-session, [data-theme="dark"] .student-rooms-session strong, [data-theme="dark"] .student-rooms-summary strong, [data-theme="dark"] .student-rooms-facts strong, [data-theme="dark"] .student-rooms-attendance strong { color: #e7ece6; }
+[data-theme="dark"] .student-rooms-list > button:hover, [data-theme="dark"] .student-rooms-session:hover { background: #344439; }
+@media (max-width: 740px) { .student-rooms-head, .student-rooms-toolbar { align-items: flex-start; flex-wrap: wrap; } .student-rooms-overview { grid-template-columns: 1fr; } .student-rooms-toolbar label { flex-basis: 100%; max-width: none; } .student-rooms-toolbar > div { margin-left: 0; } .student-rooms-list > button { padding: 14px; gap: 10px; } .student-rooms-list-icon { display: none; } .student-rooms-person { align-items: flex-start; flex-direction: column; padding: 13px 0; } }

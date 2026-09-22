@@ -21,13 +21,17 @@ import { useState, useEffect } from 'react';
 import { isTeacherUser } from '../lib/authRole';
 import { PersonalWorkspace } from '../components/PersonalWorkspace';
 import { PlatformSkillsDialog } from '../components/PlatformSkillsDialog';
+import { StudentClassrooms } from '../features/student/StudentClassrooms';
+import { StudentTools } from '../features/student/StudentTools';
+import { studentToolIds } from '../features/student/studentToolCatalog';
 
 const navItems = [
   { group: '通用', items: [
     { id: 'dashboard', icon: '🏠', label: '仪表盘' },
-    { id: 'edu-ppt', icon: '📊', label: 'PPT 集成' },
-    { id: 'edu-word', icon: '📝', label: 'Word 集成' },
-    { id: 'edu-excel', icon: '📈', label: 'Excel 集成' },
+    { id: 'tools', icon: '📚', label: '通用工具' },
+  ]},
+  { group: '课堂', items: [
+    { id: 'classrooms', icon: '🎓', label: '我的课堂' },
   ]},
   { group: '智语同航-听力', items: [
     { id: 'translate', icon: '🎧', label: '实时转译' },
@@ -62,7 +66,7 @@ const panelTitles: Record<string, string> = {
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅', 'writing-tutor': '已批阅作文答疑',
-  'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库', 'personal': '个人工作台',
+  'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库', 'personal': '个人工作台', 'classrooms': '我的课堂', 'tools': '通用工具',
 };
 
 const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'term-library', 'help', 'about']);
@@ -92,7 +96,7 @@ export function MainLayout() {
 
   useEffect(() => {
     const panel = searchParams.get('panel');
-    if (panel && (panel === 'personal' || panelComponents[panel]) && panel !== activePanel) {
+    if (panel && (panel === 'personal' || panel === 'classrooms' || panel === 'tools' || panelComponents[panel]) && panel !== activePanel) {
       setActivePanel(panel);
     }
   }, [searchParams, activePanel, setActivePanel]);
@@ -118,9 +122,9 @@ export function MainLayout() {
             <div key={group.group} style={{ padding: '12px 12px 0' }}>
               <div className="sidebar-group-title">{group.group}</div>
               {group.items.map((item) => (
-                <div key={item.id} onClick={() => changePanel(item.id)} className={`sidebar-item ${activePanel === item.id || (item.id === 'personal' && personalPanels.has(activePanel)) ? 'active' : ''}`}>
+                <button key={item.id} onClick={() => changePanel(item.id)} className={`sidebar-item ${activePanel === item.id || (item.id === 'personal' && personalPanels.has(activePanel)) || (item.id === 'tools' && studentToolIds.has(activePanel)) ? 'active' : ''}`}>
                   {item.icon} {item.label}
-                </div>
+                </button>
               ))}
             </div>
           ))}
@@ -171,7 +175,8 @@ export function MainLayout() {
         </div>
         <div className="content">
           {activePanel !== 'personal' && personalPanels.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('personal')}>← 个人工作台</button>}
-          {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : <PanelComponent />}
+          {studentToolIds.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('tools')}>← 通用工具</button>}
+          {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
         </div>
       </div>
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
