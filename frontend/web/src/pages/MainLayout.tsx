@@ -19,7 +19,8 @@ import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
 import { useState, useEffect } from 'react';
 import { isTeacherUser } from '../lib/authRole';
-import { apiCall } from '../lib/api';
+import { PersonalWorkspace } from '../components/PersonalWorkspace';
+import { PlatformSkillsDialog } from '../components/PlatformSkillsDialog';
 
 const navItems = [
   { group: '通用', items: [
@@ -44,13 +45,7 @@ const navItems = [
     { id: 'writing-tutor', icon: '💬', label: '已批阅作文答疑' },
   ]},
   { group: '设置与个人', items: [
-    { id: 'account', icon: '👤', label: '个人中心' },
-    { id: 'audio', icon: '🎧', label: '音频设备' },
-    { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
-    { id: 'api-key', icon: '🔑', label: 'API Key 配置' },
-    { id: 'term-library', icon: '📚', label: '术语库' },
-    { id: 'help', icon: '❓', label: '帮助反馈' },
-    { id: 'about', icon: 'ℹ️', label: '关于' },
+    { id: 'personal', icon: '👤', label: '个人工作台' },
   ]},
 ];
 
@@ -67,28 +62,10 @@ const panelTitles: Record<string, string> = {
   'audio': '音频设备', 'shortcuts': '快捷键', 'api-key': 'API Key 配置',
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅', 'writing-tutor': '已批阅作文答疑',
-  'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库',
+  'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库', 'personal': '个人工作台',
 };
 
-const PLATFORM_SKILL_PAGE_SIZE = 8;
-
-interface UserSkillItem {
-  id: number;
-  name: string;
-  description?: string;
-  source?: string;
-  sourceText?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface UserSkillPage {
-  records: UserSkillItem[];
-  total: number;
-  size: number;
-  current: number;
-  pages?: number;
-}
+const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'term-library', 'help', 'about']);
 
 export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
@@ -98,17 +75,6 @@ export function MainLayout() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSkillModal, setShowSkillModal] = useState(false);
-  const [skillName, setSkillName] = useState('');
-  const [skillLoading, setSkillLoading] = useState(false);
-  const [skillError, setSkillError] = useState('');
-  const [skillPage, setSkillPage] = useState<UserSkillPage>({
-    records: [],
-    total: 0,
-    size: PLATFORM_SKILL_PAGE_SIZE,
-    current: 1,
-    pages: 1,
-  });
-
   const changePanel = (panel: string) => {
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
@@ -126,86 +92,12 @@ export function MainLayout() {
 
   useEffect(() => {
     const panel = searchParams.get('panel');
-    if (panel && panelComponents[panel] && panel !== activePanel) {
+    if (panel && (panel === 'personal' || panelComponents[panel]) && panel !== activePanel) {
       setActivePanel(panel);
     }
   }, [searchParams, activePanel, setActivePanel]);
 
   const handleLogout = () => { logout(); nav('/login'); };
-
-  const loadPlatformSkills = async (pageNum = 1, name = skillName) => {
-    setSkillLoading(true);
-    setSkillError('');
-    try {
-      const params = new URLSearchParams({
-        pageNum: String(pageNum),
-        pageSize: String(PLATFORM_SKILL_PAGE_SIZE),
-      });
-      const keyword = name.trim();
-      if (keyword) params.set('name', keyword);
-      const data = await apiCall<UserSkillPage>(`/sys/user/skills/page?${params.toString()}`);
-      setSkillPage({
-        records: data.records || [],
-        total: data.total || 0,
-        size: data.size || PLATFORM_SKILL_PAGE_SIZE,
-        current: data.current || pageNum,
-        pages: data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || PLATFORM_SKILL_PAGE_SIZE))),
-      });
-    } catch (error) {
-      setSkillError(error instanceof Error ? error.message : '平台 Skill 加载失败');
-      setSkillPage(prev => ({ ...prev, records: [] }));
-    } finally {
-      setSkillLoading(false);
-    }
-  };
-
-  const openPlatformSkills = () => {
-    setShowSkillModal(true);
-    loadPlatformSkills(1);
-  };
-
-  const resetPlatformSkillSearch = () => {
-    setSkillName('');
-    loadPlatformSkills(1, '');
-  };
-
-  const formatSkillTime = (value?: string) => {
-    if (!value) return '-';
-    return value.replace('T', ' ').slice(0, 19);
-  };
-
-  const renderSkillPageNumbers = () => {
-    const totalPages = Math.max(1, skillPage.pages || Math.ceil((skillPage.total || 0) / (skillPage.size || 8)));
-    const current = Math.min(Math.max(skillPage.current || 1, 1), totalPages);
-    const pages = Array.from({ length: totalPages }, (_, index) => index + 1)
-      .filter(page => page === 1 || page === totalPages || Math.abs(page - current) <= 1);
-    const compactPages = pages.reduce<(number | string)[]>((result, page) => {
-      const last = result[result.length - 1];
-      if (typeof last === 'number' && page - last > 1) result.push(`ellipsis-${page}`);
-      result.push(page);
-      return result;
-    }, []);
-
-    return (
-      <div className="platform-skill-pagination">
-        <button className="btn" disabled={current <= 1 || skillLoading} onClick={() => loadPlatformSkills(current - 1)}>上一页</button>
-        {compactPages.map(page => typeof page === 'number' ? (
-          <button
-            key={page}
-            className={`platform-skill-page-btn ${page === current ? 'active' : ''}`}
-            disabled={skillLoading}
-            onClick={() => loadPlatformSkills(page)}
-          >
-            {page}
-          </button>
-        ) : (
-          <span key={page} className="platform-skill-ellipsis">...</span>
-        ))}
-        <button className="btn" disabled={current >= totalPages || skillLoading} onClick={() => loadPlatformSkills(current + 1)}>下一页</button>
-        <span className="platform-skill-total">共 {skillPage.total || 0} 条</span>
-      </div>
-    );
-  };
 
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#999' }}>加载中...</div>;
   if (isTeacherUser(user)) return <Navigate to="/teacher" replace />;
@@ -226,7 +118,7 @@ export function MainLayout() {
             <div key={group.group} style={{ padding: '12px 12px 0' }}>
               <div className="sidebar-group-title">{group.group}</div>
               {group.items.map((item) => (
-                <div key={item.id} onClick={() => changePanel(item.id)} className={`sidebar-item ${activePanel === item.id ? 'active' : ''}`}>
+                <div key={item.id} onClick={() => changePanel(item.id)} className={`sidebar-item ${activePanel === item.id || (item.id === 'personal' && personalPanels.has(activePanel)) ? 'active' : ''}`}>
                   {item.icon} {item.label}
                 </div>
               ))}
@@ -245,11 +137,8 @@ export function MainLayout() {
               <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
               <div style={{ position: 'absolute', bottom: '100%', left: 8, right: 8, background: '#fff', border: '1px solid #f0efec', borderRadius: 12, padding: 6, zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,.1)', marginBottom: 8 }}>
                 {[
-                  { id: 'account', icon: '👤', label: '个人中心' },
-                  { id: 'shortcuts', icon: '⌨️', label: '快捷键' },
-                  { id: 'api-key', icon: '🔑', label: 'API Key 配置' },
-                  { id: 'audio', icon: '🎧', label: '音频设备' },
-                  { id: 'help', icon: '❓', label: '帮助反馈' },
+                  { id: 'personal', icon: '👤', label: '个人工作台' },
+                  { id: 'account', icon: '⚙️', label: '个人中心' },
                 ].map(item => (
                   <div key={item.id} onClick={() => { changePanel(item.id); setShowUserMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#555' }}
                     onMouseEnter={e => (e.target as HTMLElement).style.background = '#f5f3f0'}
@@ -272,7 +161,7 @@ export function MainLayout() {
         <div className="topbar">
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={openPlatformSkills} className="btn">🧩 平台 Skill</button>
+            <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
               <option value="dark">🌙 深色</option>
@@ -281,66 +170,11 @@ export function MainLayout() {
           </div>
         </div>
         <div className="content">
-          <PanelComponent />
+          {activePanel !== 'personal' && personalPanels.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('personal')}>← 个人工作台</button>}
+          {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : <PanelComponent />}
         </div>
       </div>
-      {showSkillModal && (
-        <div className="platform-skill-mask" onClick={() => setShowSkillModal(false)}>
-          <div className="platform-skill-modal" onClick={event => event.stopPropagation()}>
-            <div className="platform-skill-head">
-              <div>
-                <h3>平台 Skill 配置</h3>
-                <p>查看当前平台开放给外语学习智能体调用的 Skill 摘要。</p>
-              </div>
-              <button className="platform-skill-close" onClick={() => setShowSkillModal(false)}>×</button>
-            </div>
-            <div className="platform-skill-toolbar">
-              <input
-                value={skillName}
-                onChange={event => setSkillName(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === 'Enter') loadPlatformSkills(1);
-                }}
-                placeholder="按 Skill 名称查询"
-              />
-              <button className="btn platform-skill-primary" disabled={skillLoading} onClick={() => loadPlatformSkills(1)}>查询</button>
-              <button className="btn" disabled={skillLoading} onClick={resetPlatformSkillSearch}>清空</button>
-              <button className="btn" disabled={skillLoading} onClick={() => loadPlatformSkills(skillPage.current || 1)}>刷新</button>
-              <span className="platform-skill-toolbar-count">共 {skillPage.total || 0} 条配置</span>
-            </div>
-            {skillError && <div className="platform-skill-error">{skillError}</div>}
-            <div className="platform-skill-body">
-              {skillLoading ? (
-                <div className="platform-skill-empty">正在加载平台 Skill...</div>
-              ) : skillPage.records.length > 0 ? (
-                <div className="platform-skill-list">
-                  {skillPage.records.map(skill => (
-                    <div key={skill.id} className="platform-skill-card">
-                      <div className="platform-skill-card-title">
-                        <div>
-                          <strong>{skill.name}</strong>
-                          <p>{skill.description || '暂无 Skill 描述'}</p>
-                        </div>
-                        <span>{skill.sourceText || skill.source || '平台配置'}</span>
-                      </div>
-                      <div className="platform-skill-card-meta">
-                        <span>创建：{formatSkillTime(skill.createdAt)}</span>
-                        <span>更新：{formatSkillTime(skill.updatedAt)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="platform-skill-empty">
-                  <strong>暂无平台 Skill</strong>
-                  <span>可以先让超管在 Skill 管理里配置一条。</span>
-                </div>
-              )}
-            </div>
-            {renderSkillPageNumbers()}
-          </div>
-        </div>
-      )}
+      {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
     </div>
   );
 }

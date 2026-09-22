@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, CirclePause, Copy, GraduationCap, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, RefreshCw, Search, Square, Sun, UserRound, Users, X } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, CirclePause, Copy, GraduationCap, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Square, Sun, UserRound, Users, X } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { isTeacherUser } from '../../lib/authRole';
 import { AccountPage } from '../../components/AccountPage';
@@ -10,7 +10,9 @@ import { ShortcutSettings } from '../../components/ShortcutSettings';
 import { ApiKeyConfig } from '../../components/ApiKeyConfig';
 import { TermLibraryPage } from '../../components/TermLibraryPage';
 import { AboutPage } from '../../components/AboutPage';
+import { PlatformSkillsDialog } from '../../components/PlatformSkillsDialog';
 import { TeacherLearningArea } from './TeacherLearning';
+import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
 import { utilityGroups } from './teacherLearningCatalog';
 import { teachingApi, type ClassroomDetail, type ClassroomInput, type ClassroomList, type MemberDetail, type MemberList, type PageResult, type SessionDetail, type SessionList, type SessionStudentDetail, type SessionStudentList } from './teachingApi';
@@ -91,6 +93,7 @@ export function TeacherWorkspace() {
   const [revision, setRevision] = useState(0);
   const [mobileNav, setMobileNav] = useState(false);
   const [accountMenu, setAccountMenu] = useState<'bottom' | null>(null);
+  const [showSkillModal, setShowSkillModal] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -204,9 +207,13 @@ export function TeacherWorkspace() {
   const isClassroomSection = page === 'classrooms' || page === 'sessions';
   const isStudentSection = page === 'preview' || page === 'tools' && !isUtilityTool;
   const isToolSection = page === 'utilities' || isUtilityTool;
+  const isPersonalSection = page === 'personal' || page === 'profile' || page === 'settings' || page === 'help';
+  const personalSettingTitles: Record<string, string> = { audio: '音频设备', shortcuts: '快捷键', 'api-key': 'API Key 配置', 'term-library': '术语库', about: '关于' };
   const currentTitle = page === 'classrooms' ? room?.id === entityId && entityId ? room.name : '我的课堂'
     : page === 'sessions' ? session?.id === entityId && entityId ? session.sessionName : '上课记录'
-    : isStudentSection ? '学生预习' : isToolSection ? '通用工具' : page === 'profile' ? '个人中心' : '教师空间';
+    : isStudentSection ? '学生预习' : isToolSection ? '通用工具' : page === 'profile' ? '个人中心'
+      : page === 'help' ? '帮助反馈' : page === 'settings' ? personalSettingTitles[rawId || ''] || '个人工作台'
+        : isPersonalSection ? '个人工作台' : '教师空间';
 
   return <div className="teacher-shell">
     {mobileNav && <button className="teacher-nav-mask" aria-label="关闭导航" onClick={() => setMobileNav(false)} />}
@@ -218,10 +225,13 @@ export function TeacherWorkspace() {
       <nav className="teacher-nav" aria-label="教师端导航">
         <NavGroup label="我的教学">
           <NavItem icon={<LayoutGrid />} label="我的课堂" active={isClassroomSection} onClick={() => go('/teacher/classrooms')} />
+          <NavItem icon={<BookOpen />} label="通用工具" active={isToolSection} onClick={() => go('/teacher/utilities')} />
         </NavGroup>
         <NavGroup label="备课与体验">
           <NavItem icon={<GraduationCap />} label="学生预习" active={isStudentSection} onClick={() => go('/teacher/preview')} />
-          <NavItem icon={<BookOpen />} label="通用工具" active={isToolSection} onClick={() => go('/teacher/utilities')} />
+        </NavGroup>
+        <NavGroup label="个人">
+          <NavItem icon={<UserRound />} label="个人工作台" active={isPersonalSection} onClick={() => go('/teacher/personal')} />
         </NavGroup>
       </nav>
       <div className="teacher-profile">
@@ -240,6 +250,7 @@ export function TeacherWorkspace() {
         </div>
         <div className="teacher-top-actions">
           {isClassroomSection && <button className="teacher-icon-button" title="刷新数据" aria-label="刷新数据" onClick={reload}><RefreshCw size={17} /></button>}
+          <button className="teacher-skill-button" title="平台 Skill" aria-label="平台 Skill" onClick={() => setShowSkillModal(true)}><Puzzle size={16} />平台 Skill</button>
           <label className="teacher-theme-control">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}<select aria-label="选择背景" value={theme} onChange={event => setTheme(event.target.value)}><option value="light">浅色背景</option><option value="dark">深色背景</option></select></label>
           <button className="teacher-exit-button" onClick={() => { logout(); navigate('/login'); }}><LogOut size={16} />退出</button>
         </div>
@@ -303,15 +314,16 @@ export function TeacherWorkspace() {
         <section className="teacher-card"><CardHead title="学生签到" subtitle="学生自行签到；每 15 秒刷新记录" action="立即刷新" onAction={reload} /><div className="teacher-list-toolbar"><label><Search size={16} /><input value={studentKeyword} onChange={event => { setStudentKeyword(event.target.value); setStudentPage(1); }} placeholder="搜索学生姓名" /></label><div className="teacher-filter">{(['all', 'present', 'absent'] as const).map(value => <button key={value} className={attendance === value ? 'active' : ''} onClick={() => { setAttendance(value); setStudentPage(1); }}>{value === 'all' ? '全部' : value === 'present' ? '已到课' : '未签到'}</button>)}</div></div>{students?.records.length ? <div className="teacher-table"><div className="teacher-table-row head"><span>学生</span><span>学生用户 ID</span><span>签到状态</span><span>签到时间</span><span>操作</span></div>{students.records.map(item => <div className="teacher-table-row" key={item.id}><span className="teacher-person"><i>{item.studentName.slice(0, 1)}</i><b>{item.studentName}</b></span><span>{item.studentId}</span><span className={item.checkInStatus === 1 ? 'teacher-present' : 'teacher-absent'}>{item.checkInStatus === 1 ? '已到课' : '未签到'}</span><span>{dateText(item.checkInTime)}</span><span className="teacher-cell-actions"><button onClick={() => { void teachingApi.sessionStudent(item.id).then(value => { setStudentDetail(value); setDialog('student'); }).catch(cause => setError(message(cause))); }}>详情</button></span></div>)}</div> : <Empty text={loadingSession ? '正在加载签到记录…' : '没有符合条件的学生记录'} action="刷新" onClick={reload} />}<Pager data={students} page={studentPage} setPage={setStudentPage} /></section></div>}
         {page === 'sessions' && entityId && session?.id !== entityId && loadingSession && <div className="teacher-page-loading">正在加载课次…</div>}
         {page === 'sessions' && entityId && session?.id !== entityId && !loadingSession && !error && <Empty text="未找到课次" action="返回课堂" onClick={() => go('/teacher/classrooms')} />}
-        {page === 'profile' && <div className="teacher-account-page"><AccountPage /></div>}
-        {page === 'help' && <Embedded title="帮助与反馈"><HelpPage /></Embedded>}
+        {page === 'personal' && <TeacherPersonalWorkspace onOpen={go} />}
+        {page === 'profile' && <div className="teacher-page teacher-account-page"><button className="teacher-back" onClick={() => go('/teacher/personal')}><ArrowLeft size={16} />个人工作台</button><AccountPage /></div>}
+        {page === 'help' && <Embedded title="帮助与反馈" subtitle="查看帮助或提交使用反馈。" onBack={() => go('/teacher/personal')}><HelpPage /></Embedded>}
         {(page === 'preview' || page === 'tools' && !isUtilityTool) && <TeacherLearningArea kind="student" activeId={page === 'tools' ? rawId === 'materials' ? 'vocab' : rawId : undefined} onOpen={id => go(`/teacher/tools/${id}`)} onHome={() => go('/teacher/preview')} />}
         {(page === 'utilities' || isUtilityTool) && <TeacherLearningArea kind="utility" activeId={rawId} onOpen={id => go(`/teacher/utilities/${id}`)} onHome={() => go('/teacher/utilities')} />}
-        {page === 'settings' && rawId === 'audio' && <Embedded title="音频设备"><AudioSettings /></Embedded>}
-        {page === 'settings' && rawId === 'shortcuts' && <Embedded title="快捷键"><ShortcutSettings /></Embedded>}
-        {page === 'settings' && rawId === 'api-key' && <Embedded title="API Key 配置"><ApiKeyConfig /></Embedded>}
-        {page === 'settings' && rawId === 'term-library' && <Embedded title="术语库"><TermLibraryPage /></Embedded>}
-        {page === 'settings' && rawId === 'about' && <Embedded title="关于"><AboutPage /></Embedded>}
+        {page === 'settings' && rawId === 'audio' && <Embedded title="音频设备" onBack={() => go('/teacher/personal')}><AudioSettings /></Embedded>}
+        {page === 'settings' && rawId === 'shortcuts' && <Embedded title="快捷键" onBack={() => go('/teacher/personal')}><ShortcutSettings /></Embedded>}
+        {page === 'settings' && rawId === 'api-key' && <Embedded title="API Key 配置" onBack={() => go('/teacher/personal')}><ApiKeyConfig /></Embedded>}
+        {page === 'settings' && rawId === 'term-library' && <Embedded title="术语库" onBack={() => go('/teacher/personal')}><TermLibraryPage /></Embedded>}
+        {page === 'settings' && rawId === 'about' && <Embedded title="关于" subtitle="平台信息" onBack={() => go('/teacher/personal')}><AboutPage /></Embedded>}
       </div>
     </main>
     {dialog === 'create' && <Modal title="创建课堂" subtitle="创建后自动生成课堂码" onClose={() => setDialog(null)}><Field label="课堂名称"><input autoFocus maxLength={64} value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} placeholder="例如：高一英语口语 2 班" /></Field><div className="teacher-form-grid"><Field label="教学语言"><select value={form.languageCode} onChange={event => setForm({ ...form, languageCode: event.target.value })}>{Object.entries(languages).map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></Field><Field label="学习阶段"><select value={form.stageCode || ''} onChange={event => setForm({ ...form, stageCode: event.target.value || null })}><option value="">暂不设置</option>{Object.entries(grades).map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></Field></div><div className="teacher-form-grid"><Field label="学年"><input value={form.academicYear || ''} onChange={event => setForm({ ...form, academicYear: event.target.value || null })} placeholder="例如 2026-2027" /></Field><Field label="学期"><select value={form.semesterCode || ''} onChange={event => setForm({ ...form, semesterCode: event.target.value || null })}><option value="">暂不设置</option><option value="FIRST">第一学期</option><option value="SECOND">第二学期</option></select></Field></div><Field label="课堂说明"><textarea rows={4} maxLength={10000} value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} placeholder="介绍教学目标、课堂安排" /></Field><Actions label="创建课堂" busy={busy} onCancel={() => setDialog(null)} onConfirm={() => { if (!form.name.trim()) return setError('课堂名称不能为空'); if (form.academicYear && !/^\d{4}-\d{4}$/.test(form.academicYear)) return setError('学年格式应为 YYYY-YYYY'); void act(async () => { const created = await teachingApi.createClassroom({ ...form, name: form.name.trim() }); setForm(emptyForm); go(`/teacher/classrooms/${created.id}`); }, '课堂已创建'); }} /></Modal>}
@@ -323,18 +335,14 @@ export function TeacherWorkspace() {
     {dialog === 'student' && studentDetail && <Modal title="课次学生记录" subtitle={studentDetail.studentName} onClose={() => setDialog(null)}><DetailLines entries={[["学生用户 ID", String(studentDetail.studentId)], ["课堂成员 ID", String(studentDetail.classroomMemberId)], ["课次记录 ID", String(studentDetail.id)], ["签到状态", studentDetail.checkInStatus === 1 ? '已到课' : '未签到'], ["签到时间", dateText(studentDetail.checkInTime)]]} /></Modal>}
     {dialog && error && <div className="teacher-toast teacher-error-toast" role="alert">{error}</div>}
     {notice && <div className="teacher-toast"><Check size={16} />{notice}</div>}
+    {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
   </div>;
 }
 
 function TeacherAccountMenu({ onGo, onLogout }: { onGo: (path: string) => void; onLogout: () => void }) {
   return <div className="teacher-account-menu">
+    <button onClick={() => onGo('/teacher/personal')}><LayoutGrid size={15} />个人工作台</button>
     <button onClick={() => onGo('/teacher/profile')}><UserRound size={15} />个人中心</button>
-    <button onClick={() => onGo('/teacher/settings/audio')}>🎧 音频设备</button>
-    <button onClick={() => onGo('/teacher/settings/shortcuts')}>⌨️ 快捷键</button>
-    <button onClick={() => onGo('/teacher/settings/api-key')}>🔑 API Key 配置</button>
-    <button onClick={() => onGo('/teacher/settings/term-library')}>📚 术语库</button>
-    <button onClick={() => onGo('/teacher/help')}>❓ 帮助反馈</button>
-    <button onClick={() => onGo('/teacher/settings/about')}>ℹ️ 关于</button>
     <button onClick={onLogout}><LogOut size={15} />退出登录</button>
   </div>;
 }
@@ -352,4 +360,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Modal({ title, subtitle, children, onClose }: { title: string; subtitle: string; children: React.ReactNode; onClose: () => void }) { return <div className="teacher-modal-mask" onMouseDown={event => event.target === event.currentTarget && onClose()}><div className="teacher-modal"><div className="teacher-modal-head"><div><h2>{title}</h2><p>{subtitle}</p></div><button aria-label="关闭" onClick={onClose}><X size={18} /></button></div><div className="teacher-modal-body">{children}</div></div></div>; }
 function Actions({ label, busy, onCancel, onConfirm }: { label: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) { return <div className="teacher-modal-actions"><button className="teacher-secondary" onClick={onCancel}>取消</button><button className="teacher-primary" disabled={busy} onClick={onConfirm}>{busy ? '处理中…' : label}</button></div>; }
 function DetailLines({ entries }: { entries: [string, string][] }) { return <div className="teacher-detail-lines">{entries.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>; }
-function Embedded({ title, children }: { title: string; children: React.ReactNode }) { return <div className="teacher-page"><PageHead title={title} subtitle="教师教学工具" /><div className="teacher-embedded-content">{children}</div></div>; }
+function Embedded({ title, subtitle = '个人设置', children, onBack }: { title: string; subtitle?: string; children: React.ReactNode; onBack: () => void }) { return <div className="teacher-page"><button className="teacher-back" onClick={onBack}><ArrowLeft size={16} />个人工作台</button><PageHead title={title} subtitle={subtitle} /><div className="teacher-embedded-content">{children}</div></div>; }
