@@ -10,8 +10,9 @@ import { OfficialSitePage } from './pages/OfficialSitePage';
 import { ApiKeyGuidePage } from './pages/ApiKeyGuidePage';
 import { DesktopAppPage } from './pages/DesktopAppPage';
 import { OfficialGamesPage } from './pages/OfficialGamesPage';
+import { JoinClassroomPage } from './pages/JoinClassroomPage';
 import { SuperAdminConsole, SuperAdminLoginPage } from './features/superadmin/SuperAdminConsole';
-import { TeacherConsole } from './features/teacher/TeacherConsole';
+import { TeacherWorkspace } from './features/teacher/TeacherWorkspace';
 import './App.css';
 
 function ProtectedRoute({ children, redirectTo = '/login' }: { children: React.ReactNode; redirectTo?: string }) {
@@ -46,6 +47,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<OfficialSitePage />} />
         <Route path="/games" element={<OfficialGamesPage />} />
+        <Route path="/join-classroom" element={<JoinClassroomPage />} />
         <Route path="/api-key-guide" element={<ApiKeyGuidePage />} />
         <Route path="/desktop" element={<DesktopAppPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -53,7 +55,7 @@ export default function App() {
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/admin/login" element={<SuperAdminLoginPage />} />
         <Route path="/admin" element={<ProtectedRoute redirectTo="/admin/login"><SuperAdminConsole /></ProtectedRoute>} />
-        <Route path="/teacher/*" element={<ProtectedRoute><TeacherConsole /></ProtectedRoute>} />
+        <Route path="/teacher/*" element={<ProtectedRoute><TeacherWorkspace /></ProtectedRoute>} />
         <Route path="/change-pwd" element={<ProtectedRoute><ChangePwdPage /></ProtectedRoute>} />
         <Route path="/*" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
       </Routes>

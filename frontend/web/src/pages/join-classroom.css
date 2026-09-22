@@ -1,0 +1,13 @@
+.join-classroom-page { min-height: 100vh; padding: 30px 16px; display: grid; place-items: center; background: #f5f3ee; color: #243b35; }
+.join-classroom-card { width: min(460px, 100%); padding: 29px; border: 1px solid #e5e2d8; border-radius: 20px; background: #fffefa; box-shadow: 0 22px 55px rgba(35, 55, 43, .08); }
+.join-classroom-back { display: inline-flex; align-items: center; gap: 6px; color: #69766e; text-decoration: none; font-size: 12px; }
+.join-classroom-icon { width: 60px; height: 60px; margin-top: 29px; display: grid; place-items: center; border-radius: 18px; background: #e5efe9; color: #234b49; }
+.join-classroom-eyebrow { margin: 20px 0 7px; color: #68887c; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+.join-classroom-card h1 { margin: 0; font-size: 26px; }
+.join-classroom-description { margin: 10px 0 24px; color: #78847d; font-size: 13px; line-height: 1.7; }
+.join-classroom-card label { display: block; margin-bottom: 16px; color: #4f5e55; font-size: 12px; font-weight: 700; }
+.join-classroom-card input { width: 100%; height: 43px; margin-top: 7px; padding: 0 12px; border: 1px solid #dce3da; border-radius: 9px; background: #fff; color: #263c34; font: inherit; font-size: 14px; }
+.join-classroom-card button, .join-classroom-action { width: 100%; min-height: 43px; margin-top: 9px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; background: #234b49; color: #fff; font-size: 13px; text-decoration: none; cursor: pointer; }
+.join-classroom-card button:disabled { opacity: .6; cursor: default; }
+.join-classroom-hint { display: flex; align-items: center; gap: 7px; color: #7d8b82; font-size: 12px; }
+.join-classroom-error { margin-top: 14px; color: #a54839; font-size: 12px; }
