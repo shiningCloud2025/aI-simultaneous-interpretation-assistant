@@ -33,6 +33,11 @@ export interface ClassroomMember {
   joinedTime: string;
 }
 
+export interface ClassroomMemberDetail extends ClassroomMember {
+  classroomId: number;
+  updateTime: string;
+}
+
 export interface ClassroomSession {
   id: number;
   classroomId?: number;
@@ -63,7 +68,7 @@ export const studentClassroomApi = {
   pageMembers: (classroomId: number, page: number) => apiCall<PageResult<ClassroomMember>>(`/student/classroom/member/${classroomId}/page`, {
     method: 'POST', body: pageBody(page),
   }),
-  updateMyName: (memberId: number, studentName: string) => apiCall(`/student/classroom/member/${memberId}`, {
+  updateMyName: (memberId: number, studentName: string) => apiCall<ClassroomMemberDetail>(`/student/classroom/member/${memberId}`, {
     method: 'PUT', body: JSON.stringify({ studentName }),
   }),
   pageSessions: (classroomId: number, page: number) => apiCall<PageResult<ClassroomSession>>(`/student/classroom/session/${classroomId}/page`, {

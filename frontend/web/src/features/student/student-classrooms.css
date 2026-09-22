@@ -47,6 +47,9 @@
 .student-rooms-session small, .student-rooms-session em { color: #849088; font-size: 12px; font-style: normal; }
 .student-rooms-person { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #edf0eb; font-size: 13px; }
 .student-rooms-person > span:last-child { color: #89948b; font-size: 12px; }
+.student-rooms-person-actions { display: inline-flex; align-items: center; gap: 14px; }
+.student-rooms-edit-name { padding: 5px 0; display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: #3d6b57; font-size: 12px; cursor: pointer; }
+.student-rooms-edit-name:hover, .student-rooms-edit-name:focus-visible { text-decoration: underline; }
 .student-rooms-person .present { color: #397650 !important; }
 .student-rooms-attendance { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 .student-rooms-attendance > div { display: flex; align-items: center; gap: 12px; color: #49745b; }

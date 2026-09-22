@@ -87,6 +87,8 @@
 [data-theme="dark"] .teacher-refresh-confirm h3, [data-theme="dark"] .teacher-refresh-confirm p strong { color: #e9eee8; }
 [data-theme="dark"] .teacher-refresh-confirm p { color: #b4c3b6; }
 .teacher-table-row { grid-template-columns: minmax(150px, 1.2fr) minmax(110px, 1fr) minmax(90px, .8fr) minmax(130px, 1fr) minmax(170px, 1.3fr); }
+.teacher-table-row.teacher-member-row { grid-template-columns: minmax(140px, 1.1fr) minmax(100px, .8fr) minmax(150px, 1fr) minmax(180px, 1.3fr); }
+.teacher-table-row.teacher-session-student-row { grid-template-columns: minmax(140px, 1.2fr) minmax(100px, .8fr) minmax(150px, 1fr) minmax(80px, .6fr); }
 .teacher-session-stats strong { font-size: clamp(13px, 1.1vw, 20px); }
 .teacher-theme-control { height: 36px; padding: 0 8px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--teacher-line); border-radius: 10px; background: #fff; color: #66746e; }
 .teacher-theme-control select { max-width: 104px; border: 0; outline: 0; background: transparent; color: inherit; font-size: 12px; cursor: pointer; }
@@ -140,6 +142,7 @@
 @media (max-width: 1100px) { .teacher-learning-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .teacher-learning-layout { display: block; } .teacher-learning-nav { position: static; max-height: none; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; } .teacher-learning-nav-group { margin: 0; display: flex; align-items: center; gap: 3px; } .teacher-learning-nav-group > span { padding: 0 5px; } .teacher-learning-nav > button, .teacher-learning-nav-group > button { width: auto; flex-shrink: 0; } }
 @media (max-width: 620px) { .teacher-learning-grid { grid-template-columns: 1fr; } .teacher-learning-tool-head { align-items: flex-start; flex-direction: column; } .teacher-top-actions { gap: 5px; } .teacher-topbar > div:first-of-type span { display: none; } .teacher-theme-control select { max-width: 72px; } .teacher-exit-button { padding: 0 8px; } }
 @media (max-width: 850px) { .teacher-picker { flex-wrap: wrap; } .teacher-table { overflow-x: auto; } .teacher-table-row { min-width: 760px; } }
+@media (max-width: 850px) { .teacher-table-row.teacher-member-row { min-width: 620px; } .teacher-table-row.teacher-session-student-row { min-width: 560px; } }
 @media (max-width: 620px) { .teacher-rooms-heading { align-items: flex-start; flex-direction: column; } .teacher-rooms-toolbar { flex-direction: column; } .teacher-rooms-toolbar > label { width: 100%; } .teacher-rooms-row { padding: 14px; gap: 10px; } .teacher-rooms-row-icon { width: 36px; height: 36px; } .teacher-rooms-enter { font-size: 0; } .teacher-rooms-status { display: none; } }
 
 /* 教师端以课堂为入口，导航和详情页使用同一套简洁的工作区布局。 */
