@@ -28,27 +28,19 @@ public class StudentClassroomController {
 
     @PostMapping("/join")
     @Operation(summary = "使用邀请码加入课堂")
-    public BaseResult<ClassroomDetailVO> join(
-            @Valid @RequestBody ClassroomJoinDTO dto
-    ) {
+    public BaseResult<ClassroomDetailVO> join(@Valid @RequestBody ClassroomJoinDTO dto) {
         return BaseResult.ok(classroomService.joinClassroom(dto));
     }
 
     @PostMapping("/page")
     @Operation(summary = "分页查询我加入的课堂")
-    public BaseResult<Page<StudentClassroomListVO>> page(
-            @Valid @RequestBody StudentClassroomPageQueryDTO dto
-    ) {
+    public BaseResult<Page<StudentClassroomListVO>> page(@Valid @RequestBody StudentClassroomPageQueryDTO dto) {
         return BaseResult.ok(classroomService.pageMyJoinedClassrooms(dto));
     }
 
     @GetMapping("/{classroomId}")
     @Operation(summary = "获取我加入的课堂详情")
-    public BaseResult<StudentClassroomDetailVO> detail(
-            @PathVariable Long classroomId
-    ) {
-        return BaseResult.ok(
-                classroomService.getMyJoinedClassroomDetail(classroomId)
-        );
+    public BaseResult<StudentClassroomDetailVO> detail(@PathVariable Long classroomId) {
+        return BaseResult.ok(classroomService.getMyJoinedClassroomDetail(classroomId));
     }
 }

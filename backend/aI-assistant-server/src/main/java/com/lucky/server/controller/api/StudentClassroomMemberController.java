@@ -27,33 +27,21 @@ public class StudentClassroomMemberController {
 
     @PutMapping("/{classroomMemberId}")
     @Operation(summary = "修改自己的课堂真实姓名")
-    public BaseResult<ClassroomMemberDetailVO> update(
-            @PathVariable Long classroomMemberId,
-            @Valid @RequestBody ClassroomMemberUpdateDTO dto
-    ) {
-        return BaseResult.ok(
-                classroomMemberService.updateMyClassroomMember(classroomMemberId, dto)
-        );
+    public BaseResult<ClassroomMemberDetailVO> update(@PathVariable Long classroomMemberId, @Valid @RequestBody ClassroomMemberUpdateDTO dto) {
+        return BaseResult.ok(classroomMemberService.updateMyClassroomMember(classroomMemberId, dto));
     }
 
     @GetMapping("/{classroomMemberId}")
     @Operation(summary = "获取课堂成员详情")
-    public BaseResult<ClassroomMemberDetailVO> detail(
-            @PathVariable Long classroomMemberId
-    ) {
-        return BaseResult.ok(
-                classroomMemberService.getClassroomMemberDetail(classroomMemberId)
-        );
+    public BaseResult<ClassroomMemberDetailVO> detail(@PathVariable Long classroomMemberId) {
+        return BaseResult.ok(classroomMemberService.getClassroomMemberDetail(classroomMemberId));
     }
 
     @PostMapping("/{classroomId}/page")
     @Operation(summary = "分页查询课堂成员")
-    public BaseResult<Page<ClassroomMemberListVO>> page(
-            @PathVariable Long classroomId,
+    public BaseResult<Page<ClassroomMemberListVO>> page(@PathVariable Long classroomId,
             @Valid @RequestBody ClassroomMemberPageQueryDTO dto
     ) {
-        return BaseResult.ok(
-                classroomMemberService.pageClassroomMembers(classroomId, dto)
-        );
+        return BaseResult.ok(classroomMemberService.pageClassroomMembers(classroomId, dto));
     }
 }
