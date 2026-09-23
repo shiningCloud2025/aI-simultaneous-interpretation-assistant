@@ -16,6 +16,7 @@ import com.lucky.server.domain.dto.ClassroomPageQueryDTO;
 import com.lucky.server.domain.dto.ClassroomUpdateDTO;
 import com.lucky.server.domain.dto.StudentClassroomPageQueryDTO;
 import com.lucky.server.domain.entity.Classroom;
+import com.lucky.server.domain.entity.ClassroomMember;
 import com.lucky.server.domain.entity.SysUser;
 import com.lucky.server.domain.vo.ClassroomDetailVO;
 import com.lucky.server.domain.vo.ClassroomInviteVO;
@@ -234,9 +235,7 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
     }
 
     @Override
-    public Page<StudentClassroomListVO> pageMyJoinedClassrooms(
-            StudentClassroomPageQueryDTO dto
-    ) {
+    public Page<StudentClassroomListVO> pageMyJoinedClassrooms(StudentClassroomPageQueryDTO dto) {
         SysUser currentStudent = getCurrentStudent();
 
         String keyword = null;
@@ -251,40 +250,78 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
             status = filter.status();
         }
 
-        Page<StudentClassroomListVO> pageResult = baseMapper.selectMyJoinedClassroomPage(
+        List<Long> joinedClassroomIds = classroomMemberService.lambdaQuery()
+                .select(ClassroomMember::getClassroomId)
+                .eq(ClassroomMember::getStudentId, currentStudent.getId())
+                .eq(ClassroomMember::getDeleted, DeletedStatusEnum.NORMAL)
+                .list()
+                .stream()
+                .map(ClassroomMember::getClassroomId)
+                .distinct()
+                .toList();
+
+        if (joinedClassroomIds.isEmpty()) {
+            return new Page<>(dto.page(), dto.size(), 0);
+        }
+
+        LambdaQueryWrapper<Classroom> classroomQuery = Wrappers.lambdaQuery();
+        classroomQuery
+                .in(Classroom::getId, joinedClassroomIds)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .like(keyword != null, Classroom::getName, keyword)
+                .eq(status != null, Classroom::getStatus, status);
+
+        List<Classroom> classrooms = list(classroomQuery);
+
+        if (classrooms.isEmpty()) {
+            return new Page<>(dto.page(), dto.size(), 0);
+        }
+
+        Map<Long, Classroom> classroomMap = new HashMap<>();
+        classrooms.forEach(classroom -> classroomMap.put(classroom.getId(), classroom));
+
+        Page<ClassroomMember> memberPage = classroomMemberService.page(
                 new Page<>(dto.page(), dto.size()),
-                currentStudent.getId(),
-                keyword,
-                status
+                Wrappers.<ClassroomMember>lambdaQuery()
+                        .eq(ClassroomMember::getStudentId, currentStudent.getId())
+                        .in(ClassroomMember::getClassroomId, classroomMap.keySet())
+                        .eq(ClassroomMember::getDeleted, DeletedStatusEnum.NORMAL)
+                        .orderByDesc(ClassroomMember::getJoinedTime)
         );
 
         Map<Long, SysUser> teacherCache = new HashMap<>();
-        List<StudentClassroomListVO> records = pageResult.getRecords()
+        List<StudentClassroomListVO> records = memberPage.getRecords()
                 .stream()
-                .map(classroom -> {
+                .map(member -> {
+                    Classroom classroom = classroomMap.get(member.getClassroomId());
                     SysUser teacher = teacherCache.computeIfAbsent(
-                            classroom.teacherId(),
+                            classroom.getTeacherId(),
                             this::getClassroomTeacher
                     );
 
                     return new StudentClassroomListVO(
-                            classroom.id(),
-                            classroom.classroomMemberId(),
-                            classroom.teacherId(),
+                            classroom.getId(),
+                            member.getId(),
+                            classroom.getTeacherId(),
                             teacher.getUsername(),
-                            classroom.name(),
-                            classroom.languageCode(),
-                            classroom.stageCode(),
-                            classroom.academicYear(),
-                            classroom.semesterCode(),
-                            classroom.status(),
-                            classroom.studentName(),
-                            classroom.joinedTime(),
-                            classroom.updateTime()
+                            classroom.getName(),
+                            classroom.getLanguageCode(),
+                            classroom.getStageCode(),
+                            classroom.getAcademicYear(),
+                            classroom.getSemesterCode(),
+                            classroom.getStatus(),
+                            member.getStudentName(),
+                            member.getJoinedTime(),
+                            classroom.getUpdateTime()
                     );
                 })
                 .toList();
 
+        Page<StudentClassroomListVO> pageResult = new Page<>(
+                memberPage.getCurrent(),
+                memberPage.getSize(),
+                memberPage.getTotal()
+        );
         pageResult.setRecords(records);
         return pageResult;
     }
@@ -292,34 +329,44 @@ public class ClassroomServiceImpl extends ServiceImpl<ClassroomMapper, Classroom
     @Override
     public StudentClassroomDetailVO getMyJoinedClassroomDetail(Long classroomId) {
         SysUser currentStudent = getCurrentStudent();
-        StudentClassroomDetailVO detail = baseMapper.selectMyJoinedClassroomDetail(
-                classroomId,
-                currentStudent.getId()
-        );
+        ClassroomMember member = classroomMemberService.lambdaQuery()
+                .eq(ClassroomMember::getClassroomId, classroomId)
+                .eq(ClassroomMember::getStudentId, currentStudent.getId())
+                .eq(ClassroomMember::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
 
-        if (detail == null) {
+        if (member == null) {
             throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "尚未加入该课堂或课堂不存在");
         }
 
-        SysUser teacher = getClassroomTeacher(detail.teacherId());
+        Classroom classroom = lambdaQuery()
+                .eq(Classroom::getId, classroomId)
+                .eq(Classroom::getDeleted, DeletedStatusEnum.NORMAL)
+                .one();
+
+        if (classroom == null) {
+            throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "尚未加入该课堂或课堂不存在");
+        }
+
+        SysUser teacher = getClassroomTeacher(classroom.getTeacherId());
 
         return new StudentClassroomDetailVO(
-                detail.id(),
-                detail.classroomMemberId(),
-                detail.teacherId(),
+                classroom.getId(),
+                member.getId(),
+                classroom.getTeacherId(),
                 teacher.getUsername(),
-                detail.name(),
-                detail.languageCode(),
-                detail.stageCode(),
-                detail.academicYear(),
-                detail.semesterCode(),
-                detail.description(),
-                detail.inviteCode(),
-                detail.status(),
-                detail.studentName(),
-                detail.joinedTime(),
-                detail.createTime(),
-                detail.updateTime()
+                classroom.getName(),
+                classroom.getLanguageCode(),
+                classroom.getStageCode(),
+                classroom.getAcademicYear(),
+                classroom.getSemesterCode(),
+                classroom.getDescription(),
+                classroom.getInviteCode(),
+                classroom.getStatus(),
+                member.getStudentName(),
+                member.getJoinedTime(),
+                classroom.getCreateTime(),
+                classroom.getUpdateTime()
         );
     }
 
