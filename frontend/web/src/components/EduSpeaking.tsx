@@ -51,6 +51,20 @@ const TTS_RATES = [0.5, 1.0, 1.5, 2.0];
 const TTS_VOICE_STORAGE_KEY = 'speaking-tts-voice';
 const TTS_RATE_STORAGE_KEY = 'speaking-tts-rate';
 
+const SPEAKING_EVAL_LEVELS = [
+  { value: 1.5, label: '宽松', desc: '评分更宽容，适合入门建立信心' },
+  { value: 2.5, label: '适中', desc: '宽严平衡，适合日常练习' },
+  { value: 3.0, label: '严格', desc: '接近正式考试标准' },
+  { value: 3.5, label: '非常严格', desc: '最高标准，评分最苛刻' },
+];
+const EVAL_STRICTNESS_STORAGE_KEY = 'speaking-eval-strictness';
+const DEFAULT_EVAL_STRICTNESS = 3.0;
+
+function evalStrictnessLabel(scoreCoeff: number): string {
+  const level = SPEAKING_EVAL_LEVELS.find(l => l.value === scoreCoeff);
+  return level ? `${level.label}(${level.value.toFixed(1)})` : `自定义(${scoreCoeff})`;
+}
+
 const SPEAKING_EVALUATION_SAMPLE_RATE = 16000;
 
 interface PageResult<T> {
@@ -120,6 +134,7 @@ interface SpeakingLatestEvaluation {
   pronAccuracy?: number;
   pronFluency?: number;
   pronCompletion?: number;
+  scoreCoeff?: number;
   words?: SpeakingWordEvaluation[];
   createTime?: string;
 }
@@ -478,6 +493,10 @@ export function EduSpeakingPractice() {
   const [detail, setDetail] = useState<SpeakingPracticeDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
   const [autoOpenedMaterialId, setAutoOpenedMaterialId] = useState<number | null>(null);
+  const [evalStrictness, setEvalStrictness] = useState(() => {
+    const saved = Number(localStorage.getItem(EVAL_STRICTNESS_STORAGE_KEY));
+    return SPEAKING_EVAL_LEVELS.some(l => l.value === saved) ? saved : DEFAULT_EVAL_STRICTNESS;
+  });
   const [toast, setToast] = useState('');
 
   const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
@@ -491,6 +510,11 @@ export function EduSpeakingPractice() {
     setLanguage(nextLanguage);
     const firstStage = STAGES.find(s => s.language === nextLanguage);
     setStage(firstStage?.code || '');
+  };
+
+  const changeEvalStrictness = (value: number) => {
+    setEvalStrictness(value);
+    localStorage.setItem(EVAL_STRICTNESS_STORAGE_KEY, String(value));
   };
 
   useEffect(() => {
@@ -639,11 +663,29 @@ export function EduSpeakingPractice() {
               <button onClick={closePracticeDetail} style={closeBtn}>×</button>
             </div>
             {detail.sceneDescription && <div style={{ ...noteStyle, marginBottom: 16 }}>{detail.sceneDescription}</div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#2c2c2c' }}>评测严格度</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {SPEAKING_EVAL_LEVELS.map(level => (
+                  <button
+                    key={level.value}
+                    type="button"
+                    title={level.desc}
+                    onClick={() => changeEvalStrictness(level.value)}
+                    style={ttsOptionBtn(evalStrictness === level.value)}
+                  >
+                    {level.label} {level.value.toFixed(1)}
+                  </button>
+                ))}
+              </div>
+              <span style={{ fontSize: 12, color: '#aaa' }}>{SPEAKING_EVAL_LEVELS.find(l => l.value === evalStrictness)?.desc}</span>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {detail.sentences?.map(sentence => (
                 <PracticeSentenceCard
                   key={sentence.sentenceId}
                   sentence={sentence}
+                  scoreCoeff={evalStrictness}
                   onEvaluated={result => {
                     setDetail(prev => {
                       if (!prev) return prev;
@@ -716,9 +758,11 @@ function MaterialDetail({ material, onPractice, loading }: { material: SpeakingM
 
 function PracticeSentenceCard({
   sentence,
+  scoreCoeff,
   onEvaluated,
 }: {
   sentence: SpeakingSentence;
+  scoreCoeff: number;
   onEvaluated: (evaluation: SpeakingEvaluationResult) => void;
 }) {
   const [recording, setRecording] = useState(false);
@@ -829,6 +873,7 @@ function PracticeSentenceCard({
         body: JSON.stringify({
           sentenceId: sentence.sentenceId,
           studentAudioUrl: uploaded.url,
+          scoreCoeff,
         }),
       });
       onEvaluated(result);
@@ -911,7 +956,13 @@ function EvaluationView({ evaluation }: { evaluation: SpeakingLatestEvaluation }
           ))}
         </div>
       )}
-      {evaluation.createTime && <div style={{ fontSize: 11, color: '#bbb', marginTop: 8 }}>评测时间：{formatTime(evaluation.createTime)}</div>}
+      {(evaluation.createTime || evaluation.scoreCoeff != null) && (
+        <div style={{ fontSize: 11, color: '#bbb', marginTop: 8 }}>
+          {evaluation.createTime && `评测时间：${formatTime(evaluation.createTime)}`}
+          {evaluation.createTime && evaluation.scoreCoeff != null && ' · '}
+          {evaluation.scoreCoeff != null && `严格度：${evalStrictnessLabel(evaluation.scoreCoeff)}`}
+        </div>
+      )}
     </div>
   );
 }
