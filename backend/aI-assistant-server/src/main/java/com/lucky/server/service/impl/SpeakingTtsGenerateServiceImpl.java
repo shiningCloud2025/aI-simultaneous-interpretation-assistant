@@ -5,6 +5,7 @@ import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesizer;
 import com.alibaba.dashscope.utils.Constants;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.common.enums.SpeakingTtsVoiceEnum;
 import com.lucky.server.common.storage.FileStorageService;
 import com.lucky.server.config.SpeakingTtsProperties;
 import com.lucky.server.service.SpeakingTtsGenerateService;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -30,12 +32,12 @@ public class SpeakingTtsGenerateServiceImpl implements SpeakingTtsGenerateServic
     private final FileStorageService fileStorageService;
 
     @Override
-    public String generateAndUpload(String text) {
+    public String generateAndUpload(String text, SpeakingTtsVoiceEnum voice, BigDecimal speechRate) {
         if (text == null || text.isBlank()) {
             throw new BusinessException(ResultCodeEnum.PARAM_ERROR, "TTS合成文本不能为空");
         }
 
-        byte[] audioBytes = generateAudio(text.trim());
+        byte[] audioBytes = generateAudio(text.trim(), voice, speechRate);
         String fileName = "speaking-tts/%s/%s.%s".formatted(
                 LocalDate.now(),
                 UUID.randomUUID(),
@@ -50,7 +52,7 @@ public class SpeakingTtsGenerateServiceImpl implements SpeakingTtsGenerateServic
         );
     }
 
-    private byte[] generateAudio(String text) {
+    private byte[] generateAudio(String text, SpeakingTtsVoiceEnum voice, BigDecimal speechRate) {
         SpeechSynthesizer synthesizer = null;
         try {
             Constants.baseWebsocketApiUrl = properties.getWebsocketUrl();
@@ -58,7 +60,8 @@ public class SpeakingTtsGenerateServiceImpl implements SpeakingTtsGenerateServic
             SpeechSynthesisParam param = SpeechSynthesisParam.builder()
                     .apiKey(properties.getApiKey())
                     .model(properties.getModelName())
-                    .voice(properties.getDefaultVoice().getCode())
+                    .voice(voice.getCode())
+                    .speechRate(speechRate.floatValue())
                     .build();
 
             synthesizer = new SpeechSynthesizer(param, null);

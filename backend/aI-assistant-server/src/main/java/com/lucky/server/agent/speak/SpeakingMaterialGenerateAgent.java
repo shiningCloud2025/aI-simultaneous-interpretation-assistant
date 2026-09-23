@@ -367,8 +367,8 @@ public class SpeakingMaterialGenerateAgent {
         generation.setModelName(llmPreference.modelName());
         generation.setTtsProvider(speakingTtsProperties.getProvider());
         generation.setTtsModelName(speakingTtsProperties.getModelName());
-        generation.setTtsVoice(speakingTtsProperties.getDefaultVoice().getCode());
-        generation.setTtsSpeechRate(speakingTtsProperties.getSpeechRate());
+        generation.setTtsVoice(dto.ttsVoice().getCode());
+        generation.setTtsSpeechRate(dto.ttsSpeechRate());
 
         Long materialId = speakingMaterialGenerationService.saveGeneration(generation);
         List<SpeakingMaterialGenerateSentenceVO> sentenceVOList = new ArrayList<>();
@@ -376,7 +376,7 @@ public class SpeakingMaterialGenerateAgent {
         for (SpeakingMaterialAgentSentenceResult item : result.sentences()) {
             try {
                 String ttsText = item.sentence();
-                String audioUrl = speakingTtsGenerateService.generateAndUpload(ttsText);
+                String audioUrl = speakingTtsGenerateService.generateAndUpload(ttsText, dto.ttsVoice(), dto.ttsSpeechRate());
 
                 SpeakingMaterialSentence sentence = new SpeakingMaterialSentence();
                 sentence.setMaterialId(materialId);
@@ -431,8 +431,8 @@ public class SpeakingMaterialGenerateAgent {
             entity.setModelName(llmPreference == null ? null : llmPreference.modelName());
             entity.setTtsProvider(speakingTtsProperties.getProvider());
             entity.setTtsModelName(speakingTtsProperties.getModelName());
-            entity.setTtsVoice(speakingTtsProperties.getDefaultVoice().getCode());
-            entity.setTtsSpeechRate(speakingTtsProperties.getSpeechRate());
+            entity.setTtsVoice(dto == null ? null : dto.ttsVoice().getCode());
+            entity.setTtsSpeechRate(dto == null ? null : dto.ttsSpeechRate());
             entity.setFailureStage(failureStage);
             entity.setErrorMessage(error.getMessage());
             entity.setRawResponse(rawResponse);

@@ -4,8 +4,13 @@ import com.lucky.server.common.enums.SpeakingDifficultyEnum;
 import com.lucky.server.common.enums.SpeakingLanguageEnum;
 import com.lucky.server.common.enums.SpeakingSceneEnum;
 import com.lucky.server.common.enums.SpeakingStageEnum;
+import com.lucky.server.common.enums.SpeakingTtsVoiceEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
 
 /**
  * 口语素材生成请求参数
@@ -34,6 +39,16 @@ public record SpeakingMaterialGenerateDTO(
         String customScene,
 
         @Schema(description = "用户提示词/偏好说明")
-        String userPrompt
+        String userPrompt,
+
+        @Schema(description = "TTS音色编码（loongmary/loongeva_v3.6/loongjohn）")
+        @NotNull(message = "TTS音色不能为空")
+        SpeakingTtsVoiceEnum ttsVoice,
+
+        @Schema(description = "TTS语速（0.5~2.0）")
+        @NotNull(message = "TTS语速不能为空")
+        @DecimalMin(value = "0.5", message = "TTS语速不能小于0.5")
+        @DecimalMax(value = "2.0", message = "TTS语速不能大于2.0")
+        BigDecimal ttsSpeechRate
 ) {
 }
