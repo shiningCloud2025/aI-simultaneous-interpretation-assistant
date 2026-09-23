@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, Copy, GraduationCap, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Sun, UserRound, Users, X } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, Copy, GraduationCap, Home, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Sun, UserRound, Users, X } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { isTeacherUser } from '../../lib/authRole';
 import { AccountPage } from '../../components/AccountPage';
@@ -12,6 +12,7 @@ import { TermLibraryPage } from '../../components/TermLibraryPage';
 import { AboutPage } from '../../components/AboutPage';
 import { PlatformSkillsDialog } from '../../components/PlatformSkillsDialog';
 import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBadge';
+import { TeacherDashboard } from './TeacherDashboard';
 import { TeacherLearningArea } from './TeacherLearning';
 import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
@@ -56,7 +57,8 @@ export function TeacherWorkspace() {
   const logout = useAppStore(state => state.logout);
   const navigate = useNavigate();
   const location = useLocation();
-  const [, , page = 'classrooms', rawId] = location.pathname.split('/');
+  const [, , rawPage, rawId] = location.pathname.split('/');
+  const page = rawPage || 'home';
   const entityId = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
   const isUtilityTool = page === 'tools' && utilityGroups.some(group => group.items.some(item => item.id === rawId));
   const [classrooms, setClassrooms] = useState<PageResult<ClassroomList> | null>(null);
@@ -245,7 +247,8 @@ export function TeacherWorkspace() {
   const isToolSection = page === 'utilities' || isUtilityTool;
   const isPersonalSection = page === 'personal' || page === 'profile' || page === 'settings' || page === 'help';
   const personalSettingTitles: Record<string, string> = { audio: '音频设备', shortcuts: '快捷键', 'api-key': 'API Key 配置', 'term-library': '术语库', about: '关于' };
-  const currentTitle = page === 'classrooms' ? room?.id === entityId && entityId ? room.name : '我的课堂'
+  const currentTitle = page === 'home' ? '教学仪表盘'
+    : page === 'classrooms' ? room?.id === entityId && entityId ? room.name : '我的课堂'
     : page === 'sessions' ? session?.id === entityId && entityId ? session.sessionName : '上课记录'
     : isStudentSection ? '学生预习' : isToolSection ? '通用工具' : page === 'profile' ? '个人中心'
       : page === 'help' ? '帮助反馈' : page === 'settings' ? personalSettingTitles[rawId || ''] || '个人工作台'
@@ -256,12 +259,13 @@ export function TeacherWorkspace() {
   return <div className="teacher-shell">
     {mobileNav && <button className="teacher-nav-mask" aria-label="关闭导航" onClick={() => setMobileNav(false)} />}
     <aside className={`teacher-sidebar ${mobileNav ? 'open' : ''}`}>
-      <button className="teacher-brand" onClick={() => go('/teacher/classrooms')}>
+      <button className="teacher-brand" onClick={() => go('/teacher')}>
         <span className="teacher-brand-mark"><Languages size={21} /></span>
         <span><strong>智语同航</strong><small>教师端</small></span>
       </button>
       <nav className="teacher-nav" aria-label="教师端导航">
         <NavGroup label="我的教学">
+          <NavItem icon={<Home />} label="教学仪表盘" active={page === 'home'} onClick={() => go('/teacher')} />
           <NavItem icon={<LayoutGrid />} label="我的课堂" active={isClassroomSection} onClick={() => go('/teacher/classrooms')} />
           <NavItem icon={<BookOpen />} label="通用工具" active={isToolSection} onClick={() => go('/teacher/utilities')} />
         </NavGroup>
@@ -295,6 +299,12 @@ export function TeacherWorkspace() {
       </header>
       <div className="teacher-content">
         {error && <div className="teacher-alert" role="alert"><span>{error}</span><button onClick={() => { setError(''); reload(); }}>重试</button></div>}
+        {page === 'home' && <TeacherDashboard
+          userName={user?.username || '老师'}
+          revision={revision}
+          onGo={go}
+          onCreateClassroom={() => { setForm(emptyForm); setDialog('create'); }}
+        />}
         {page === 'classrooms' && !entityId && <TeacherClassroomList
           data={classrooms}
           loading={loading}

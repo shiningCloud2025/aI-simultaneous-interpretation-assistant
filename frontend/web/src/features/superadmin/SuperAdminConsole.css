@@ -1103,6 +1103,8 @@
   top: 50%;
   left: 50%;
   --orbit-radius: -245px;
+  --orbit-angle: 0deg;
+  --orbit-angle-reverse: 0deg;
   width: 104px;
   height: 104px;
   margin: -52px 0 0 -52px;
@@ -1143,9 +1145,10 @@
 }
 
 .admin-star-planet-1 { --orbit-angle: 0deg; --orbit-angle-reverse: 0deg; }
-.admin-star-planet-2 { --orbit-angle: 90deg; --orbit-angle-reverse: -90deg; }
-.admin-star-planet-3 { --orbit-angle: 180deg; --orbit-angle-reverse: -180deg; }
-.admin-star-planet-4 { --orbit-angle: 270deg; --orbit-angle-reverse: -270deg; }
+.admin-star-planet-2 { --orbit-angle: 72deg; --orbit-angle-reverse: -72deg; }
+.admin-star-planet-3 { --orbit-angle: 144deg; --orbit-angle-reverse: -144deg; }
+.admin-star-planet-4 { --orbit-angle: 216deg; --orbit-angle-reverse: -216deg; }
+.admin-star-planet-5 { --orbit-angle: 288deg; --orbit-angle-reverse: -288deg; }
 
 .admin-satellite-layer {
   inset: 0;
