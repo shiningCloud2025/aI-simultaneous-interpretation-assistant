@@ -21,6 +21,7 @@ import { useState, useEffect } from 'react';
 import { isTeacherUser } from '../lib/authRole';
 import { PersonalWorkspace } from '../components/PersonalWorkspace';
 import { PlatformSkillsDialog } from '../components/PlatformSkillsDialog';
+import { LiveSessionBadge } from '../components/LiveSessionBadge';
 import { StudentClassrooms } from '../features/student/StudentClassrooms';
 import { StudentTools } from '../features/student/StudentTools';
 import { studentToolIds } from '../features/student/studentToolCatalog';
@@ -180,6 +181,7 @@ export function MainLayout() {
         </div>
       </div>
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
+      {user && <LiveSessionBadge role="student" onOpen={sessionId => nav(`/?panel=classrooms&sessionId=${sessionId}`)} />}
     </div>
   );
 }

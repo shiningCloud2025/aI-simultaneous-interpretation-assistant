@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, Check, Clock3, Pencil, Plus, RefreshCw, Search, Users, X } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
+import { useLiveConsole } from '../../components/LiveSessionBadge';
 import { studentClassroomApi, type ClassroomMember, type ClassroomSession, type PageResult, type SessionStudent, type StudentClassroom, type StudentClassroomDetail } from './studentClassroomApi';
 import { classroomCodeFromLink } from './classroomInvite';
 import './student-classrooms.css';
@@ -29,6 +31,15 @@ function plainText(html: string | null) {
   return html ? new DOMParser().parseFromString(html, 'text/html').body.textContent?.trim() || '暂无课堂说明' : '暂无课堂说明';
 }
 
+function elapsedText(startTime: string, end: number) {
+  const start = new Date(startTime.replace(' ', 'T')).getTime();
+  const total = Math.max(0, Math.floor((end - start) / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours > 0 ? `${hours}:${minutes}:${seconds}` : `${minutes}:${seconds}`;
+}
+
 function Pager({ data, page, onChange }: { data: PageResult<unknown> | null; page: number; onChange: (page: number) => void }) {
   if (!data || data.pages <= 1) return null;
   return <div className="student-rooms-pager"><span>第 {page} / {data.pages} 页</span><button disabled={page <= 1} onClick={() => onChange(page - 1)}>上一页</button><button disabled={page >= data.pages} onClick={() => onChange(page + 1)}>下一页</button></div>;
@@ -36,6 +47,9 @@ function Pager({ data, page, onChange }: { data: PageResult<unknown> | null; pag
 
 export function StudentClassrooms() {
   const userId = useAppStore(state => state.user?.id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setConsoleSession = useLiveConsole(state => state.setSessionId);
+  const [now, setNow] = useState(Date.now());
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<'all' | 'active' | 'archived'>('all');
@@ -111,7 +125,62 @@ export function StudentClassrooms() {
     return () => { cancelled = true; };
   }, [sessionId, studentPage, revision]);
 
+  useEffect(() => {
+    const raw = searchParams.get('sessionId');
+    const linked = raw ? Number(raw) : null;
+    if (!linked || !Number.isFinite(linked) || linked === sessionId) return;
+    setSessionId(linked);
+    setSession(null);
+    setStudents(null);
+    setOwnCheckedIn(false);
+    setStudentPage(1);
+    setError('');
+    const next = new URLSearchParams(searchParams);
+    next.delete('sessionId');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, sessionId, setSearchParams]);
+
+  useEffect(() => {
+    setConsoleSession(sessionId && session?.id === sessionId && session.status !== 3 ? sessionId : null);
+    return () => setConsoleSession(null);
+  }, [sessionId, session, setConsoleSession]);
+
+  useEffect(() => {
+    if (!classroomId && session?.classroomId) setClassroomId(session.classroomId);
+  }, [session, classroomId]);
+
+  useEffect(() => {
+    if (!sessionId || !session || session.status === 3) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [sessionId, session]);
+
+  useEffect(() => {
+    if (!sessionId || !session || session.status === 3) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const latest = await studentClassroomApi.session(sessionId);
+        if (cancelled) return;
+        if (latest.status === 3) {
+          backToClassroom();
+          setNotice('老师已结束本次课程');
+          refresh();
+        } else {
+          setSession(latest);
+        }
+      } catch { /* 轮询失败时静默，等待下次轮询 */ }
+      try {
+        const records = await studentClassroomApi.pageSessionStudents(sessionId, studentPage);
+        if (!cancelled) setStudents(records);
+      } catch { /* 轮询失败时静默，等待下次轮询 */ }
+    };
+    const timer = window.setInterval(() => { void poll(); }, 10000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [sessionId, session, studentPage]);
+
   const openClassroom = (id: number) => { setClassroomId(id); setClassroom(null); setSessionId(null); setSessions(null); setMembers(null); setSection('sessions'); setSessionPage(1); setMemberPage(1); setError(''); };
+  const backToClassroom = () => { setSessionId(null); setSession(null); setStudents(null); setError(''); };
   const openNameEditor = () => { if (!classroom || classroom.status !== 1) return; setName(classroom.studentName); setEditingName(true); setError(''); };
   const join = async () => {
     if (busy) return;
@@ -148,9 +217,21 @@ export function StudentClassrooms() {
   return <div className="student-rooms">
     {error && <div className="student-rooms-message error" role="alert">{error}<button onClick={() => { setError(''); refresh(); }}>重试</button></div>}
     {notice && <div className="student-rooms-message success"><Check size={16} />{notice}<button onClick={() => setNotice('')}>关闭</button></div>}
-    {sessionId && session?.id !== sessionId ? <div className="student-rooms-panel student-rooms-empty"><h2>{error ? '课次暂时无法显示' : '正在加载课次…'}</h2><button className="student-rooms-text-button" onClick={() => { setSessionId(null); setSession(null); }}>返回课堂</button></div> : sessionId && session?.id === sessionId ? <>
-      <button className="student-rooms-back" onClick={() => { setSessionId(null); setSession(null); setStudents(null); }}>← 返回课堂</button>
-      <div className="student-rooms-head"><div><span>上课记录</span><h1>{session.sessionName}</h1><p>首次开课 {dateText(session.startTime)}</p></div><div className="student-rooms-head-actions"><span className={`student-rooms-badge state-${session.status}`}>{session.status === 1 ? '进行中' : session.status === 2 ? '已暂停' : '已结束'}</span><button className="student-rooms-refresh" title="刷新课次和签到情况" aria-label="刷新课次和签到情况" onClick={refresh}><RefreshCw size={17} /></button></div></div>
+    {sessionId && session?.id !== sessionId ? <div className="student-rooms-panel student-rooms-empty"><h2>{error ? '课次暂时无法显示' : '正在加载课次…'}</h2><button className="student-rooms-text-button" onClick={backToClassroom}>返回课堂</button></div> : sessionId && session?.id === sessionId ? <>
+      <button className="student-rooms-back" onClick={backToClassroom}>← 返回课堂</button>
+      {session.status !== 3 ? <div className={`student-live-banner${session.status === 2 ? ' paused' : ''}`}>
+        <span className="student-live-dot" aria-hidden="true" />
+        <div className="student-live-main">
+          <strong>{session.status === 1 ? '上课中' : '老师暂停中'}</strong>
+          <h1>{session.sessionName}</h1>
+          <p>首次开课 {dateText(session.startTime)}{session.status === 2 ? ' · 恢复上课后才能签到' : ''}</p>
+        </div>
+        <div className="student-live-side">
+          <span>已进行</span>
+          <strong>{elapsedText(session.startTime, now)}</strong>
+          <button className="student-live-refresh" title="刷新课次和签到情况" aria-label="刷新课次和签到情况" onClick={refresh}><RefreshCw size={15} /></button>
+        </div>
+      </div> : <div className="student-rooms-head"><div><span>上课记录</span><h1>{session.sessionName}</h1><p>首次开课 {dateText(session.startTime)}{session.endTime ? ` · 时长 ${elapsedText(session.startTime, new Date(session.endTime.replace(' ', 'T')).getTime())}` : ''}</p></div><div className="student-rooms-head-actions"><span className={`student-rooms-badge state-${session.status}`}>已结束</span><button className="student-rooms-refresh" title="刷新课次和签到情况" aria-label="刷新课次和签到情况" onClick={refresh}><RefreshCw size={17} /></button></div></div>}
       <div className="student-rooms-panel student-rooms-attendance"><div><Clock3 size={20} /><div><strong>本次签到</strong><p>{session.status === 1 ? '课程进行中，可以签到。' : session.status === 2 ? '老师暂停了课程，继续上课后才能签到。' : '本次课程已结束。'}</p></div></div><button className="student-rooms-primary" disabled={busy || session.status !== 1 || ownCheckedIn || students?.records.some(item => item.studentId === userId && item.checkInStatus === 1)} onClick={() => void checkIn()}>{ownCheckedIn || students?.records.some(item => item.studentId === userId && item.checkInStatus === 1) ? '已签到' : busy ? '正在签到…' : '签到'}</button></div>
       <section className="student-rooms-panel"><h2>签到情况 <small>共 {students?.total ?? 0} 人</small></h2>{students?.records.length ? students.records.map(item => <div className="student-rooms-person" key={item.id}><span>{item.studentName}</span><span className={item.checkInStatus === 1 ? 'present' : ''}>{item.checkInStatus === 1 ? `已签到 · ${dateText(item.checkInTime)}` : '未签到'}</span></div>) : <p className="student-rooms-empty">暂无学生记录</p>}<Pager data={students} page={studentPage} onChange={setStudentPage} /></section>
     </> : classroomId && classroom?.id === classroomId ? <>

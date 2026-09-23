@@ -72,8 +72,8 @@ export const studentClassroomApi = {
   updateMyName: (memberId: number, studentName: string) => apiCall<ClassroomMemberDetail>(`/student/classroom/member/${memberId}`, {
     method: 'PUT', body: JSON.stringify({ studentName }),
   }),
-  pageSessions: (classroomId: number, page: number) => apiCall<PageResult<ClassroomSession>>(`/student/classroom/session/${classroomId}/page`, {
-    method: 'POST', body: pageBody(page),
+  pageSessions: (classroomId: number, page: number, filter: Record<string, string | number | null> = {}) => apiCall<PageResult<ClassroomSession>>(`/student/classroom/session/${classroomId}/page`, {
+    method: 'POST', body: pageBody(page, filter),
   }),
   session: (id: number) => apiCall<ClassroomSession>(`/student/classroom/session/${id}`),
   pageSessionStudents: (sessionId: number, page: number) => apiCall<PageResult<SessionStudent>>(`/student/classroom/session/student/${sessionId}/page`, {

@@ -11,6 +11,7 @@ import { ApiKeyConfig } from '../../components/ApiKeyConfig';
 import { TermLibraryPage } from '../../components/TermLibraryPage';
 import { AboutPage } from '../../components/AboutPage';
 import { PlatformSkillsDialog } from '../../components/PlatformSkillsDialog';
+import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBadge';
 import { TeacherLearningArea } from './TeacherLearning';
 import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
@@ -45,6 +46,14 @@ function descriptionText(value: string | null) {
   return new DOMParser().parseFromString(value, 'text/html').body.textContent?.trim() || '暂未填写课堂说明';
 }
 function message(error: unknown) { return error instanceof Error ? error.message : '操作失败，请稍后重试'; }
+function elapsedText(startTime: string, end: number) {
+  const start = new Date(startTime.replace(' ', 'T')).getTime();
+  const total = Math.max(0, Math.floor((end - start) / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours > 0 ? `${hours}:${minutes}:${seconds}` : `${minutes}:${seconds}`;
+}
 
 export function TeacherWorkspace() {
   const user = useAppStore(state => state.user);
@@ -72,6 +81,9 @@ export function TeacherWorkspace() {
   const [historyRoom, setHistoryRoom] = useState<number | null>(null);
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [students, setStudents] = useState<PageResult<SessionStudentList> | null>(null);
+  const [stats, setStats] = useState<{ total: number; present: number; absent: string[] } | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const setConsoleSession = useLiveConsole(state => state.setSessionId);
   const [studentPage, setStudentPage] = useState(1);
   const [studentKeyword, setStudentKeyword] = useState('');
   const [attendance, setAttendance] = useState<'all' | 'present' | 'absent'>('all');
@@ -174,10 +186,18 @@ export function TeacherWorkspace() {
         studentName: studentKeyword.trim() || null,
         checkInStatus: attendance === 'all' ? null : attendance === 'present' ? 1 : 0,
       }),
-    ]).then(([detail, studentData]) => {
+      teachingApi.pageSessionStudents(entityId, 1, 1, {}),
+      teachingApi.pageSessionStudents(entityId, 1, 1, { checkInStatus: 1 }),
+      teachingApi.pageSessionStudents(entityId, 1, 8, { checkInStatus: 0 }),
+    ]).then(([detail, studentData, totalData, presentData, absentData]) => {
       if (cancelled) return;
       setSession(detail.status === 'fulfilled' ? detail.value : null);
       setStudents(studentData.status === 'fulfilled' ? studentData.value : null);
+      setStats(totalData.status === 'fulfilled' ? {
+        total: totalData.value.total,
+        present: presentData.status === 'fulfilled' ? presentData.value.total : 0,
+        absent: absentData.status === 'fulfilled' ? absentData.value.records.map(item => item.studentName) : [],
+      } : null);
       const failure = [detail, studentData].find(result => result.status === 'rejected');
       setError(failure?.status === 'rejected' ? message(failure.reason) : '');
     });
@@ -186,6 +206,17 @@ export function TeacherWorkspace() {
     const timer = window.setInterval(() => { void load(); }, 15000);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [user, page, entityId, studentPage, studentKeyword, attendance, revision]);
+
+  useEffect(() => {
+    if (page !== 'sessions' || !session || session.status === 3) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [page, session]);
+
+  useEffect(() => {
+    setConsoleSession(page === 'sessions' && entityId && session?.id === entityId && session.status !== 3 ? entityId : null);
+    return () => setConsoleSession(null);
+  }, [page, entityId, session, setConsoleSession]);
 
   useEffect(() => {
     if (!user || page !== 'sessions' || entityId || !historyRoom) return;
@@ -325,8 +356,22 @@ export function TeacherWorkspace() {
             {session.status !== 3 && <button className="end" disabled={busy} onClick={() => { if (window.confirm('确定结束本次课次吗？结束后不能继续签到。')) void act(() => teachingApi.endSession(session.id), '课次已结束'); }}><Square size={15} />结束课次</button>}
           </div>
         </header>
+        {session.status !== 3 && <section className={`teacher-live-board${session.status === 2 ? ' paused' : ''}`} aria-label="课堂控制台">
+          <div className="teacher-live-board-row">
+            <span className="teacher-live-dot" aria-hidden="true" />
+            <strong>{session.status === 1 ? '课堂控制台 · 上课中' : '课堂控制台 · 已暂停'}</strong>
+            <span className="teacher-live-elapsed">已进行<b>{elapsedText(session.startTime, now)}</b></span>
+          </div>
+          <div className="teacher-live-progress">
+            <div className="teacher-live-progress-info"><span>签到进度</span><strong>{stats ? `${stats.present}/${stats.total}` : '—'}</strong></div>
+            <div className="teacher-live-progress-track"><i style={{ width: stats && stats.total ? `${Math.round(stats.present / stats.total * 100)}%` : '0%' }} /></div>
+          </div>
+          {stats && stats.total - stats.present > 0 && <div className="teacher-live-absent"><span>未到</span><div>{stats.absent.map(name => <em key={name}>{name}</em>)}{stats.total - stats.present > stats.absent.length && <em>+{stats.total - stats.present - stats.absent.length}</em>}</div></div>}
+          {stats && stats.total > 0 && stats.present === stats.total && <div className="teacher-live-all-present">全员到齐</div>}
+        </section>}
         <div className="teacher-session-summary">
           <span>学生 <strong>{students?.total ?? '—'}</strong>{studentKeyword || attendance !== 'all' ? '（筛选结果）' : ''}</span>
+          {session.status === 3 && stats && <span>签到 <strong>{stats.present}/{stats.total}</strong></span>}
           <span>结束时间 <strong>{dateText(session.endTime)}</strong></span>
         </div>
         <section className="teacher-card"><CardHead title="学生签到" subtitle="学生自行签到；每 15 秒刷新记录" action="立即刷新" onAction={reload} /><div className="teacher-list-toolbar"><label><Search size={16} /><input value={studentKeyword} onChange={event => { setStudentKeyword(event.target.value); setStudentPage(1); }} placeholder="搜索学生姓名" /></label><div className="teacher-filter">{(['all', 'present', 'absent'] as const).map(value => <button key={value} className={attendance === value ? 'active' : ''} onClick={() => { setAttendance(value); setStudentPage(1); }}>{value === 'all' ? '全部' : value === 'present' ? '已到课' : '未签到'}</button>)}</div></div>{students?.records.length ? <div className="teacher-table"><div className="teacher-table-row teacher-session-student-row head"><span>学生</span><span>签到状态</span><span>签到时间</span><span>操作</span></div>{students.records.map(item => <div className="teacher-table-row teacher-session-student-row" key={item.id}><span className="teacher-person"><i>{item.studentName.slice(0, 1)}</i><b>{item.studentName}</b></span><span className={item.checkInStatus === 1 ? 'teacher-present' : 'teacher-absent'}>{item.checkInStatus === 1 ? '已到课' : '未签到'}</span><span>{dateText(item.checkInTime)}</span><span className="teacher-cell-actions"><button onClick={() => { void teachingApi.sessionStudent(item.id).then(value => { setStudentDetail(value); setDialog('student'); }).catch(cause => setError(message(cause))); }}>详情</button></span></div>)}</div> : <Empty text={loadingSession ? '正在加载签到记录…' : '没有符合条件的学生记录'} action="刷新" onClick={reload} />}<Pager data={students} page={studentPage} setPage={setStudentPage} /></section></div>}
@@ -371,6 +416,7 @@ export function TeacherWorkspace() {
     {dialog && error && <div className="teacher-toast teacher-error-toast" role="alert">{error}</div>}
     {notice && <div className="teacher-toast"><Check size={16} />{notice}</div>}
     {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
+    {user && isTeacherUser(user) && <LiveSessionBadge role="teacher" onOpen={id => go(`/teacher/sessions/${id}`)} />}
   </div>;
 }
 

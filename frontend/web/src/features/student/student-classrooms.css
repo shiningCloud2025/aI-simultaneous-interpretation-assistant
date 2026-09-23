@@ -56,6 +56,23 @@
 .student-rooms-attendance > div { display: flex; align-items: center; gap: 12px; color: #49745b; }
 .student-rooms-attendance strong { color: #324839; font-size: 14px; }
 .student-rooms-attendance p { margin: 5px 0 0; color: #829087; font-size: 12px; }
+.student-live-banner { margin-bottom: 16px; padding: 24px 26px; display: flex; align-items: center; gap: 18px; border-radius: 15px; background: linear-gradient(120deg, #1e473c, #2e6852); color: #eaf5ee; box-shadow: 0 14px 34px #1f4c3d2e; }
+.student-live-banner.paused { background: linear-gradient(120deg, #584a22, #75642f); box-shadow: 0 14px 34px #584a222e; }
+.student-live-dot { width: 12px; height: 12px; flex-shrink: 0; border-radius: 50%; background: #5ff2a2; animation: student-live-pulse 1.6s ease-out infinite; }
+.student-live-banner.paused .student-live-dot { background: #ffd479; animation: none; }
+@keyframes student-live-pulse { 0% { box-shadow: 0 0 0 0 #5ff2a273; } 70% { box-shadow: 0 0 0 13px #5ff2a200; } 100% { box-shadow: 0 0 0 0 #5ff2a200; } }
+.student-live-main { min-width: 0; flex: 1; }
+.student-live-main > strong { font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #a9d9bd; }
+.student-live-banner.paused .student-live-main > strong { color: #f0dfae; }
+.student-live-main h1 { margin: 5px 0 6px; font-size: 22px; color: #fff; }
+.student-live-main p { margin: 0; color: #c4e2cf; font-size: 12.5px; }
+.student-live-banner.paused .student-live-main p { color: #ecdcb0; }
+.student-live-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.student-live-side > span { color: #b7d8c3; font-size: 11px; }
+.student-live-banner.paused .student-live-side > span { color: #e5d5a5; }
+.student-live-side > strong { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.student-live-refresh { width: 32px; height: 32px; margin-top: 6px; display: grid; place-items: center; border: 1px solid #ffffff33; border-radius: 8px; background: #ffffff1a; color: #eaf5ee; cursor: pointer; }
+.student-live-refresh:hover { background: #ffffff2b; }
 .student-rooms-empty { padding: 55px 20px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; color: #849187; }
 .student-rooms-empty h2 { margin: 13px 0 0; color: #3c4b40; }
 .student-rooms-empty p { margin: 8px 0 18px; }
@@ -86,4 +103,4 @@
 [data-theme="dark"] .student-rooms-panel, [data-theme="dark"] .student-rooms-list, [data-theme="dark"] .student-rooms-toolbar label, [data-theme="dark"] .student-rooms-refresh, [data-theme="dark"] .student-rooms-modal { background: #29332c; border-color: #435145; color: #e7ece6; }
 [data-theme="dark"] .student-rooms-list > button, [data-theme="dark"] .student-rooms-session, [data-theme="dark"] .student-rooms-session strong, [data-theme="dark"] .student-rooms-detail-fields strong, [data-theme="dark"] .student-rooms-attendance strong { color: #e7ece6; }
 [data-theme="dark"] .student-rooms-list > button:hover, [data-theme="dark"] .student-rooms-session:hover { background: #344439; }
-@media (max-width: 740px) { .student-rooms-head, .student-rooms-toolbar { align-items: flex-start; flex-wrap: wrap; } .student-rooms-detail-fields { align-items: flex-start; flex-direction: column; gap: 12px; } .student-rooms-toolbar label { flex-basis: 100%; max-width: none; } .student-rooms-toolbar > div { margin-left: 0; } .student-rooms-list > button { padding: 14px; gap: 10px; } .student-rooms-list-icon { display: none; } .student-rooms-person { align-items: flex-start; flex-direction: column; padding: 13px 0; } }
+@media (max-width: 740px) { .student-rooms-head, .student-rooms-toolbar { align-items: flex-start; flex-wrap: wrap; } .student-rooms-detail-fields { align-items: flex-start; flex-direction: column; gap: 12px; } .student-rooms-toolbar label { flex-basis: 100%; max-width: none; } .student-rooms-toolbar > div { margin-left: 0; } .student-rooms-list > button { padding: 14px; gap: 10px; } .student-rooms-list-icon { display: none; } .student-rooms-person { align-items: flex-start; flex-direction: column; padding: 13px 0; } .student-live-banner { align-items: flex-start; flex-direction: column; gap: 12px; } .student-live-side { align-items: flex-start; } }
