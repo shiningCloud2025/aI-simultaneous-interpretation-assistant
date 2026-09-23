@@ -104,6 +104,10 @@ export const teachingApi = {
       method: 'POST', body: pageBody(page, size, { keyword: keyword || null }),
     }),
   member: (id: number) => apiCall<MemberDetail>(`/teacher/classroom/member/${id}`),
+  updateMember: (id: number, studentName: string) =>
+    apiCall<MemberDetail>(`/teacher/classroom/member/${id}`, {
+      method: 'PUT', body: JSON.stringify({ studentName }),
+    }),
   removeMember: (id: number) => apiCall<void>(`/teacher/classroom/member/${id}`, { method: 'DELETE' }),
   pageSessions: (classroomId: number, page: number, size: number, filter: PageFilter = {}) =>
     apiCall<PageResult<SessionList>>(`/teacher/classroom/session/${classroomId}/page`, {
