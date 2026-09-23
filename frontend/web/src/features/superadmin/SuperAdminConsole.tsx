@@ -30,6 +30,7 @@ type AdminPanelKey =
   | 'skills'
   | 'system'
   | 'nacos-console'
+  | 'sentinel-console'
   | 'admin-account';
 
 type UserManageTabKey = 'all-users' | 'online-users' | 'disabled-users' | 'operation-records';
@@ -96,6 +97,13 @@ const navGroups: Array<{
         name: 'Nacos 配置与服务发现平台',
         desc: '配置中心、服务发现与注册治理',
         iframeUrl: 'http://49.235.190.40:35003/nacos/#/login',
+      },
+      {
+        key: 'sentinel-console',
+        icon: '◇',
+        name: 'Sentinel 流量治理平台',
+        desc: '流控、熔断、热点参数与系统保护规则',
+        iframeUrl: 'http://49.235.190.40:35004',
       },
     ],
   },
@@ -526,7 +534,7 @@ export function SuperAdminConsole() {
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
-              {panel === 'nacos-console' && <GovernanceFramePanel item={meta} />}
+              {meta.iframeUrl && <GovernanceFramePanel item={meta} />}
               {panel === 'admin-account' && <AdminAccountPanel />}
             </>
           )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, CirclePause, Copy, GraduationCap, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Square, Sun, UserRound, Users, X } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, Copy, GraduationCap, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Sun, UserRound, Users, X } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { isTeacherUser } from '../../lib/authRole';
 import { AccountPage } from '../../components/AccountPage';
@@ -15,6 +15,8 @@ import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBa
 import { TeacherLearningArea } from './TeacherLearning';
 import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
+import { TeacherLiveConsole } from './TeacherLiveConsole';
+import { teacherInteractions } from './teacherInteractionCatalog';
 import { utilityGroups } from './teacherLearningCatalog';
 import { teachingApi, type ClassroomDetail, type ClassroomInput, type ClassroomList, type MemberDetail, type MemberList, type PageResult, type SessionDetail, type SessionList, type SessionStudentDetail, type SessionStudentList } from './teachingApi';
 import './teacher-console.css';
@@ -46,14 +48,6 @@ function descriptionText(value: string | null) {
   return new DOMParser().parseFromString(value, 'text/html').body.textContent?.trim() || '暂未填写课堂说明';
 }
 function message(error: unknown) { return error instanceof Error ? error.message : '操作失败，请稍后重试'; }
-function elapsedText(startTime: string, end: number) {
-  const start = new Date(startTime.replace(' ', 'T')).getTime();
-  const total = Math.max(0, Math.floor((end - start) / 1000));
-  const hours = Math.floor(total / 3600);
-  const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-  const seconds = String(total % 60).padStart(2, '0');
-  return hours > 0 ? `${hours}:${minutes}:${seconds}` : `${minutes}:${seconds}`;
-}
 
 export function TeacherWorkspace() {
   const user = useAppStore(state => state.user);
@@ -82,7 +76,6 @@ export function TeacherWorkspace() {
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [students, setStudents] = useState<PageResult<SessionStudentList> | null>(null);
   const [stats, setStats] = useState<{ total: number; present: number; absent: string[] } | null>(null);
-  const [now, setNow] = useState(Date.now());
   const setConsoleSession = useLiveConsole(state => state.setSessionId);
   const [studentPage, setStudentPage] = useState(1);
   const [studentKeyword, setStudentKeyword] = useState('');
@@ -208,12 +201,6 @@ export function TeacherWorkspace() {
   }, [user, page, entityId, studentPage, studentKeyword, attendance, revision]);
 
   useEffect(() => {
-    if (page !== 'sessions' || !session || session.status === 3) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [page, session]);
-
-  useEffect(() => {
     setConsoleSession(page === 'sessions' && entityId && session?.id === entityId && session.status !== 3 ? entityId : null);
     return () => setConsoleSession(null);
   }, [page, entityId, session, setConsoleSession]);
@@ -263,6 +250,8 @@ export function TeacherWorkspace() {
     : isStudentSection ? '学生预习' : isToolSection ? '通用工具' : page === 'profile' ? '个人中心'
       : page === 'help' ? '帮助反馈' : page === 'settings' ? personalSettingTitles[rawId || ''] || '个人工作台'
         : isPersonalSection ? '个人工作台' : '教师空间';
+
+  const sessionStudentsCard = <section className="teacher-card"><CardHead title="学生签到" subtitle="学生自行签到；每 15 秒刷新记录" action="立即刷新" onAction={reload} /><div className="teacher-list-toolbar"><label><Search size={16} /><input value={studentKeyword} onChange={event => { setStudentKeyword(event.target.value); setStudentPage(1); }} placeholder="搜索学生姓名" /></label><div className="teacher-filter">{(['all', 'present', 'absent'] as const).map(value => <button key={value} className={attendance === value ? 'active' : ''} onClick={() => { setAttendance(value); setStudentPage(1); }}>{value === 'all' ? '全部' : value === 'present' ? '已到课' : '未签到'}</button>)}</div></div>{students?.records.length ? <div className="teacher-table"><div className="teacher-table-row teacher-session-student-row head"><span>学生</span><span>签到状态</span><span>签到时间</span><span>操作</span></div>{students.records.map(item => <div className="teacher-table-row teacher-session-student-row" key={item.id}><span className="teacher-person"><i>{item.studentName.slice(0, 1)}</i><b>{item.studentName}</b></span><span className={item.checkInStatus === 1 ? 'teacher-present' : 'teacher-absent'}>{item.checkInStatus === 1 ? '已到课' : '未签到'}</span><span>{dateText(item.checkInTime)}</span><span className="teacher-cell-actions"><button onClick={() => { void teachingApi.sessionStudent(item.id).then(value => { setStudentDetail(value); setDialog('student'); }).catch(cause => setError(message(cause))); }}>详情</button></span></div>)}</div> : <Empty text={loadingSession ? '正在加载签到记录…' : '没有符合条件的学生记录'} action="刷新" onClick={reload} />}<Pager data={students} page={studentPage} setPage={setStudentPage} /></section>;
 
   return <div className="teacher-shell">
     {mobileNav && <button className="teacher-nav-mask" aria-label="关闭导航" onClick={() => setMobileNav(false)} />}
@@ -344,37 +333,30 @@ export function TeacherWorkspace() {
         {page === 'classrooms' && entityId && room?.id !== entityId && loadingRoom && <div className="teacher-page-loading">正在加载课堂…</div>}
         {page === 'classrooms' && entityId && room?.id !== entityId && !loadingRoom && !error && <Empty text="未找到课堂" action="返回列表" onClick={() => go('/teacher/classrooms')} />}
         {page === 'sessions' && !entityId && <div className="teacher-page"><PageHead title="上课记录" subtitle="选择一间课堂，查看它的上课和签到记录。" /><div className="teacher-picker"><label>选择课堂 <select value={historyRoom || ''} onChange={event => { setHistoryRoom(Number(event.target.value) || null); setSessionPage(1); setSessions(null); }}><option value="">请选择课堂</option>{classrooms?.records.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>{(classrooms?.total || 0) > 100 && <button onClick={() => go('/teacher/classrooms')}>从课堂列表选择更多课堂</button>}</div>{historyRoom ? <section className="teacher-card"><CardHead title={classrooms?.records.find(item => item.id === historyRoom)?.name || '课堂课次'} subtitle="课次状态和开始时间" /><SessionFilters keyword={sessionKeyword} setKeyword={value => { setSessionKeyword(value); setSessionPage(1); }} status={sessionStatus} setStatus={value => { setSessionStatus(value); setSessionPage(1); }} /><SessionRows data={sessions} onOpen={id => go(`/teacher/sessions/${id}`)} /><Pager data={sessions} page={sessionPage} setPage={setSessionPage} /></section> : <Empty text="选择一个课堂查看上课记录" action="前往课堂" onClick={() => go('/teacher/classrooms')} />}</div>}
-        {page === 'sessions' && entityId && session?.id === entityId && <div className="teacher-page"><button className="teacher-back" onClick={() => { setTab('sessions'); go(`/teacher/classrooms/${session.classroomId}`); }}><ArrowLeft size={16} />返回课堂</button><header className="teacher-session-header">
-          <div>
-            <span className={`teacher-session-badge state-${session.status}`}>{sessionNames[session.status]}</span>
-            <h1>{session.sessionName}</h1>
-            <p>{classrooms?.records.find(item => item.id === session.classroomId)?.name || '课堂'} · 首次开课 {dateText(session.startTime)}</p>
+        {page === 'sessions' && entityId && session?.id === entityId && <div className="teacher-page"><button className="teacher-back" onClick={() => { setTab('sessions'); go(`/teacher/classrooms/${session.classroomId}`); }}><ArrowLeft size={16} />返回课堂</button>{session.status !== 3 ? <TeacherLiveConsole
+          session={session}
+          classroomName={classrooms?.records.find(item => item.id === session.classroomId)?.name || '课堂'}
+          stats={stats}
+          busy={busy}
+          onPause={() => void act(() => teachingApi.pauseSession(session.id), '课次已暂停')}
+          onResume={() => void act(() => teachingApi.resumeSession(session.id), '课次已继续')}
+          onEnd={() => { if (window.confirm('确定结束本次课次吗？结束后不能继续签到。')) void act(() => teachingApi.endSession(session.id), '课次已结束'); }}
+          onInteraction={id => { const item = teacherInteractions.find(entry => entry.id === id); toast(item ? `「${item.name}」即将上线，敬请期待` : '该互动功能即将上线'); }}
+        >{sessionStudentsCard}</TeacherLiveConsole> : <>
+          <header className="teacher-session-header">
+            <div>
+              <span className={`teacher-session-badge state-${session.status}`}>{sessionNames[session.status]}</span>
+              <h1>{session.sessionName}</h1>
+              <p>{classrooms?.records.find(item => item.id === session.classroomId)?.name || '课堂'} · 首次开课 {dateText(session.startTime)}</p>
+            </div>
+          </header>
+          <div className="teacher-session-summary">
+            <span>学生 <strong>{students?.total ?? '—'}</strong>{studentKeyword || attendance !== 'all' ? '（筛选结果）' : ''}</span>
+            {stats && <span>签到 <strong>{stats.present}/{stats.total}</strong></span>}
+            <span>结束时间 <strong>{dateText(session.endTime)}</strong></span>
           </div>
-          <div className="teacher-session-controls">
-            {session.status === 1 && <button disabled={busy} onClick={() => void act(() => teachingApi.pauseSession(session.id), '课次已暂停')}><CirclePause size={17} />暂停</button>}
-            {session.status === 2 && <button disabled={busy} onClick={() => void act(() => teachingApi.resumeSession(session.id), '课次已继续')}><Play size={17} />继续</button>}
-            {session.status !== 3 && <button className="end" disabled={busy} onClick={() => { if (window.confirm('确定结束本次课次吗？结束后不能继续签到。')) void act(() => teachingApi.endSession(session.id), '课次已结束'); }}><Square size={15} />结束课次</button>}
-          </div>
-        </header>
-        {session.status !== 3 && <section className={`teacher-live-board${session.status === 2 ? ' paused' : ''}`} aria-label="课堂控制台">
-          <div className="teacher-live-board-row">
-            <span className="teacher-live-dot" aria-hidden="true" />
-            <strong>{session.status === 1 ? '课堂控制台 · 上课中' : '课堂控制台 · 已暂停'}</strong>
-            <span className="teacher-live-elapsed">已进行<b>{elapsedText(session.startTime, now)}</b></span>
-          </div>
-          <div className="teacher-live-progress">
-            <div className="teacher-live-progress-info"><span>签到进度</span><strong>{stats ? `${stats.present}/${stats.total}` : '—'}</strong></div>
-            <div className="teacher-live-progress-track"><i style={{ width: stats && stats.total ? `${Math.round(stats.present / stats.total * 100)}%` : '0%' }} /></div>
-          </div>
-          {stats && stats.total - stats.present > 0 && <div className="teacher-live-absent"><span>未到</span><div>{stats.absent.map(name => <em key={name}>{name}</em>)}{stats.total - stats.present > stats.absent.length && <em>+{stats.total - stats.present - stats.absent.length}</em>}</div></div>}
-          {stats && stats.total > 0 && stats.present === stats.total && <div className="teacher-live-all-present">全员到齐</div>}
-        </section>}
-        <div className="teacher-session-summary">
-          <span>学生 <strong>{students?.total ?? '—'}</strong>{studentKeyword || attendance !== 'all' ? '（筛选结果）' : ''}</span>
-          {session.status === 3 && stats && <span>签到 <strong>{stats.present}/{stats.total}</strong></span>}
-          <span>结束时间 <strong>{dateText(session.endTime)}</strong></span>
-        </div>
-        <section className="teacher-card"><CardHead title="学生签到" subtitle="学生自行签到；每 15 秒刷新记录" action="立即刷新" onAction={reload} /><div className="teacher-list-toolbar"><label><Search size={16} /><input value={studentKeyword} onChange={event => { setStudentKeyword(event.target.value); setStudentPage(1); }} placeholder="搜索学生姓名" /></label><div className="teacher-filter">{(['all', 'present', 'absent'] as const).map(value => <button key={value} className={attendance === value ? 'active' : ''} onClick={() => { setAttendance(value); setStudentPage(1); }}>{value === 'all' ? '全部' : value === 'present' ? '已到课' : '未签到'}</button>)}</div></div>{students?.records.length ? <div className="teacher-table"><div className="teacher-table-row teacher-session-student-row head"><span>学生</span><span>签到状态</span><span>签到时间</span><span>操作</span></div>{students.records.map(item => <div className="teacher-table-row teacher-session-student-row" key={item.id}><span className="teacher-person"><i>{item.studentName.slice(0, 1)}</i><b>{item.studentName}</b></span><span className={item.checkInStatus === 1 ? 'teacher-present' : 'teacher-absent'}>{item.checkInStatus === 1 ? '已到课' : '未签到'}</span><span>{dateText(item.checkInTime)}</span><span className="teacher-cell-actions"><button onClick={() => { void teachingApi.sessionStudent(item.id).then(value => { setStudentDetail(value); setDialog('student'); }).catch(cause => setError(message(cause))); }}>详情</button></span></div>)}</div> : <Empty text={loadingSession ? '正在加载签到记录…' : '没有符合条件的学生记录'} action="刷新" onClick={reload} />}<Pager data={students} page={studentPage} setPage={setStudentPage} /></section></div>}
+          {sessionStudentsCard}
+        </>}</div>}
         {page === 'sessions' && entityId && session?.id !== entityId && loadingSession && <div className="teacher-page-loading">正在加载课次…</div>}
         {page === 'sessions' && entityId && session?.id !== entityId && !loadingSession && !error && <Empty text="未找到课次" action="返回课堂" onClick={() => go('/teacher/classrooms')} />}
         {page === 'personal' && <TeacherPersonalWorkspace onOpen={go} />}

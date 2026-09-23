@@ -181,7 +181,7 @@ export function MainLayout() {
         </div>
       </div>
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
-      {user && <LiveSessionBadge role="student" onOpen={sessionId => nav(`/?panel=classrooms&sessionId=${sessionId}`)} />}
+      {user && <LiveSessionBadge role="student" onOpen={sessionId => setSearchParams({ panel: 'classrooms', sessionId: String(sessionId) })} />}
     </div>
   );
 }

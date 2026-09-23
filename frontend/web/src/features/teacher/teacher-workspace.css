@@ -202,27 +202,6 @@
 .teacher-session-summary { margin: 14px 0 20px; display: flex; flex-wrap: wrap; gap: 11px; }
 .teacher-session-summary > span { min-width: 170px; padding: 14px 18px; display: flex; align-items: baseline; gap: 9px; border: 1px solid var(--teacher-line); border-radius: 10px; background: #fff; color: #718076; font-size: 12px; }
 .teacher-session-summary strong { color: var(--teacher-ink); font-size: 16px; }
-.teacher-live-board { margin: 14px 0 20px; padding: 20px 22px; border-radius: 12px; background: linear-gradient(120deg, #1e473c, #2e6852); color: #eaf5ee; box-shadow: 0 12px 30px #1f4c3d29; }
-.teacher-live-board.paused { background: linear-gradient(120deg, #584a22, #75642f); box-shadow: 0 12px 30px #584a2229; }
-.teacher-live-board-row { display: flex; align-items: center; gap: 10px; }
-.teacher-live-dot { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; background: #5ff2a2; animation: teacher-live-pulse 1.6s ease-out infinite; }
-.teacher-live-board.paused .teacher-live-dot { background: #ffd479; animation: none; }
-@keyframes teacher-live-pulse { 0% { box-shadow: 0 0 0 0 #5ff2a273; } 70% { box-shadow: 0 0 0 11px #5ff2a200; } 100% { box-shadow: 0 0 0 0 #5ff2a200; } }
-.teacher-live-board-row > strong { font-size: 14px; letter-spacing: .5px; }
-.teacher-live-elapsed { margin-left: auto; color: #b7d8c3; font-size: 12px; }
-.teacher-live-board.paused .teacher-live-elapsed { color: #e5d5a5; }
-.teacher-live-elapsed b { margin-left: 5px; color: #fff; font-size: 17px; font-variant-numeric: tabular-nums; }
-.teacher-live-progress { margin-top: 15px; }
-.teacher-live-progress-info { margin-bottom: 7px; display: flex; align-items: baseline; justify-content: space-between; color: #c4e2cf; font-size: 12px; }
-.teacher-live-progress-info strong { color: #fff; font-size: 15px; font-variant-numeric: tabular-nums; }
-.teacher-live-progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: #ffffff26; }
-.teacher-live-progress-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5ff2a2, #9df5c6); transition: width .5s ease; }
-.teacher-live-absent { margin-top: 14px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; }
-.teacher-live-absent > span { padding-top: 3px; flex-shrink: 0; color: #b7d8c3; }
-.teacher-live-board.paused .teacher-live-absent > span { color: #e5d5a5; }
-.teacher-live-absent > div { min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.teacher-live-absent em { padding: 3px 9px; border: 1px solid #ffffff30; border-radius: 999px; background: #ffffff14; color: #fff; font-style: normal; font-size: 12px; }
-.teacher-live-all-present { margin-top: 13px; color: #9df5c6; font-size: 12px; font-weight: 600; }
 .teacher-learning-page { max-width: 1080px; }
 .teacher-learning-heading { margin-bottom: 26px; }
 .teacher-learning-heading h1 { margin: 0; font-size: clamp(24px, 2vw, 30px); }
