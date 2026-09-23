@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, Check, Clock3, GraduationCap, Pencil, Plus, RefreshCw, Search, Users, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, Clock3, Pencil, Plus, RefreshCw, Search, Users, X } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { studentClassroomApi, type ClassroomMember, type ClassroomSession, type PageResult, type SessionStudent, type StudentClassroom, type StudentClassroomDetail } from './studentClassroomApi';
 import { classroomCodeFromLink } from './classroomInvite';
@@ -156,7 +156,14 @@ export function StudentClassrooms() {
     </> : classroomId && classroom?.id === classroomId ? <>
       <button className="student-rooms-back" onClick={() => { setClassroomId(null); setClassroom(null); }}>← 我的课堂</button>
       <div className="student-rooms-head"><div><span>{classroom.status === 1 ? '我的课堂' : '已归档课堂'}</span><h1>{classroom.name}</h1><p>{meta(classroom)}</p></div><span className="student-rooms-badge">{classroom.status === 1 ? '进行中' : '已归档'}</span></div>
-      <div className="student-rooms-overview"><section className="student-rooms-panel"><h2>课堂信息</h2><p>{plainText(classroom.description)}</p><div className="student-rooms-facts"><span>老师用户 ID <strong>{classroom.teacherId}</strong></span><span>加入时间 <strong>{dateText(classroom.joinedTime)}</strong></span><span>课堂姓名 <strong>{classroom.studentName}</strong></span></div>{classroom.status === 1 && <button className="student-rooms-text-button" onClick={openNameEditor}>修改我的课堂姓名</button>}</section><section className="student-rooms-panel student-rooms-summary"><GraduationCap size={25} /><strong>开始上课后，在课次中签到</strong><p>老师开课时会保存当时的学生名单。进入上课记录，可以查看自己是否在名单中。</p></section></div>
+      <section className="student-rooms-panel student-rooms-detail">
+        {classroom.description && plainText(classroom.description) !== classroom.name && <p className="student-rooms-description">{plainText(classroom.description)}</p>}
+        <div className="student-rooms-detail-fields">
+          <div><span>任课老师</span><strong>{classroom.teacherName || '—'}</strong></div>
+          <div><span>加入时间</span><strong>{dateText(classroom.joinedTime)}</strong></div>
+          <div className="student-rooms-detail-name"><span>我在课堂中的姓名</span><strong>{classroom.studentName}</strong>{classroom.status === 1 && <button className="student-rooms-edit-name" onClick={openNameEditor}><Pencil size={13} />修改</button>}</div>
+        </div>
+      </section>
       <div className="student-rooms-tabs"><button className={section === 'sessions' ? 'active' : ''} onClick={() => setSection('sessions')}>上课记录</button><button className={section === 'members' ? 'active' : ''} onClick={() => setSection('members')}>学生名单</button></div>
       <section className="student-rooms-panel">{section === 'sessions' ? <><h2>上课记录 <small>共 {sessions?.total ?? 0} 次</small></h2>{sessions?.records.length ? sessions.records.map(item => <button className="student-rooms-session" key={item.id} onClick={() => { setSessionId(item.id); setSession(null); setStudents(null); setOwnCheckedIn(false); setStudentPage(1); setError(''); }}><BookOpen size={19} /><span><strong>{item.sessionName}</strong><small>{dateText(item.startTime)}</small></span><em>{item.status === 1 ? '进行中' : item.status === 2 ? '已暂停' : '已结束'}</em><ArrowRight size={17} /></button>) : <p className="student-rooms-empty">还没有上课记录</p>}<Pager data={sessions} page={sessionPage} onChange={setSessionPage} /></> : <><h2>学生名单 <small>共 {members?.total ?? 0} 人</small></h2>{members?.records.length ? members.records.map(item => <div className="student-rooms-person" key={item.id}><span>{item.studentName}{item.studentId === userId && <small>（我）</small>}</span><span className="student-rooms-person-actions">加入于 {dateText(item.joinedTime)}{item.studentId === userId && classroom.status === 1 && <button className="student-rooms-edit-name" onClick={openNameEditor}><Pencil size={13} />修改姓名</button>}</span></div>) : <p className="student-rooms-empty">暂无学生</p>}<Pager data={members} page={memberPage} onChange={setMemberPage} /></>}</section>
     </> : classroomId ? <div className="student-rooms-panel student-rooms-empty"><h2>{error ? '课堂暂时无法显示' : '正在加载课堂…'}</h2><button className="student-rooms-text-button" onClick={() => { setClassroomId(null); setClassroom(null); }}>返回我的课堂</button></div> : <>

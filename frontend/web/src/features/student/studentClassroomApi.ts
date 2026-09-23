@@ -11,6 +11,7 @@ export interface StudentClassroom {
   id: number;
   classroomMemberId: number;
   teacherId: number;
+  teacherName?: string | null;
   name: string;
   languageCode: string;
   stageCode: string | null;
