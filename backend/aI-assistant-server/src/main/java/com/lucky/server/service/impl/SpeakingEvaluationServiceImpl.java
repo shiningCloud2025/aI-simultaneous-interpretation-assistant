@@ -80,20 +80,20 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
 
         byte[] audioBytes = downloadAudio(dto.studentAudioUrl());
         String voiceId = UUID.randomUUID().toString();
-        OralEvaluationResponse response = callTencentSoe(voiceId, refText, audioBytes);
+        OralEvaluationResponse response = callTencentSoe(voiceId, refText, audioBytes, dto.scoreCoeff());
         SentenceInfo result = response.getResult();
         if (result == null) {
             throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "口语评测结果为空");
         }
 
-        SpeakingEvaluationResultVO vo = buildResultVO(dto.sentenceId(), voiceId, refText, dto.studentAudioUrl(), response, result);
+        SpeakingEvaluationResultVO vo = buildResultVO(dto.sentenceId(), voiceId, refText, dto.studentAudioUrl(), response, result, dto.scoreCoeff());
         saveSuccessRecord(sentence, vo);
         return vo;
 
     }
 
 
-    private OralEvaluationResponse callTencentSoe(String voiceId, String refText, byte[] audioBytes) {
+    private OralEvaluationResponse callTencentSoe(String voiceId, String refText, byte[] audioBytes, BigDecimal scoreCoeff) {
         Credential credential = new Credential(properties.getAppId(), properties.getSecretId(), properties.getSecretKey());
         if (properties.getToken() != null && !properties.getToken().isBlank()) {
             credential.setToken(properties.getToken());
@@ -104,7 +104,7 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
         request.setRefText(refText);
         request.setServerEngineType(properties.getServerEngineType());
         request.setEvalMode(properties.getEvalMode());
-        request.setScoreCoeff(properties.getScoreCoeff());
+        request.setScoreCoeff(scoreCoeff.doubleValue());
         request.setVoiceFormat(properties.getVoiceFormat());
         request.setRecMode(properties.getRecMode());
         request.setSentenceInfoEnabled(properties.getSentenceInfoEnabled());
@@ -203,7 +203,8 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
                                                      String refText,
                                                      String studentAudioUrl,
                                                      OralEvaluationResponse response,
-                                                     SentenceInfo result) {
+                                                     SentenceInfo result,
+                                                     BigDecimal scoreCoeff) {
         List<SpeakingEvaluationWordVO> words = result.getWords() == null ? Collections.emptyList() :
                 result.getWords().stream()
                         .map(this::buildWordVO)
@@ -218,6 +219,7 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
                 result.getPronAccuracy(),
                 result.getPronFluency(),
                 result.getPronCompletion(),
+                scoreCoeff,
                 words,
                 safeRawResponse(response)
         );
@@ -295,6 +297,7 @@ public class SpeakingEvaluationServiceImpl implements SpeakingEvaluationService 
         record.setProvider(properties.getProvider());
         record.setEngineType(properties.getServerEngineType());
         record.setEvalMode(properties.getEvalMode());
+        record.setScoreCoeff(vo.scoreCoeff());
         record.setSuccess(true);
 
         speakingEvaluationRecordService.saveRecord(record);

@@ -2,6 +2,7 @@ package com.lucky.server.domain.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -19,6 +20,7 @@ public record SpeakingEvaluationResultVO(
         @Schema(description = "发音准确度") Double pronAccuracy,
         @Schema(description = "发音流利度") Double pronFluency,
         @Schema(description = "发音完整度") Double pronCompletion,
+        @Schema(description = "评分苛刻系数") BigDecimal scoreCoeff,
         @Schema(description = "单词评测结果") List<SpeakingEvaluationWordVO> words,
         @Schema(description = "腾讯云原始响应") String rawResponse
 ) { }

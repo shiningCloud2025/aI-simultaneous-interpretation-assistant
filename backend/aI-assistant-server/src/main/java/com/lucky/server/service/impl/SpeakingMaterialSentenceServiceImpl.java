@@ -157,6 +157,7 @@ public class SpeakingMaterialSentenceServiceImpl extends ServiceImpl<SpeakingMat
                 record.getPronAccuracy(),
                 record.getPronFluency(),
                 record.getPronCompletion(),
+                record.getScoreCoeff(),
                 parseWordList(record.getWordResultJson()),
                 record.getCreateTime());
     }
