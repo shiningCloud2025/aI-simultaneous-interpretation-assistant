@@ -3,6 +3,7 @@ package com.lucky.server.config;
 import com.lucky.server.common.enums.SpeakingTtsVoiceEnum;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
  */
 @Data
 @Component
+@RefreshScope
 @ConfigurationProperties(prefix = "speaking.tts")
 public class SpeakingTtsProperties {
 
