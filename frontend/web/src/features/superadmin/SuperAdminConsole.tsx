@@ -18,6 +18,8 @@ import {
   type UserDashboardSummary,
   type UserTrendItem,
 } from './adminApi';
+import { AdminCalendarPanel } from './AdminCalendarPanel';
+import { CalendarModal } from '../../components/CalendarModal';
 import './SuperAdminConsole.css';
 
 type AdminPanelKey =
@@ -363,6 +365,7 @@ export function SuperAdminConsole() {
   const [starGroupKey, setStarGroupKey] = useState('boards');
   const [starLevel, setStarLevel] = useState<StarNavigationLevel>('primary');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
   const logout = useAppStore((s) => s.logout);
@@ -489,6 +492,7 @@ export function SuperAdminConsole() {
             </p>
           </div>
           <div className="admin-top-actions">
+            <button className="admin-btn" onClick={() => setShowCalendar(true)}>📅 日历</button>
             <button
               className={`admin-btn ${mode === 'star' || mode === 'star-content' ? 'primary' : ''}`}
               onClick={() => {
@@ -540,6 +544,11 @@ export function SuperAdminConsole() {
           )}
         </section>
       </main>
+      {showCalendar && (
+        <CalendarModal title="平台日历" onClose={() => setShowCalendar(false)}>
+          <AdminCalendarPanel />
+        </CalendarModal>
+      )}
     </div>
   );
 }

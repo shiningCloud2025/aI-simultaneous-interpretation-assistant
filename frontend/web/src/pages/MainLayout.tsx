@@ -23,6 +23,8 @@ import { PersonalWorkspace } from '../components/PersonalWorkspace';
 import { PlatformSkillsDialog } from '../components/PlatformSkillsDialog';
 import { LiveSessionBadge } from '../components/LiveSessionBadge';
 import { StudentClassrooms } from '../features/student/StudentClassrooms';
+import { StudentCalendar } from '../features/student/StudentCalendar';
+import { CalendarModal } from '../components/CalendarModal';
 import { StudentTools } from '../features/student/StudentTools';
 import { studentToolIds } from '../features/student/studentToolCatalog';
 
@@ -80,6 +82,7 @@ export function MainLayout() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const changePanel = (panel: string) => {
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
@@ -166,6 +169,7 @@ export function MainLayout() {
         <div className="topbar">
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={() => setShowCalendar(true)} className="btn">📅 日历</button>
             <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
@@ -180,6 +184,14 @@ export function MainLayout() {
           {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
         </div>
       </div>
+      {showCalendar && (
+        <CalendarModal title="学习日历" onClose={() => setShowCalendar(false)}>
+          <StudentCalendar
+            onOpenPanel={panel => { setShowCalendar(false); changePanel(panel); }}
+            onOpenSession={sessionId => { setShowCalendar(false); setSearchParams({ panel: 'classrooms', sessionId: String(sessionId) }); }}
+          />
+        </CalendarModal>
+      )}
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
       {user && <LiveSessionBadge role="student" onOpen={sessionId => setSearchParams({ panel: 'classrooms', sessionId: String(sessionId) })} />}
     </div>

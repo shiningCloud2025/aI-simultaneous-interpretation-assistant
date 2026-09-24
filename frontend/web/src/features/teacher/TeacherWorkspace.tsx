@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Archive, ArrowLeft, BookOpen, Check, ChevronRight, Copy, GraduationCap, Home, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Sun, UserRound, Users, X } from 'lucide-react';
+import { Archive, ArrowLeft, BookOpen, CalendarDays, Check, ChevronRight, Copy, GraduationCap, Home, Languages, LayoutGrid, Link2, LogOut, Menu, Moon, Pencil, Play, Puzzle, RefreshCw, Search, Sun, UserRound, Users, X } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { isTeacherUser } from '../../lib/authRole';
 import { AccountPage } from '../../components/AccountPage';
@@ -13,6 +13,8 @@ import { AboutPage } from '../../components/AboutPage';
 import { PlatformSkillsDialog } from '../../components/PlatformSkillsDialog';
 import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBadge';
 import { TeacherDashboard } from './TeacherDashboard';
+import { TeacherCalendar } from './TeacherCalendar';
+import { CalendarModal } from '../../components/CalendarModal';
 import { TeacherLearningArea } from './TeacherLearning';
 import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
@@ -103,6 +105,7 @@ export function TeacherWorkspace() {
   const [mobileNav, setMobileNav] = useState(false);
   const [accountMenu, setAccountMenu] = useState<'bottom' | null>(null);
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -292,6 +295,7 @@ export function TeacherWorkspace() {
         </div>
         <div className="teacher-top-actions">
           {isClassroomSection && <button className="teacher-icon-button" title="刷新数据" aria-label="刷新数据" onClick={reload}><RefreshCw size={17} /></button>}
+          <button className="teacher-icon-button" title="教学日历" aria-label="教学日历" onClick={() => setShowCalendar(true)}><CalendarDays size={17} /></button>
           <button className="teacher-skill-button" title="平台 Skill" aria-label="平台 Skill" onClick={() => setShowSkillModal(true)}><Puzzle size={16} />平台 Skill</button>
           <label className="teacher-theme-control">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}<select aria-label="选择背景" value={theme} onChange={event => setTheme(event.target.value)}><option value="light">浅色背景</option><option value="dark">深色背景</option></select></label>
           <button className="teacher-exit-button" onClick={() => { logout(); navigate('/login'); }}><LogOut size={16} />退出</button>
@@ -305,8 +309,7 @@ export function TeacherWorkspace() {
           onGo={go}
           onCreateClassroom={() => { setForm(emptyForm); setDialog('create'); }}
         />}
-        {page === 'classrooms' && !entityId && <TeacherClassroomList
-          data={classrooms}
+        {page === 'classrooms' && !entityId && <TeacherClassroomList          data={classrooms}
           loading={loading}
           error={error}
           keyword={classroomKeyword}
@@ -408,6 +411,11 @@ export function TeacherWorkspace() {
     {dialog && error && <div className="teacher-toast teacher-error-toast" role="alert">{error}</div>}
     {notice && <div className="teacher-toast"><Check size={16} />{notice}</div>}
     {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}
+    {showCalendar && (
+      <CalendarModal title="教学日历" onClose={() => setShowCalendar(false)}>
+        <TeacherCalendar revision={revision} onGo={path => { setShowCalendar(false); go(path); }} />
+      </CalendarModal>
+    )}
     {user && isTeacherUser(user) && <LiveSessionBadge role="teacher" onOpen={id => go(`/teacher/sessions/${id}`)} />}
   </div>;
 }
