@@ -31,77 +31,40 @@ public class TeacherClassroomSessionController {
 
     @PostMapping("/{classroomId}")
     @Operation(summary = "开始一个新课次")
-    public BaseResult<ClassroomSessionDetailVO> start(
-            @PathVariable Long classroomId,
-            @Valid @RequestBody ClassroomSessionStartDTO dto
+    public BaseResult<ClassroomSessionDetailVO> start(@PathVariable Long classroomId, @Valid @RequestBody ClassroomSessionStartDTO dto
     ) {
-        return BaseResult.ok(
-                classroomSessionService.startClassroomSession(
-                        classroomId,
-                        dto
-                )
-        );
+        return BaseResult.ok(classroomSessionService.startClassroomSession(classroomId, dto));
     }
 
     @PostMapping("/{classroomSessionId}/pause")
     @Operation(summary = "暂停课次")
-    public BaseResult<ClassroomSessionDetailVO> pause(
-            @PathVariable Long classroomSessionId
-    ) {
-        return BaseResult.ok(
-                classroomSessionService.pauseClassroomSession(
-                        classroomSessionId
-                )
-        );
+    public BaseResult<ClassroomSessionDetailVO> pause(@PathVariable Long classroomSessionId) {
+        return BaseResult.ok(classroomSessionService.pauseClassroomSession(classroomSessionId));
     }
 
     @PostMapping("/{classroomSessionId}/resume")
     @Operation(summary = "继续课次")
-    public BaseResult<ClassroomSessionDetailVO> resume(
-            @PathVariable Long classroomSessionId
-    ) {
-        return BaseResult.ok(
-                classroomSessionService.resumeClassroomSession(
-                        classroomSessionId
-                )
-        );
+    public BaseResult<ClassroomSessionDetailVO> resume(@PathVariable Long classroomSessionId) {
+        return BaseResult.ok(classroomSessionService.resumeClassroomSession(classroomSessionId));
     }
 
     @PostMapping("/{classroomSessionId}/end")
     @Operation(summary = "结束课次")
-    public BaseResult<ClassroomSessionDetailVO> end(
-            @PathVariable Long classroomSessionId
-    ) {
-        return BaseResult.ok(
-                classroomSessionService.endClassroomSession(
-                        classroomSessionId
-                )
-        );
+    public BaseResult<ClassroomSessionDetailVO> end(@PathVariable Long classroomSessionId) {
+        return BaseResult.ok(classroomSessionService.endClassroomSession(classroomSessionId));
     }
 
     @GetMapping("/{classroomSessionId}")
     @Operation(summary = "获取课次详情")
-    public BaseResult<ClassroomSessionDetailVO> detail(
-            @PathVariable Long classroomSessionId
-    ) {
-        return BaseResult.ok(
-                classroomSessionService.getClassroomSessionDetail(
-                        classroomSessionId
-                )
-        );
+    public BaseResult<ClassroomSessionDetailVO> detail(@PathVariable Long classroomSessionId) {
+        return BaseResult.ok(classroomSessionService.getClassroomSessionDetail(classroomSessionId));
     }
 
     @PostMapping("/{classroomId}/page")
     @Operation(summary = "分页查询课堂课次")
-    public BaseResult<Page<ClassroomSessionListVO>> page(
-            @PathVariable Long classroomId,
-            @Valid @RequestBody ClassroomSessionPageQueryDTO dto
+    public BaseResult<Page<ClassroomSessionListVO>> page(@PathVariable Long classroomId,
+                                                         @Valid @RequestBody ClassroomSessionPageQueryDTO dto
     ) {
-        return BaseResult.ok(
-                classroomSessionService.pageClassroomSessions(
-                        classroomId,
-                        dto
-                )
-        );
+        return BaseResult.ok(classroomSessionService.pageClassroomSessions(classroomId, dto));
     }
 }

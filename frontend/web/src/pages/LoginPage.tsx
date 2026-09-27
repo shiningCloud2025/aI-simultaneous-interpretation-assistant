@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore, api } from '../stores/appStore';
 import { AuthBox } from '../components/AuthBox';
 import { isTeacherUser } from '../lib/authRole';
@@ -19,6 +19,9 @@ export function LoginPage() {
   const setUser = useAppStore((s) => s.setUser);
   const setToken = useAppStore((s) => s.setToken);
   const nav = useNavigate();
+  const location = useLocation();
+  const returnPath = new URLSearchParams(location.search).get('next');
+  const afterLogin = (teacher: boolean) => teacher ? '/teacher' : returnPath?.startsWith('/join-classroom?') ? returnPath : '/dashboard';
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
 
@@ -33,7 +36,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(isTeacherUser(user) ? '/teacher' : '/dashboard');
+      nav(afterLogin(isTeacherUser(user)));
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -52,7 +55,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(isTeacherUser(user) ? '/teacher' : '/dashboard');
+      nav(afterLogin(isTeacherUser(user)));
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {
@@ -71,7 +74,7 @@ export function LoginPage() {
       setToken(data.token);
       const user = await api.getUserInfo();
       setUser(user);
-      nav(isTeacherUser(user) ? '/teacher' : '/dashboard');
+      nav(afterLogin(isTeacherUser(user)));
     } catch (e: any) {
       showToast(e.message || '登录失败');
     } finally {

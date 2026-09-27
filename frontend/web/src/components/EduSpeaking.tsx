@@ -40,6 +40,31 @@ const SCENES = [
   { code: 'custom', desc: '自定义' },
 ];
 
+const TTS_VOICES = [
+  { code: 'loongeva_v3.6', name: '高智美音', gender: '女', age: '28岁', accent: '美式发音', avatar: '/voices/eva.png', desc: '清晰知性，发音标准利落，适合精听与课堂跟读' },
+  { code: 'loongmary', name: '温暖英音', gender: '女', age: '20岁', accent: '英式发音', avatar: '/voices/mary.png', desc: '温暖柔和，语调自然亲切，适合日常对话模仿' },
+  { code: 'loongjohn', name: '沉稳亲切美音', gender: '男', age: '28岁', accent: '美式发音', avatar: '/voices/john.png', desc: '沉稳亲切，节奏稳健，适合演讲与面试表达' },
+];
+
+const TTS_RATES = [0.5, 1.0, 1.5, 2.0];
+
+const TTS_VOICE_STORAGE_KEY = 'speaking-tts-voice';
+const TTS_RATE_STORAGE_KEY = 'speaking-tts-rate';
+
+const SPEAKING_EVAL_LEVELS = [
+  { value: 1.5, label: '宽松', desc: '评分更宽容，适合入门建立信心' },
+  { value: 2.5, label: '适中', desc: '宽严平衡，适合日常练习' },
+  { value: 3.0, label: '严格', desc: '接近正式考试标准' },
+  { value: 3.5, label: '非常严格', desc: '最高标准，评分最苛刻' },
+];
+const EVAL_STRICTNESS_STORAGE_KEY = 'speaking-eval-strictness';
+const DEFAULT_EVAL_STRICTNESS = 3.0;
+
+function evalStrictnessLabel(scoreCoeff: number): string {
+  const level = SPEAKING_EVAL_LEVELS.find(l => l.value === scoreCoeff);
+  return level ? `${level.label}(${level.value.toFixed(1)})` : `自定义(${scoreCoeff})`;
+}
+
 const SPEAKING_EVALUATION_SAMPLE_RATE = 16000;
 
 interface PageResult<T> {
@@ -109,6 +134,7 @@ interface SpeakingLatestEvaluation {
   pronAccuracy?: number;
   pronFluency?: number;
   pronCompletion?: number;
+  scoreCoeff?: number;
   words?: SpeakingWordEvaluation[];
   createTime?: string;
 }
@@ -145,6 +171,15 @@ export function EduSpeakingGenerate() {
   const [scene, setScene] = useState(SCENES[0].code);
   const [customScene, setCustomScene] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
+  const [ttsVoice, setTtsVoice] = useState(() => {
+    const saved = localStorage.getItem(TTS_VOICE_STORAGE_KEY);
+    return TTS_VOICES.some(v => v.code === saved) ? saved as string : TTS_VOICES[0].code;
+  });
+  const [ttsRate, setTtsRate] = useState(() => {
+    const saved = Number(localStorage.getItem(TTS_RATE_STORAGE_KEY));
+    return TTS_RATES.includes(saved) ? saved : TTS_RATES[1];
+  });
+  const [hoveredVoice, setHoveredVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [material, setMaterial] = useState<SpeakingMaterial | null>(null);
   const [historySuccess, setHistorySuccess] = useState(true);
@@ -169,6 +204,16 @@ export function EduSpeakingGenerate() {
     setLanguage(nextLanguage);
     const firstStage = STAGES.find(s => s.language === nextLanguage);
     setStage(firstStage?.code || '');
+  };
+
+  const changeTtsVoice = (code: string) => {
+    setTtsVoice(code);
+    localStorage.setItem(TTS_VOICE_STORAGE_KEY, code);
+  };
+
+  const changeTtsRate = (rate: number) => {
+    setTtsRate(rate);
+    localStorage.setItem(TTS_RATE_STORAGE_KEY, String(rate));
   };
 
   useEffect(() => {
@@ -218,6 +263,10 @@ export function EduSpeakingGenerate() {
       showToast('请选择完整的生成口语素材条件');
       return;
     }
+    if (!ttsVoice) {
+      showToast('请选择标准音频音色');
+      return;
+    }
     setLoading(true);
     setMaterial(null);
     try {
@@ -230,6 +279,8 @@ export function EduSpeakingGenerate() {
           sceneCode: scene,
           customScene: scene === 'custom' ? customScene.trim() || undefined : undefined,
           userPrompt: userPrompt.trim() || undefined,
+          ttsVoice: ttsVoice,
+          ttsSpeechRate: ttsRate,
         }),
       });
       setMaterial(data);
@@ -284,6 +335,53 @@ export function EduSpeakingGenerate() {
               />
             </Field>
           )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
+          <Field label="标准音频音色">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {TTS_VOICES.map(voice => (
+                <span key={voice.code} style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => changeTtsVoice(voice.code)}
+                    onMouseEnter={() => setHoveredVoice(voice.code)}
+                    onMouseLeave={() => setHoveredVoice(null)}
+                    onFocus={() => setHoveredVoice(voice.code)}
+                    onBlur={() => setHoveredVoice(null)}
+                    style={voiceCardBtn(ttsVoice === voice.code)}
+                  >
+                    <img src={voice.avatar} alt={voice.name} style={voiceAvatarImg} />
+                    <span>{voice.name}</span>
+                    <span style={{ fontSize: 11, opacity: .7 }}>{voice.gender}声</span>
+                  </button>
+                  {hoveredVoice === voice.code && (
+                    <span style={voicePopover}>
+                      <img src={voice.avatar} alt="" style={voicePopoverAvatar} />
+                      <span>
+                        <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{voice.name}</span>
+                        <span style={{ display: 'block', fontSize: 11, color: '#999', marginTop: 3 }}>{voice.gender}声 · {voice.age} · {voice.accent}</span>
+                        <span style={{ display: 'block', fontSize: 12, color: '#666', lineHeight: 1.6, marginTop: 6 }}>{voice.desc}</span>
+                      </span>
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </Field>
+          <Field label="语速">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {TTS_RATES.map(rate => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => changeTtsRate(rate)}
+                  style={{ ...ttsOptionBtn(ttsRate === rate), minWidth: 56 }}
+                >
+                  {rate.toFixed(1)}x
+                </button>
+              ))}
+            </div>
+          </Field>
         </div>
         <div style={{ marginTop: 14 }}>
           <Field label="偏好说明">
@@ -343,6 +441,11 @@ export function EduSpeakingGenerate() {
                   <>
                     {item.sceneDescription && <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 8, whiteSpace: 'pre-wrap' }}>{item.sceneDescription}</div>}
                     {item.userPrompt && <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>偏好：{item.userPrompt}</div>}
+                    {item.ttsVoice && (
+                      <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
+                        标准音频：{ttsVoiceLabel(item.ttsVoice)} · {Number(item.ttsSpeechRate ?? 1).toFixed(1)}x
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                       <button onClick={() => openReadonlyDetail(item.id)} disabled={readonlyLoadingId === item.id} style={ghostBtn}>
                         {readonlyLoadingId === item.id ? '加载中...' : '查看素材'}
@@ -390,6 +493,10 @@ export function EduSpeakingPractice() {
   const [detail, setDetail] = useState<SpeakingPracticeDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
   const [autoOpenedMaterialId, setAutoOpenedMaterialId] = useState<number | null>(null);
+  const [evalStrictness, setEvalStrictness] = useState(() => {
+    const saved = Number(localStorage.getItem(EVAL_STRICTNESS_STORAGE_KEY));
+    return SPEAKING_EVAL_LEVELS.some(l => l.value === saved) ? saved : DEFAULT_EVAL_STRICTNESS;
+  });
   const [toast, setToast] = useState('');
 
   const currentStages = useMemo(() => STAGES.filter(s => s.language === language), [language]);
@@ -403,6 +510,11 @@ export function EduSpeakingPractice() {
     setLanguage(nextLanguage);
     const firstStage = STAGES.find(s => s.language === nextLanguage);
     setStage(firstStage?.code || '');
+  };
+
+  const changeEvalStrictness = (value: number) => {
+    setEvalStrictness(value);
+    localStorage.setItem(EVAL_STRICTNESS_STORAGE_KEY, String(value));
   };
 
   useEffect(() => {
@@ -551,11 +663,29 @@ export function EduSpeakingPractice() {
               <button onClick={closePracticeDetail} style={closeBtn}>×</button>
             </div>
             {detail.sceneDescription && <div style={{ ...noteStyle, marginBottom: 16 }}>{detail.sceneDescription}</div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#2c2c2c' }}>评测严格度</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {SPEAKING_EVAL_LEVELS.map(level => (
+                  <button
+                    key={level.value}
+                    type="button"
+                    title={level.desc}
+                    onClick={() => changeEvalStrictness(level.value)}
+                    style={ttsOptionBtn(evalStrictness === level.value)}
+                  >
+                    {level.label} {level.value.toFixed(1)}
+                  </button>
+                ))}
+              </div>
+              <span style={{ fontSize: 12, color: '#aaa' }}>{SPEAKING_EVAL_LEVELS.find(l => l.value === evalStrictness)?.desc}</span>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {detail.sentences?.map(sentence => (
                 <PracticeSentenceCard
                   key={sentence.sentenceId}
                   sentence={sentence}
+                  scoreCoeff={evalStrictness}
                   onEvaluated={result => {
                     setDetail(prev => {
                       if (!prev) return prev;
@@ -628,9 +758,11 @@ function MaterialDetail({ material, onPractice, loading }: { material: SpeakingM
 
 function PracticeSentenceCard({
   sentence,
+  scoreCoeff,
   onEvaluated,
 }: {
   sentence: SpeakingSentence;
+  scoreCoeff: number;
   onEvaluated: (evaluation: SpeakingEvaluationResult) => void;
 }) {
   const [recording, setRecording] = useState(false);
@@ -741,6 +873,7 @@ function PracticeSentenceCard({
         body: JSON.stringify({
           sentenceId: sentence.sentenceId,
           studentAudioUrl: uploaded.url,
+          scoreCoeff,
         }),
       });
       onEvaluated(result);
@@ -823,7 +956,13 @@ function EvaluationView({ evaluation }: { evaluation: SpeakingLatestEvaluation }
           ))}
         </div>
       )}
-      {evaluation.createTime && <div style={{ fontSize: 11, color: '#bbb', marginTop: 8 }}>评测时间：{formatTime(evaluation.createTime)}</div>}
+      {(evaluation.createTime || evaluation.scoreCoeff != null) && (
+        <div style={{ fontSize: 11, color: '#bbb', marginTop: 8 }}>
+          {evaluation.createTime && `评测时间：${formatTime(evaluation.createTime)}`}
+          {evaluation.createTime && evaluation.scoreCoeff != null && ' · '}
+          {evaluation.scoreCoeff != null && `严格度：${evalStrictnessLabel(evaluation.scoreCoeff)}`}
+        </div>
+      )}
     </div>
   );
 }
@@ -1000,6 +1139,10 @@ function labelOf(options: { code: string; desc: string }[], code?: string) {
   return options.find(o => o.code === code)?.desc || code || '—';
 }
 
+function ttsVoiceLabel(code?: string) {
+  return TTS_VOICES.find(v => v.code === code)?.name || code || '—';
+}
+
 function codeOf(options: { code: string; desc: string }[], desc: string) {
   return options.find(o => o.desc === desc)?.code || '';
 }
@@ -1055,6 +1198,68 @@ function tabBtn(active: boolean): React.CSSProperties {
     cursor: 'pointer',
   };
 }
+
+function ttsOptionBtn(active: boolean): React.CSSProperties {
+  return {
+    padding: '7px 14px',
+    borderRadius: 8,
+    border: active ? '1px solid #2c2c2c' : '1px solid #e8e6e1',
+    background: active ? '#2c2c2c' : '#fff',
+    color: active ? '#fff' : '#666',
+    fontSize: 12,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  };
+}
+
+function voiceCardBtn(active: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '5px 12px 5px 6px',
+    borderRadius: 10,
+    border: active ? '1px solid #2c2c2c' : '1px solid #e8e6e1',
+    background: active ? '#2c2c2c' : '#fff',
+    color: active ? '#fff' : '#666',
+    fontSize: 12,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  };
+}
+
+const voiceAvatarImg: React.CSSProperties = {
+  width: 26,
+  height: 26,
+  borderRadius: '50%',
+  objectFit: 'cover',
+  flexShrink: 0,
+};
+
+const voicePopover: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 'calc(100% + 8px)',
+  left: 0,
+  display: 'flex',
+  gap: 10,
+  alignItems: 'flex-start',
+  width: 240,
+  padding: 12,
+  background: '#fff',
+  border: '1px solid #f0efec',
+  borderRadius: 12,
+  boxShadow: '0 10px 30px rgba(0,0,0,.12)',
+  pointerEvents: 'none',
+  zIndex: 30,
+};
+
+const voicePopoverAvatar: React.CSSProperties = {
+  width: 44,
+  height: 44,
+  borderRadius: '50%',
+  objectFit: 'cover',
+  flexShrink: 0,
+};
 
 function pagerBtn(disabled: boolean): React.CSSProperties {
   return {

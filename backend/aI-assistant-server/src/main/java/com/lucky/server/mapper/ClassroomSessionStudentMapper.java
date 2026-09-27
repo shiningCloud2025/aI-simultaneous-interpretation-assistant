@@ -8,6 +8,4 @@ import com.lucky.server.domain.entity.ClassroomSessionStudent;
  *
  * @author shiningCloud2025
  */
-public interface ClassroomSessionStudentMapper
-        extends BaseMapper<ClassroomSessionStudent> {
-}
+public interface ClassroomSessionStudentMapper extends BaseMapper<ClassroomSessionStudent> { }

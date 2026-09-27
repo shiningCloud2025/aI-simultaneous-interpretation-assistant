@@ -29,26 +29,19 @@ public class TeacherClassroomController {
 
     @PostMapping
     @Operation(summary = "创建课堂")
-    public BaseResult<ClassroomDetailVO> create(
-            @Valid @RequestBody ClassroomCreateDTO dto
-    ) {
+    public BaseResult<ClassroomDetailVO> create(@Valid @RequestBody ClassroomCreateDTO dto) {
         return BaseResult.ok(classroomService.createClassroom(dto));
     }
 
     @PutMapping("/{classroomId}")
     @Operation(summary = "修改课堂基本资料")
-    public BaseResult<ClassroomDetailVO> update(
-            @PathVariable Long classroomId,
-            @Valid @RequestBody ClassroomUpdateDTO dto
-    ) {
+    public BaseResult<ClassroomDetailVO> update(@PathVariable Long classroomId, @Valid @RequestBody ClassroomUpdateDTO dto) {
         return BaseResult.ok(classroomService.updateClassroom(classroomId, dto));
     }
 
     @PostMapping("/{classroomId}/invite-code/refresh")
     @Operation(summary = "刷新课堂邀请码")
-    public BaseResult<ClassroomInviteVO> refreshInviteCode(
-            @PathVariable Long classroomId
-    ) {
+    public BaseResult<ClassroomInviteVO> refreshInviteCode(@PathVariable Long classroomId) {
         return BaseResult.ok(classroomService.refreshInviteCode(classroomId));
     }
 

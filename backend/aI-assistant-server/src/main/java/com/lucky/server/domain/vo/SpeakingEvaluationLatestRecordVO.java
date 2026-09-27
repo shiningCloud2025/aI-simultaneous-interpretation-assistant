@@ -19,6 +19,7 @@ public record SpeakingEvaluationLatestRecordVO(
         @Schema(description = "发音准确度") BigDecimal pronAccuracy,
         @Schema(description = "发音流利度") BigDecimal pronFluency,
         @Schema(description = "发音完整度") BigDecimal pronCompletion,
+        @Schema(description = "评分苛刻系数") BigDecimal scoreCoeff,
         @Schema(description = "单词评测结果") List<SpeakingEvaluationWordVO> words,
         @Schema(description = "创建时间") LocalDateTime createTime
 ) { }

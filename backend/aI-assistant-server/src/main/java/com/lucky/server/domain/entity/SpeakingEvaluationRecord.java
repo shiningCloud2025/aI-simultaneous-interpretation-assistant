@@ -93,6 +93,10 @@ public class SpeakingEvaluationRecord implements Serializable {
     @Schema(description = "评测模式")
     private Integer evalMode;
 
+    @TableField("score_coeff")
+    @Schema(description = "评分苛刻系数")
+    private BigDecimal scoreCoeff;
+
     @TableField("success")
     @Schema(description = "是否评测成功")
     private Boolean success;

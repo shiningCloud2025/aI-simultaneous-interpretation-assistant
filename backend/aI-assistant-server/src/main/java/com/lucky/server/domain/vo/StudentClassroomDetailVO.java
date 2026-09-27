@@ -17,6 +17,7 @@ public record StudentClassroomDetailVO(
         @Schema(description = "课堂ID") Long id,
         @Schema(description = "课堂成员ID") Long classroomMemberId,
         @Schema(description = "课堂所属老师用户ID") Long teacherId,
+        @Schema(description = "课堂所属老师姓名") String teacherName,
         @Schema(description = "课堂名称") String name,
         @Schema(description = "主要教学语言") ClassroomLanguageEnum languageCode,
         @Schema(description = "学习阶段") ClassroomStageEnum stageCode,

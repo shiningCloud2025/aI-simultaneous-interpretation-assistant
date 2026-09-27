@@ -1,0 +1,18 @@
+.student-tools { max-width: 1120px; margin: 0 auto; color: #283a32; }
+.student-tools header { margin-bottom: 30px; }
+.student-tools h1 { margin: 0; font-size: 28px; }
+.student-tools header p { margin: 8px 0 0; color: #7c8880; font-size: 13px; }
+.student-tools section { margin-bottom: 27px; }
+.student-tools h2 { margin: 0 0 12px; font-size: 16px; }
+.student-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.student-tools-grid button { min-height: 88px; padding: 17px; display: flex; align-items: center; gap: 14px; border: 1px solid #e2e9e1; border-radius: 12px; background: #fff; color: inherit; text-align: left; cursor: pointer; }
+.student-tools-grid button:hover { border-color: #b7cbbb; background: #f8fbf8; }
+.student-tools-icon { width: 39px; height: 39px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px; background: #eaf2e9; color: #37634c; }
+.student-tools-grid button > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.student-tools-grid strong { font-size: 14px; }
+.student-tools-grid small { color: #829086; font-size: 12px; line-height: 1.5; }
+.student-tools-grid button > svg { color: #8ca192; }
+[data-theme="dark"] .student-tools { color: #e8eee7; }
+[data-theme="dark"] .student-tools-grid button { background: #29332c; border-color: #445246; }
+[data-theme="dark"] .student-tools-grid button:hover { background: #344439; }
+@media (max-width: 760px) { .student-tools-grid { grid-template-columns: 1fr; } }

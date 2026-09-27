@@ -1,0 +1,20 @@
+.personal-workspace { width: 100%; max-width: 1060px; margin: 0 auto; color: #26352b; }
+.personal-workspace-heading { margin-bottom: 26px; }
+.personal-workspace-heading h1 { margin: 0; font-size: clamp(24px, 2vw, 30px); }
+.personal-workspace-heading p { margin-top: 7px; color: #758079; font-size: 14px; }
+.personal-workspace-group { margin-bottom: 29px; }
+.personal-workspace-group > h2 { margin: 0 0 12px; font-size: 16px; }
+.personal-workspace-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.personal-workspace-card { min-height: 88px; padding: 17px 19px; display: flex; align-items: center; gap: 15px; border: 1px solid #e2e8e2; border-radius: 12px; background: #fff; color: inherit; text-align: left; cursor: pointer; }
+.personal-workspace-card:hover, .personal-workspace-card:focus-visible { border-color: #b8c9bb; background: #f9fbf8; }
+.personal-workspace-icon { width: 39px; height: 39px; display: grid; place-items: center; flex-shrink: 0; border-radius: 10px; background: #edf3ee; color: #335f4a; }
+.personal-workspace-card-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.personal-workspace-card-text strong { font-size: 14px; }
+.personal-workspace-card-text small { color: #79867c; font-size: 12px; line-height: 1.5; }
+.personal-workspace-card > svg:last-child { color: #829388; }
+.personal-workspace-back { margin-bottom: 16px; background: transparent; color: #37624f; font-size: 13px; }
+[data-theme="dark"] .personal-workspace { color: #e9eee8; }
+[data-theme="dark"] .personal-workspace-card { background: #29332c; border-color: #3d4d42; }
+[data-theme="dark"] .personal-workspace-card:hover, [data-theme="dark"] .personal-workspace-card:focus-visible { background: #344439; }
+[data-theme="dark"] .personal-workspace-card-text small, [data-theme="dark"] .personal-workspace-heading p { color: #b4c3b6; }
+@media (max-width: 760px) { .personal-workspace-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,6 @@
+.live-session-badge { position: fixed; top: 62px; right: 22px; z-index: 150; max-width: min(340px, calc(100vw - 44px)); min-height: 46px; padding: 0 16px; display: flex; align-items: center; gap: 9px; border: 0; border-radius: 999px; background: linear-gradient(120deg, #1e473c, #2e6852); color: #eaf5ee; font-size: 13px; cursor: pointer; box-shadow: 0 12px 32px #1f4c3d59; transition: transform .18s ease, filter .18s ease; }
+.live-session-badge:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.live-session-badge-dot { width: 9px; height: 9px; flex-shrink: 0; border-radius: 50%; background: #5ff2a2; animation: live-badge-pulse 1.6s ease-out infinite; }
+@keyframes live-badge-pulse { 0% { box-shadow: 0 0 0 0 #5ff2a280; } 70% { box-shadow: 0 0 0 9px #5ff2a200; } 100% { box-shadow: 0 0 0 0 #5ff2a200; } }
+.live-session-badge-label { flex-shrink: 0; color: #a9d9bd; font-size: 12px; }
+.live-session-badge strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }

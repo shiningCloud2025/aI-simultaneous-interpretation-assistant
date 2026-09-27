@@ -1,0 +1,52 @@
+.teacher-console-topbar { padding: 22px 26px; display: flex; align-items: center; gap: 16px; border-radius: 14px; background: linear-gradient(120deg, #1e473c, #2e6852); color: #eaf5ee; box-shadow: 0 14px 34px #1f4c3d2e; }
+.teacher-console-topbar.paused { background: linear-gradient(120deg, #584a22, #75642f); box-shadow: 0 14px 34px #584a222e; }
+.teacher-console-dot { width: 12px; height: 12px; flex-shrink: 0; border-radius: 50%; background: #5ff2a2; animation: teacher-console-pulse 1.6s ease-out infinite; }
+.teacher-console-topbar.paused .teacher-console-dot { background: #ffd479; animation: none; }
+@keyframes teacher-console-pulse { 0% { box-shadow: 0 0 0 0 #5ff2a273; } 70% { box-shadow: 0 0 0 13px #5ff2a200; } 100% { box-shadow: 0 0 0 0 #5ff2a200; } }
+.teacher-console-title { min-width: 0; flex: 1; }
+.teacher-console-title > strong { font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #a9d9bd; }
+.teacher-console-topbar.paused .teacher-console-title > strong { color: #f0dfae; }
+.teacher-console-title h1 { margin: 4px 0 5px; color: #fff; font-size: clamp(20px, 2vw, 26px); line-height: 1.25; }
+.teacher-console-title p { margin: 0; color: #c4e2cf; font-size: 12.5px; }
+.teacher-console-topbar.paused .teacher-console-title p { color: #ecdcb0; }
+.teacher-console-controls { flex-shrink: 0; display: flex; gap: 9px; }
+.teacher-console-controls button { min-height: 40px; padding: 0 15px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ffffff38; border-radius: 9px; background: #ffffff1a; color: #fff; font-size: 13px; cursor: pointer; }
+.teacher-console-controls button:hover { background: #ffffff2b; }
+.teacher-console-controls button.end { background: #b3402f33; border-color: #ff9d8a55; color: #ffd9d0; }
+.teacher-console-controls button.end:hover { background: #b3402f52; }
+.teacher-console-controls button:disabled { opacity: .45; cursor: default; }
+.teacher-console-grid { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(370px, 430px); gap: 16px; align-items: start; }
+.teacher-console-interactions { padding: 22px 24px; border: 1px solid var(--teacher-line); border-radius: 14px; background: #fff; }
+.teacher-console-section-head { margin-bottom: 18px; }
+.teacher-console-section-head h2 { margin: 0 0 6px; color: var(--teacher-ink); font-size: 17px; }
+.teacher-console-section-head p { margin: 0; color: #758078; font-size: 12.5px; }
+.teacher-interaction-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.teacher-interaction-card { position: relative; min-height: 128px; padding: 17px 16px 15px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; border: 1px solid var(--teacher-line); border-radius: 12px; background: #fbfdfb; color: var(--teacher-ink); text-align: left; cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.teacher-interaction-card:hover { border-color: #9dc3ab; box-shadow: 0 8px 22px #1f4c3d14; transform: translateY(-2px); }
+.teacher-interaction-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(135deg, #1e473c, #2e6852); color: #a9f0c8; }
+.teacher-interaction-card > strong { font-size: 14.5px; }
+.teacher-interaction-card > p { margin: 0; color: #758078; font-size: 12px; line-height: 1.6; }
+.teacher-interaction-card > em { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 999px; background: #eef4ec; color: #5b7a63; font-size: 11px; font-style: normal; font-weight: 600; }
+.teacher-interaction-card[data-state="coming"] .teacher-interaction-icon { background: #e4ede4; color: #6f8a74; }
+.teacher-console-rail { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.teacher-console-board { padding: 20px 22px; border: 1px solid var(--teacher-line); border-radius: 14px; background: #fff; }
+.teacher-console-board-head { margin-bottom: 12px; display: flex; align-items: baseline; justify-content: space-between; }
+.teacher-console-board-head h2 { margin: 0; color: var(--teacher-ink); font-size: 15px; }
+.teacher-console-board-head strong { color: var(--teacher-ink); font-size: 20px; font-variant-numeric: tabular-nums; }
+.teacher-console-board-track { height: 8px; overflow: hidden; border-radius: 999px; background: #e9f0e8; }
+.teacher-console-board-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2e6852, #57b87e); transition: width .5s ease; }
+.teacher-console-absent { margin-top: 14px; font-size: 12px; }
+.teacher-console-absent > span { color: #758078; }
+.teacher-console-absent > div { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.teacher-console-absent em { padding: 3px 9px; border: 1px solid #ead9d2; border-radius: 999px; background: #fdf6f3; color: #8e5643; font-style: normal; font-size: 12px; }
+.teacher-console-all-present { margin: 13px 0 0; color: #2f7a4e; font-size: 12.5px; font-weight: 600; }
+[data-theme="dark"] .teacher-console-interactions, [data-theme="dark"] .teacher-console-board, [data-theme="dark"] .teacher-interaction-card { background: #29332c; }
+[data-theme="dark"] .teacher-console-section-head h2, [data-theme="dark"] .teacher-console-board-head h2, [data-theme="dark"] .teacher-console-board-head strong, [data-theme="dark"] .teacher-interaction-card { color: #e9eee8; }
+[data-theme="dark"] .teacher-interaction-card { background: #29332c; }
+[data-theme="dark"] .teacher-interaction-card:hover { border-color: #5b7f6a; }
+[data-theme="dark"] .teacher-interaction-card > em { background: #334137; color: #a9c8b2; }
+[data-theme="dark"] .teacher-interaction-card[data-state="coming"] .teacher-interaction-icon { background: #334137; color: #8fae97; }
+[data-theme="dark"] .teacher-console-board-track { background: #3a4a3e; }
+[data-theme="dark"] .teacher-console-absent em { background: #4a3a34; border-color: #6b4a40; color: #e8b8a8; }
+@media (max-width: 1100px) { .teacher-console-grid { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .teacher-console-topbar { align-items: flex-start; flex-wrap: wrap; } .teacher-console-controls { width: 100%; } .teacher-console-controls button { flex: 1; justify-content: center; } }
