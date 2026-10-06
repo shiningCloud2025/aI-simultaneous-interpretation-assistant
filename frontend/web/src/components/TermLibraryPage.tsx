@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { appConfirm } from '../lib/appDialog';
 
 interface Library {
   id: number;
@@ -58,7 +59,7 @@ export function TermLibraryPage() {
   };
 
   const deleteLibrary = async (id: number) => {
-    if (!confirm('确定删除该术语库及其下所有条目？')) return;
+    if (!await appConfirm({ title: '删除术语库', message: '确定删除该术语库及其下所有条目？删除后不可恢复。', confirmText: '删除', danger: true })) return;
     const res = await fetch(`${API}/library/${id}`, { method: 'DELETE', headers: headers() });
     const json = await res.json();
     if (json.code === 200) { loadLibraries(); if (activeLib?.id === id) setActiveLib(null); showToast('已删除'); }
@@ -82,8 +83,8 @@ export function TermLibraryPage() {
   const removeEntry = (i: number) => { setEntries(entries.filter((_, j) => j !== i)); setDirty(true); };
 
   // 返回时如果有未保存的修改，提示
-  const goBack = () => {
-    if (dirty && !confirm('你有未保存的修改，确定返回吗？')) return;
+  const goBack = async () => {
+    if (dirty && !await appConfirm({ title: '放弃修改', message: '你有未保存的修改，确定返回吗？', confirmText: '返回' })) return;
     setActiveLib(null);
     setDirty(false);
   };

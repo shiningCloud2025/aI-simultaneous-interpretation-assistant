@@ -5,6 +5,7 @@ import { EditableSlideCanvas, EMPTY_SELECTION } from './editing-src';
 import type { EditIntent, Selection } from './editing-src/types';
 import type { Slide as CanvasSlide } from '@openmaic/dsl';
 import { buildPptxBlob } from './export-utils/buildPptxBlob';
+import { appAlert, appConfirm } from '../lib/appDialog';
 
 type Mode = 'preview' | 'edit';
 
@@ -53,7 +54,7 @@ export function EduPPT() {
       const { importPptx } = await import('@openmaic/importer');
       const result = await importPptx(file);
       if (!result || result.length === 0) {
-        alert('PPT 文件解析后没有幻灯片');
+        void appAlert('PPT 文件解析后没有幻灯片', '解析失败');
       } else {
         setSlides(result);
         setEditingSlides(structuredClone(result));
@@ -63,7 +64,7 @@ export function EduPPT() {
       }
     } catch (e: any) {
       console.error(e);
-      alert('PPTX 导入失败: ' + (e?.message || '未知错误'));
+      void appAlert('PPTX 导入失败: ' + (e?.message || '未知错误'), '导入失败');
     } finally {
       setLoading(false);
     }
@@ -107,12 +108,12 @@ export function EduPPT() {
   }, [prevSlide, nextSlide, isEditing]);
 
   // 切换编辑模式
-  const toggleEdit = useCallback(() => {
+  const toggleEdit = useCallback(async () => {
     if (isEditing) {
-      if (confirm('保存修改？\n确定 = 保存\n取消 = 放弃修改')) {
+      if (await appConfirm({ title: '保存修改', message: '是否保存当前 PPT 修改？\n选择取消将放弃本次编辑内容。', confirmText: '保存' })) {
         setSlides(editingSlides);
         setMode('preview');
-        alert('已保存');
+        void appAlert('已保存');
       } else {
         setEditingSlides(structuredClone(slides));
         setMode('preview');
@@ -177,10 +178,10 @@ export function EduPPT() {
       a.download = `${name}.pptx`;
       a.click();
       URL.revokeObjectURL(url);
-      alert('导出成功');
+      void appAlert('导出成功');
     } catch (e: any) {
       console.error(e);
-      alert('导出失败: ' + (e?.message || '未知错误'));
+      void appAlert('导出失败: ' + (e?.message || '未知错误'), '导出失败');
     }
   }, [effectiveSlides, editingSlides, isEditing, slides, pptFileName]);
 

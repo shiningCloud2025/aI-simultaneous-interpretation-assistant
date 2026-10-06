@@ -1,0 +1,55 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: '自动部署分支'
+        required: true
+        default: main
+
+env:
+  JDK_VERSION: '21'
+  NODE_VERSION: '24'
+  BACKEND_DIR: backend/aI-assistant-server
+  WEB_DIR: frontend/web
+
+# 所有Job的容器
+jobs:
+  # Job的id，自定义
+  deploy:
+    # 申请一台全新的Ubuntu虚拟机
+    runs-on: ubuntu-latest
+    # 步骤列表，从上往下
+    steps:
+      # 全新虚拟机是空的，先拉取代码
+      - uses: actions/checkout@v4
+      # 在虚拟机上安装JDK
+      - uses: actions/setup-java@v4
+        # with是参数
+        with:
+          # JDK 发行版（Eclipse 基金会的，社区标准）
+          distribution: temurin
+          java-version: ${{env.JDK_VERSION}}
+          # 缓存 ~/.m2 依赖目录：第一次构建按 pom.xml
+          cache: maven
+      - name: Maven package
+        # 相当于先 cd 到后端模块目录
+        working-directory: ${{ env.BACKEND_DIR }}
+        # -B 批处理模式（日志干净），跳过测试
+        run: mvn -B -DskipTests package
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.WEB_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.WEB_DIR }}
+        run: npm ci
+
+      - name: Vite build
+        working-directory: ${{ env.WEB_DIR }}
+        run: npm run build

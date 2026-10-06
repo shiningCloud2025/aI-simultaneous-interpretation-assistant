@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { appConfirm } from '../lib/appDialog';
 
 /** 后端返回的 API Key VO */
 interface ApiKeyVO {
@@ -17,6 +18,8 @@ interface Provider {
   name: string;
 }
 
+type ApiKeyType = 'ASR' | 'LLM';
+
 const API = '/api/sys/user/api-key';
 const STATUS_MAP: Record<number, { label: string; color: string; bg: string }> = {
   0: { label: '未测试', color: '#999', bg: '#f5f3f0' },
@@ -26,10 +29,11 @@ const STATUS_MAP: Record<number, { label: string; color: string; bg: string }> =
 
 export function ApiKeyConfig() {
   const [keys, setKeys] = useState<ApiKeyVO[]>([]);
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [asrProviders, setAsrProviders] = useState<Provider[]>([]);
+  const [llmProviders, setLlmProviders] = useState<Provider[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [testing, setTesting] = useState<number | null>(null);
-  const [form, setForm] = useState({ provider: '', keyType: 'LLM', apiKey: '' });
+  const [form, setForm] = useState<{ provider: string; keyType: ApiKeyType; apiKey: string }>({ provider: '', keyType: 'LLM', apiKey: '' });
   const [toast, setToast] = useState('');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000); };
 
@@ -45,24 +49,22 @@ export function ApiKeyConfig() {
   };
 
   const loadProviders = async () => {
-    // 合并 ASR + LLM 厂商列表，去重
-    const map = new Map<string, string>();
     try {
       const [asrRes, llmRes] = await Promise.all([
         fetch('/api/sys/user/ai/asr/providers', { headers: h() }),
         fetch('/api/sys/user/ai/llm/providers', { headers: h() }),
       ]);
       const [asrJson, llmJson] = await Promise.all([asrRes.json(), llmRes.json()]);
-      if (asrJson.code === 200) (asrJson.data as Provider[]).forEach(p => map.set(p.key, p.name));
-      if (llmJson.code === 200) (llmJson.data as Provider[]).forEach(p => map.set(p.key, p.name));
+      if (asrJson.code === 200) setAsrProviders(asrJson.data);
+      if (llmJson.code === 200) setLlmProviders(llmJson.data);
     } catch { /* ignore */ }
-    setProviders(Array.from(map, ([key, name]) => ({ key, name })));
   };
 
   useEffect(() => { loadKeys(); loadProviders(); }, []);
 
   const saveKey = async () => {
     if (!form.provider || !form.apiKey.trim()) return showToast('请填写完整信息');
+    if (!currentProviders.some(p => p.key === form.provider)) return showToast('请选择对应类型的厂商');
     try {
       const res = await fetch(API, { method: 'POST', headers: h(), body: JSON.stringify(form) });
       const json = await res.json();
@@ -76,7 +78,7 @@ export function ApiKeyConfig() {
   };
 
   const deleteKey = async (id: number) => {
-    if (!confirm('确定删除该 API Key？')) return;
+    if (!await appConfirm({ title: '删除 API Key', message: '确定删除该 API Key？删除后对应服务将无法继续使用该密钥。', confirmText: '删除', danger: true })) return;
     try {
       const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: h() });
       const json = await res.json();
@@ -99,6 +101,19 @@ export function ApiKeyConfig() {
   // 按类型分组
   const asrKeys = keys.filter(k => k.keyType === 'ASR');
   const llmKeys = keys.filter(k => k.keyType === 'LLM');
+  const currentProviders = form.keyType === 'ASR' ? asrProviders : llmProviders;
+  const providerMap = new Map<string, string>();
+  [...asrProviders, ...llmProviders].forEach(p => providerMap.set(p.key, p.name));
+  const allProviders = Array.from(providerMap, ([key, name]) => ({ key, name }));
+
+  const openAddModal = (keyType: ApiKeyType = 'LLM') => {
+    setForm({ provider: '', keyType, apiKey: '' });
+    setShowModal(true);
+  };
+
+  const changeKeyType = (keyType: ApiKeyType) => {
+    setForm(prev => ({ ...prev, keyType, provider: '' }));
+  };
 
   return (
     <div style={{ width: '100%' }}>
@@ -107,7 +122,7 @@ export function ApiKeyConfig() {
           <div style={{ fontSize: 15, fontWeight: 600 }}>API Key 配置</div>
           <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>配置各厂商的 API Key，用于语音识别和翻译服务</div>
         </div>
-        <button onClick={() => { setForm({ provider: '', keyType: 'LLM', apiKey: '' }); setShowModal(true); }} style={btnPrimary}>
+        <button onClick={() => openAddModal()} style={btnPrimary}>
           + 添加 API Key
         </button>
       </div>
@@ -121,7 +136,7 @@ export function ApiKeyConfig() {
         {asrKeys.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', color: '#bbb', padding: 32, fontSize: 13 }}>暂无 ASR 的 API Key</div>
         ) : (
-          <KeyTable keys={asrKeys} providers={providers} testing={testing} onTest={testKey} onDelete={deleteKey} />
+          <KeyTable keys={asrKeys} providers={allProviders} testing={testing} onTest={testKey} onDelete={deleteKey} />
         )}
       </div>
 
@@ -134,7 +149,7 @@ export function ApiKeyConfig() {
         {llmKeys.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', color: '#bbb', padding: 32, fontSize: 13 }}>暂无 LLM 的 API Key</div>
         ) : (
-          <KeyTable keys={llmKeys} providers={providers} testing={testing} onTest={testKey} onDelete={deleteKey} />
+          <KeyTable keys={llmKeys} providers={allProviders} testing={testing} onTest={testKey} onDelete={deleteKey} />
         )}
       </div>
 
@@ -151,7 +166,7 @@ export function ApiKeyConfig() {
                 style={selectStyle}
               >
                 <option value="">请选择厂商</option>
-                {providers.map(p => (
+                {currentProviders.map(p => (
                   <option key={p.key} value={p.key}>{p.name}</option>
                 ))}
               </select>
@@ -160,7 +175,7 @@ export function ApiKeyConfig() {
               <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>类型</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['LLM', 'ASR'] as const).map(t => (
-                  <button key={t} onClick={() => setForm({ ...form, keyType: t })}
+                  <button key={t} onClick={() => changeKeyType(t)}
                     style={typeBtn(form.keyType === t)}>
                     {t === 'LLM' ? '🧠 LLM' : '🎤 ASR'}
                   </button>

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, PageBanner } from './ui';
+import { appAlert } from '../lib/appDialog';
 import '@wangeditor/editor/dist/css/style.css';
 
 // 懒加载编辑器
@@ -42,7 +43,7 @@ export function EduWord() {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.name.toLowerCase().endsWith('.docx') && !f.name.toLowerCase().endsWith('.doc')) {
-      alert('请上传 .docx 格式的文件');
+      void appAlert('请上传 .docx 格式的文件');
       return;
     }
     setFile(f);
@@ -59,7 +60,7 @@ export function EduWord() {
       setHtmlContent(html);
     } catch (e: any) {
       console.error(e);
-      alert('Word 解析失败: ' + (e?.message || '未知错误'));
+      void appAlert('Word 解析失败: ' + (e?.message || '未知错误'), '解析失败');
     } finally {
       setLoading(false);
     }
@@ -83,14 +84,14 @@ export function EduWord() {
   const handleExportTxt = () => {
     const text = getPlainText();
     downloadText(text, file?.name?.replace(/\.docx?$/i, '') + '.txt' || 'document.txt', 'text/plain');
-    alert('已导出 TXT');
+    void appAlert('已导出 TXT');
   };
 
   const handleExportMd = () => {
     const text = getPlainText();
     const md = text.split(/\n+/).filter((l: string) => l.trim()).map((l: string) => l.trim() + '\n').join('\n');
     downloadText(md, file?.name?.replace(/\.docx?$/i, '') + '.md' || 'document.md', 'text/markdown');
-    alert('已导出 Markdown');
+    void appAlert('已导出 Markdown');
   };
 
   const handleExportDocx = async () => {
@@ -102,10 +103,10 @@ export function EduWord() {
       const doc = new Document({ sections: [{ children }] });
       const blob = await Packer.toBlob(doc);
       downloadBlob(blob, file?.name?.replace(/\.docx?$/i, '') + '_export.docx' || 'document.docx');
-      alert('已导出 Word');
+      void appAlert('已导出 Word');
     } catch (e: any) {
       console.error(e);
-      alert('导出失败');
+      void appAlert('导出失败', '导出失败');
     }
   };
 

@@ -3,6 +3,7 @@ import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, useAppStore } from '../../stores/appStore';
 import { uploadFile } from '../../lib/api';
+import { appConfirm, appPrompt } from '../../lib/appDialog';
 import {
   adminApi,
   type DashboardOnline,
@@ -1295,7 +1296,7 @@ function AllUsersPanel({ embedded = false }: { embedded?: boolean }) {
   };
 
   const resetPassword = async (userId: number) => {
-    const pwd = window.prompt('请输入新密码，长度 6-26 位');
+    const pwd = await appPrompt({ title: '重置密码', message: '请输入新密码，长度 6-26 位', placeholder: '新密码', confirmText: '重置' });
     if (!pwd) return;
     try {
       await adminApi.resetPassword(userId, pwd);
@@ -1728,7 +1729,7 @@ function SkillPanel() {
   };
 
   const remove = async (item: SkillItem) => {
-    if (!window.confirm(`确定删除 ${item.name} 吗？`)) return;
+    if (!await appConfirm({ title: '删除 Skill', message: `确定删除 ${item.name} 吗？`, confirmText: '删除', danger: true })) return;
     try {
       await adminApi.deleteSkill(item.name);
       const nextPage = data.records.length === 1 && data.current > 1 ? data.current - 1 : data.current;
