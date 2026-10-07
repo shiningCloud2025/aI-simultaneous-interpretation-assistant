@@ -23,7 +23,7 @@ public record SuperAdminMailAccountManagePageQueryDTO(
 
     @Schema(description = "超管邮箱绑定管理筛选条件")
     public record Filter(
-            @Size(max = 128, message = "关键字长度不能超过128位") @Schema(description = "关键字，支持邮箱/备注名/用户账号/用户名") String keyword,
+            @Size(max = 128, message = "关键字长度不能超过128位") @Schema(description = "关键字，支持邮箱/备注名") String keyword,
             @Schema(description = "邮箱类型") MailProviderEnum provider,
             @Schema(description = "邮箱状态") MailAccountStatusEnum status,
             @Schema(description = "用户类型") UserTypeEnum userType
