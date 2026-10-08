@@ -3,6 +3,7 @@ package com.lucky.server.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 超管 AgentScope Skill 详情VO
@@ -14,6 +15,7 @@ public record SuperAdminSkillDetailVO(
         @Schema(description = "Skill名称") String name,
         @Schema(description = "Skill描述") String description,
         @Schema(description = "Skill内容") String skillContent,
+        @Schema(description = "Skill资源列表") List<SuperAdminSkillResourceVO> resources,
         @Schema(description = "Skill来源") String source,
         @Schema(description = "Skill元数据JSON") String metadataJson,
         @Schema(description = "创建时间") LocalDateTime createdAt,
