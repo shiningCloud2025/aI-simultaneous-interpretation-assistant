@@ -53,3 +53,33 @@ jobs:
       - name: Vite build
         working-directory: ${{ env.WEB_DIR }}
         run: npm run build
+
+      # ① dist 里小文件多，先压成一个包，传输快
+      - name: Package frontend dist
+        working-directory: ${{env.WEB_DIR}}
+        run: tar -czf dist.tar.gz dist
+      # ② 装钥匙：私钥从保险柜倒成文件（放到默认路径，ssh/scp 自动捡），
+      # 再把服务器指纹登记进信任名单（否则 ssh 会卡在 yes/no 提问）
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+      # ③ 传后端 jar，直接覆盖服务器上的 app.jar
+      - name: Upload backend jar
+        run: scp ${{ env.BACKEND_DIR }}/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/smart-language-classroom/backend/app.jar
+      # ④ 传前端压缩包
+      - name: Upload frontend package
+        run: scp ${{ env.WEB_DIR }}/dist.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/root/smart-language-classroom/frontend/
+      # ⑤ 双引号里的命令在【服务器上】执行：解包、清包、重建镜像并重启容器
+      - name: Deploy on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            cd /root/smart-language-classroom/frontend &&
+            rm -rf dist &&
+            tar -xzf dist.tar.gz &&
+            rm dist.tar.gz &&
+            cd /root/smart-language-classroom &&
+            docker compose up -d --build
+          "
