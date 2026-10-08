@@ -1673,6 +1673,7 @@ function SkillPanel() {
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<SkillDetail | null>(null);
   const [form, setForm] = useState({ name: '', description: '', skillContent: '', overwrite: false });
+  const [mdFileName, setMdFileName] = useState('');
   const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1693,6 +1694,7 @@ function SkillPanel() {
   const resetForm = () => {
     setEditing(null);
     setForm({ name: '', description: '', skillContent: '', overwrite: false });
+    setMdFileName('');
   };
 
   const openCreate = () => {
@@ -1706,6 +1708,7 @@ function SkillPanel() {
       const detail = await adminApi.skillDetail(item.name);
       setEditing(detail);
       setForm({ name: detail.name, description: detail.description || '', skillContent: detail.skillContent || '', overwrite: true });
+      setMdFileName('');
       setModal(nextModal);
     } catch (e: any) {
       setError(e.message || '详情加载失败');
@@ -1768,6 +1771,7 @@ function SkillPanel() {
       const content = await file.text();
       const nextName = normalizeSkillName(file.name);
       const title = extractMarkdownTitle(content);
+      setMdFileName(file.name);
       setForm(current => ({
         ...current,
         name: current.name || nextName,
@@ -1780,6 +1784,20 @@ function SkillPanel() {
     } finally {
       if (mdFileInputRef.current) mdFileInputRef.current.value = '';
     }
+  };
+
+  const skillMarkdownFileName = () => `${form.name.trim() || 'skill'}.md`;
+
+  const downloadSkillMarkdown = () => {
+    const blob = new Blob([form.skillContent || ''], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = skillMarkdownFileName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || pageSize)));
@@ -1884,7 +1902,33 @@ function SkillPanel() {
                     <button type="button" className="admin-btn" onClick={() => mdFileInputRef.current?.click()}>选择 MD</button>
                   </div>
                 )}
+                {modal !== 'view' && mdFileName && (
+                  <div className="admin-skill-md-preview">
+                    <div>
+                      <strong>解析预览</strong>
+                      <span>{mdFileName} · {form.skillContent.length} 字符</span>
+                    </div>
+                    <pre>{form.skillContent.slice(0, 1200)}{form.skillContent.length > 1200 ? '\n...' : ''}</pre>
+                  </div>
+                )}
                 <textarea className="admin-skill-content-textarea" value={form.skillContent} onChange={(e) => setForm({ ...form, skillContent: e.target.value })} placeholder="写入可被 AgentScope 使用的 Skill 内容" disabled={modal === 'view'} />
+                {form.skillContent && (
+                  <div
+                    className="admin-skill-md-file"
+                    role="button"
+                    tabIndex={0}
+                    title="双击下载 Markdown 文件"
+                    onDoubleClick={downloadSkillMarkdown}
+                    onKeyDown={(e) => { if (e.key === 'Enter') downloadSkillMarkdown(); }}
+                  >
+                    <div className="admin-skill-md-file-icon">MD</div>
+                    <div className="admin-skill-md-file-main">
+                      <strong>{skillMarkdownFileName()}</strong>
+                      <span>{modal === 'view' ? '双击下载这份 Skill Markdown' : '保存后可作为 Skill Markdown 文件使用'}</span>
+                    </div>
+                    <button type="button" className="admin-btn" onClick={downloadSkillMarkdown}>下载</button>
+                  </div>
+                )}
               </AdminAccountField>
             </div>
             {modal === 'create' && (

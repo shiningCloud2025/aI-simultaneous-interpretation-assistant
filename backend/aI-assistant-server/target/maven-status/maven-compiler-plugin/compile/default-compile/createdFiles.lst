@@ -38,6 +38,7 @@ com/lucky/server/controller/api/ReadingWordMaterialController.class
 com/lucky/server/domain/dto/SysUserUpdateDTO.class
 com/lucky/server/service/SysUserSkillService.class
 com/lucky/server/domain/dto/SysUserFeedbackSubmitDTO.class
+com/lucky/server/controller/superadmin/SuperAdminMailAccountSpaceController.class
 com/lucky/server/service/impl/SpeakingEvaluationRecordServiceImpl.class
 com/lucky/server/domain/vo/SysUserModelPreferenceVO.class
 com/lucky/server/common/tester/AsrApiKeyTester.class
