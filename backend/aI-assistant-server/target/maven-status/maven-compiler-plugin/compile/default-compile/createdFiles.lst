@@ -192,6 +192,7 @@ com/lucky/server/agent/middleware/DynamicContextMiddleware.class
 com/lucky/server/service/impl/ReadingWordMaterialFailureServiceImpl.class
 com/lucky/server/common/storage/FileStorageService.class
 com/lucky/server/domain/vo/StudentClassroomDetailVO.class
+com/lucky/server/controller/api/SysUserMailAccountSpaceController.class
 com/lucky/server/domain/vo/SpeakingMaterialPracticeSentenceVO.class
 com/lucky/server/controller/superadmin/SuperAdminLogDashboardController.class
 com/lucky/server/service/SysUserEmailService.class
