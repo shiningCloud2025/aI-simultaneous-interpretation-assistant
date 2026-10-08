@@ -1673,7 +1673,6 @@ function SkillPanel() {
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<SkillDetail | null>(null);
   const [form, setForm] = useState({ name: '', description: '', skillContent: '', overwrite: false });
-  const [mdFileName, setMdFileName] = useState('');
   const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1694,7 +1693,6 @@ function SkillPanel() {
   const resetForm = () => {
     setEditing(null);
     setForm({ name: '', description: '', skillContent: '', overwrite: false });
-    setMdFileName('');
   };
 
   const openCreate = () => {
@@ -1708,7 +1706,6 @@ function SkillPanel() {
       const detail = await adminApi.skillDetail(item.name);
       setEditing(detail);
       setForm({ name: detail.name, description: detail.description || '', skillContent: detail.skillContent || '', overwrite: true });
-      setMdFileName('');
       setModal(nextModal);
     } catch (e: any) {
       setError(e.message || '详情加载失败');
@@ -1771,7 +1768,6 @@ function SkillPanel() {
       const content = await file.text();
       const nextName = normalizeSkillName(file.name);
       const title = extractMarkdownTitle(content);
-      setMdFileName(file.name);
       setForm(current => ({
         ...current,
         name: current.name || nextName,
@@ -1902,17 +1898,8 @@ function SkillPanel() {
                     <button type="button" className="admin-btn" onClick={() => mdFileInputRef.current?.click()}>选择 MD</button>
                   </div>
                 )}
-                {modal !== 'view' && mdFileName && (
-                  <div className="admin-skill-md-preview">
-                    <div>
-                      <strong>解析预览</strong>
-                      <span>{mdFileName} · {form.skillContent.length} 字符</span>
-                    </div>
-                    <pre>{form.skillContent.slice(0, 1200)}{form.skillContent.length > 1200 ? '\n...' : ''}</pre>
-                  </div>
-                )}
                 <textarea className="admin-skill-content-textarea" value={form.skillContent} onChange={(e) => setForm({ ...form, skillContent: e.target.value })} placeholder="写入可被 AgentScope 使用的 Skill 内容" disabled={modal === 'view'} />
-                {form.skillContent && (
+                {modal === 'view' && form.skillContent && (
                   <div
                     className="admin-skill-md-file"
                     role="button"
@@ -1924,7 +1911,7 @@ function SkillPanel() {
                     <div className="admin-skill-md-file-icon">MD</div>
                     <div className="admin-skill-md-file-main">
                       <strong>{skillMarkdownFileName()}</strong>
-                      <span>{modal === 'view' ? '双击下载这份 Skill Markdown' : '保存后可作为 Skill Markdown 文件使用'}</span>
+                      <span>双击下载这份 Skill Markdown</span>
                     </div>
                     <button type="button" className="admin-btn" onClick={downloadSkillMarkdown}>下载</button>
                   </div>

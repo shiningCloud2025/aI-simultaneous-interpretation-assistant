@@ -2435,42 +2435,6 @@
   line-height: 1.6;
 }
 
-.admin-skill-md-preview {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding: 12px 14px;
-  border: 1px solid #eee5d8;
-  border-radius: 10px;
-  background: #fffdf8;
-}
-
-.admin-skill-md-preview strong {
-  color: #263530;
-  font-size: 13px;
-}
-
-.admin-skill-md-preview span {
-  margin-left: 8px;
-  color: #918c82;
-  font-size: 12px;
-}
-
-.admin-skill-md-preview pre {
-  max-height: 160px;
-  overflow: auto;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #f7f3eb;
-  color: #34403b;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 .admin-skill-md-file {
   display: grid;
   grid-template-columns: 46px minmax(0, 1fr) auto;
