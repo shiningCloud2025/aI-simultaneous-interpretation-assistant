@@ -19,6 +19,7 @@ com/lucky/server/domain/entity/SysUserTermLibrary.class
 com/lucky/server/domain/dto/SysUserApiKeyDTO.class
 com/lucky/server/service/SysUserAiModelService.class
 com/lucky/server/controller/api/SysUserEmailController.class
+com/lucky/server/service/impl/MailSpaceServiceImpl$MailContent.class
 com/lucky/server/controller/api/SpeakingMaterialController.class
 com/lucky/server/domain/entity/SysUserApiKey.class
 com/lucky/server/common/enums/UserTypeEnum.class

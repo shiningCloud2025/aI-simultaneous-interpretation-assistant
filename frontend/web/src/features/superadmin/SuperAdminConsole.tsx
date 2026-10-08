@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, useAppStore } from '../../stores/appStore';
@@ -1668,6 +1668,7 @@ function FeedbackPanel() {
 
 function SkillPanel() {
   const pageSize = 10;
+  const mdFileInputRef = useRef<HTMLInputElement | null>(null);
   const [data, setData] = useState<PageResult<SkillItem>>({ records: [], total: 0, size: pageSize, current: 1 });
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<SkillDetail | null>(null);
@@ -1742,6 +1743,43 @@ function SkillPanel() {
   const clearSearch = () => {
     setName('');
     load(1, '');
+  };
+
+  const normalizeSkillName = (fileName: string) => fileName
+    .replace(/\.(md|markdown)$/i, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9_-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const extractMarkdownTitle = (content: string) => {
+    const heading = content.split(/\r?\n/).find(line => line.trim().startsWith('# '));
+    return heading?.replace(/^#\s+/, '').trim();
+  };
+
+  const handleMdFile = async (file?: File) => {
+    if (!file) return;
+    if (!/\.(md|markdown)$/i.test(file.name)) {
+      setError('请上传 .md 或 .markdown 文件');
+      return;
+    }
+    try {
+      const content = await file.text();
+      const nextName = normalizeSkillName(file.name);
+      const title = extractMarkdownTitle(content);
+      setForm(current => ({
+        ...current,
+        name: current.name || nextName,
+        description: current.description || title || `从 ${file.name} 导入的 Skill`,
+        skillContent: content,
+      }));
+      setError('');
+    } catch {
+      setError('Markdown 文件读取失败');
+    } finally {
+      if (mdFileInputRef.current) mdFileInputRef.current.value = '';
+    }
   };
 
   const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || pageSize)));
@@ -1831,6 +1869,21 @@ function SkillPanel() {
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" disabled={modal === 'view'} />
               </AdminAccountField>
               <AdminAccountField label="Skill 内容">
+                {modal !== 'view' && (
+                  <div className="admin-skill-md-upload">
+                    <input
+                      ref={mdFileInputRef}
+                      type="file"
+                      accept=".md,.markdown,text/markdown,text/plain"
+                      onChange={(e) => handleMdFile(e.target.files?.[0])}
+                    />
+                    <div>
+                      <strong>Markdown 导入</strong>
+                      <span>选择 .md 文件后自动填入内容，新增时会尝试用文件名作为 Skill 名称。</span>
+                    </div>
+                    <button type="button" className="admin-btn" onClick={() => mdFileInputRef.current?.click()}>选择 MD</button>
+                  </div>
+                )}
                 <textarea className="admin-skill-content-textarea" value={form.skillContent} onChange={(e) => setForm({ ...form, skillContent: e.target.value })} placeholder="写入可被 AgentScope 使用的 Skill 内容" disabled={modal === 'view'} />
               </AdminAccountField>
             </div>

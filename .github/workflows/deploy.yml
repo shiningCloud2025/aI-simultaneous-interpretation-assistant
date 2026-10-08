@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [backend/2.6]
+    branches: [main]
   workflow_dispatch:
     inputs:
       branch:

@@ -7,14 +7,17 @@ import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.MailAccountStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.util.MailAuthCodeCryptoUtil;
+import com.lucky.server.domain.dto.MailMessageDetailDTO;
 import com.lucky.server.domain.dto.MailMessagePageDTO;
 import com.lucky.server.domain.entity.SysUserMailAccount;
 import com.lucky.server.domain.vo.MailFolderVO;
+import com.lucky.server.domain.vo.MailMessageDetailVO;
 import com.lucky.server.domain.vo.MailMessageSummaryVO;
 import com.lucky.server.mapper.SysUserMailAccountMapper;
 import com.lucky.server.service.MailSpaceService;
 import com.lucky.server.service.SysUserService;
 import jakarta.mail.Address;
+import jakarta.mail.BodyPart;
 import jakarta.mail.Flags;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
@@ -132,6 +135,56 @@ public class MailSpaceServiceImpl implements MailSpaceService {
         }
     }
 
+    @Override
+    public MailMessageDetailVO detailMessage(Long mailAccountId, MailMessageDetailDTO dto) {
+        SysUserMailAccount account = getCurrentUserMailAccount(mailAccountId);
+        String mailAuthCode = mailAuthCodeCryptoUtil.decrypt(account.getMailAuthCode());
+
+        Store store = null;
+        Folder folder = null;
+        try {
+            Session session = Session.getInstance(buildImapProperties(account));
+            store = session.getStore("imaps");
+            store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+
+            folder = store.getFolder(dto.folderName());
+            if (folder == null || !folder.exists()) {
+                throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "邮箱文件夹不存在");
+            }
+            folder.open(Folder.READ_ONLY);
+
+            UIDFolder uidFolder = requireUidFolder(folder);
+            Message message = uidFolder.getMessageByUID(dto.uid());
+            if (message == null) {
+                throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "邮件不存在");
+            }
+
+            MailContent content = new MailContent();
+            parsePart(message, "", content);
+
+            return new MailMessageDetailVO(
+                    uidFolder.getUID(message),
+                    decodeText(message.getSubject()),
+                    addressText(message.getFrom()),
+                    addressList(message.getRecipients(Message.RecipientType.TO)),
+                    addressList(message.getRecipients(Message.RecipientType.CC)),
+                    toLocalDateTime(message.getSentDate()),
+                    toLocalDateTime(message.getReceivedDate()),
+                    message.isSet(Flags.Flag.SEEN),
+                    content.textContent.toString(),
+                    content.htmlContent.toString(),
+                    content.attachments
+            );
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "邮件详情读取失败：" + e.getMessage());
+        } finally {
+            closeQuietly(folder);
+            closeQuietly(store);
+        }
+    }
+
     private SysUserMailAccount getCurrentUserMailAccount(Long mailAccountId) {
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserMailAccount account = sysUserMailAccountMapper.selectOne(new LambdaQueryWrapper<SysUserMailAccount>()
@@ -180,6 +233,48 @@ public class MailSpaceServiceImpl implements MailSpaceService {
                 hasAttachment(message),
                 message.getSize()
         );
+    }
+
+    private void parsePart(Part part, String partPath, MailContent content) throws Exception {
+        if (part.isMimeType("text/plain") && !isAttachment(part)) {
+            Object value = part.getContent();
+            if (value != null) {
+                content.textContent.append(value);
+            }
+            return;
+        }
+
+        if (part.isMimeType("text/html") && !isAttachment(part)) {
+            Object value = part.getContent();
+            if (value != null) {
+                content.htmlContent.append(value);
+            }
+            return;
+        }
+
+        if (isAttachment(part)) {
+            content.attachments.add(new MailMessageDetailVO.Attachment(
+                    partPath,
+                    decodeText(part.getFileName()),
+                    part.getContentType(),
+                    part.getSize()
+            ));
+            return;
+        }
+
+        if (part.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) part.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart bodyPart = multipart.getBodyPart(i);
+                String childPath = StringUtils.hasText(partPath) ? partPath + "." + (i + 1) : String.valueOf(i + 1);
+                parsePart(bodyPart, childPath, content);
+            }
+            return;
+        }
+
+        if (part.isMimeType("message/rfc822")) {
+            parsePart((Part) part.getContent(), partPath, content);
+        }
     }
 
     private boolean hasAttachment(Part part) {
@@ -274,6 +369,15 @@ public class MailSpaceServiceImpl implements MailSpaceService {
                 .collect(Collectors.joining(", "));
     }
 
+    private List<String> addressList(Address[] addresses) {
+        if (addresses == null || addresses.length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(addresses)
+                .map(this::addressText)
+                .toList();
+    }
+
     private String addressText(Address address) {
         if (address instanceof InternetAddress internetAddress) {
             return internetAddress.toUnicodeString();
@@ -310,5 +414,11 @@ public class MailSpaceServiceImpl implements MailSpaceService {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    private static class MailContent {
+        private final StringBuilder textContent = new StringBuilder();
+        private final StringBuilder htmlContent = new StringBuilder();
+        private final List<MailMessageDetailVO.Attachment> attachments = new ArrayList<>();
     }
 }

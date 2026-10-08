@@ -1,8 +1,10 @@
 package com.lucky.server.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.lucky.server.domain.dto.MailMessageDetailDTO;
 import com.lucky.server.domain.dto.MailMessagePageDTO;
 import com.lucky.server.domain.vo.MailFolderVO;
+import com.lucky.server.domain.vo.MailMessageDetailVO;
 import com.lucky.server.domain.vo.MailMessageSummaryVO;
 
 import java.util.List;
@@ -18,4 +20,7 @@ public interface MailSpaceService {
 
     /** 分页查询邮件列表 */
     Page<MailMessageSummaryVO> pageMessages(Long mailAccountId, MailMessagePageDTO dto);
+
+    /** 查询邮件详情 */
+    MailMessageDetailVO detailMessage(Long mailAccountId, MailMessageDetailDTO dto);
 }
