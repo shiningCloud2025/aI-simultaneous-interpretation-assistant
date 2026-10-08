@@ -1,26 +1,44 @@
 package com.lucky.server.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.MailAccountStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
 import com.lucky.server.common.util.MailAuthCodeCryptoUtil;
+import com.lucky.server.domain.dto.MailMessagePageDTO;
 import com.lucky.server.domain.entity.SysUserMailAccount;
 import com.lucky.server.domain.vo.MailFolderVO;
+import com.lucky.server.domain.vo.MailMessageSummaryVO;
 import com.lucky.server.mapper.SysUserMailAccountMapper;
 import com.lucky.server.service.MailSpaceService;
 import com.lucky.server.service.SysUserService;
+import jakarta.mail.Address;
+import jakarta.mail.Flags;
 import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import jakarta.mail.UIDFolder;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeUtility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.stream.Collectors;
 
 /**
  * 邮箱空间服务实现
@@ -62,6 +80,58 @@ public class MailSpaceServiceImpl implements MailSpaceService {
         }
     }
 
+    @Override
+    public Page<MailMessageSummaryVO> pageMessages(Long mailAccountId, MailMessagePageDTO dto) {
+        SysUserMailAccount account = getCurrentUserMailAccount(mailAccountId);
+        String mailAuthCode = mailAuthCodeCryptoUtil.decrypt(account.getMailAuthCode());
+
+        Store store = null;
+        Folder folder = null;
+        try {
+            Session session = Session.getInstance(buildImapProperties(account));
+            store = session.getStore("imaps");
+            store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+
+            folder = store.getFolder(dto.filter().folderName());
+            if (folder == null || !folder.exists()) {
+                throw new BusinessException(ResultCodeEnum.DATA_NOT_EXIST, "邮箱文件夹不存在");
+            }
+            folder.open(Folder.READ_ONLY);
+
+            int total = folder.getMessageCount();
+            Page<MailMessageSummaryVO> result = new Page<>(dto.page(), dto.size(), total);
+            if (total <= 0) {
+                result.setRecords(List.of());
+                return result;
+            }
+
+            int end = total - (dto.page() - 1) * dto.size();
+            if (end < 1) {
+                result.setRecords(List.of());
+                return result;
+            }
+
+            int start = Math.max(1, end - dto.size() + 1);
+            Message[] messages = folder.getMessages(start, end);
+            UIDFolder uidFolder = requireUidFolder(folder);
+
+            List<MailMessageSummaryVO> records = new ArrayList<>();
+            for (int i = messages.length - 1; i >= 0; i--) {
+                records.add(toSummaryVO(messages[i], uidFolder));
+            }
+
+            result.setRecords(records);
+            return result;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ResultCodeEnum.OPERATION_FAILED, "邮件列表读取失败：" + e.getMessage());
+        } finally {
+            closeQuietly(folder);
+            closeQuietly(store);
+        }
+    }
+
     private SysUserMailAccount getCurrentUserMailAccount(Long mailAccountId) {
         Long userId = sysUserService.getCurrentUser().getId();
         SysUserMailAccount account = sysUserMailAccountMapper.selectOne(new LambdaQueryWrapper<SysUserMailAccount>()
@@ -97,6 +167,52 @@ public class MailSpaceServiceImpl implements MailSpaceService {
                 safeMessageCount(folder),
                 safeUnreadCount(folder)
         );
+    }
+
+    private MailMessageSummaryVO toSummaryVO(Message message, UIDFolder uidFolder) throws MessagingException {
+        return new MailMessageSummaryVO(
+                uidFolder.getUID(message),
+                decodeText(message.getSubject()),
+                addressText(message.getFrom()),
+                toLocalDateTime(message.getSentDate()),
+                toLocalDateTime(message.getReceivedDate()),
+                message.isSet(Flags.Flag.SEEN),
+                hasAttachment(message),
+                message.getSize()
+        );
+    }
+
+    private boolean hasAttachment(Part part) {
+        try {
+            if (isAttachment(part)) {
+                return true;
+            }
+            if (part.isMimeType("multipart/*")) {
+                Multipart multipart = (Multipart) part.getContent();
+                for (int i = 0; i < multipart.getCount(); i++) {
+                    if (hasAttachment(multipart.getBodyPart(i))) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isAttachment(Part part) throws MessagingException {
+        String disposition = part.getDisposition();
+        return Part.ATTACHMENT.equalsIgnoreCase(disposition)
+                || Part.INLINE.equalsIgnoreCase(disposition) && StringUtils.hasText(part.getFileName())
+                || StringUtils.hasText(part.getFileName());
+    }
+
+    private UIDFolder requireUidFolder(Folder folder) {
+        if (folder instanceof UIDFolder uidFolder) {
+            return uidFolder;
+        }
+        throw new BusinessException(ResultCodeEnum.UNSUPPORTED_OPERATION, "当前邮箱文件夹不支持UID查询");
     }
 
     private String resolveSystemType(Folder folder) {
@@ -135,6 +251,52 @@ public class MailSpaceServiceImpl implements MailSpaceService {
             return folder.getUnreadMessageCount();
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private String decodeText(String value) {
+        if (!StringUtils.hasText(value)) {
+            return value;
+        }
+        try {
+            return MimeUtility.decodeText(value);
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
+    private String addressText(Address[] addresses) {
+        if (addresses == null || addresses.length == 0) {
+            return null;
+        }
+        return Arrays.stream(addresses)
+                .map(this::addressText)
+                .collect(Collectors.joining(", "));
+    }
+
+    private String addressText(Address address) {
+        if (address instanceof InternetAddress internetAddress) {
+            return internetAddress.toUnicodeString();
+        }
+        return address.toString();
+    }
+
+    private LocalDateTime toLocalDateTime(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+
+    private void closeQuietly(Folder folder) {
+        if (folder == null) {
+            return;
+        }
+        try {
+            if (folder.isOpen()) {
+                folder.close(false);
+            }
+        } catch (Exception ignored) {
         }
     }
 

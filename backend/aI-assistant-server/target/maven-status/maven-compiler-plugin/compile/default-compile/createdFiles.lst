@@ -1,4 +1,5 @@
 com/lucky/server/domain/entity/Classroom.class
+com/lucky/server/domain/vo/MailMessageDetailVO.class
 com/lucky/server/config/MybatisPlusConfig.class
 com/lucky/server/domain/vo/SysUserApiKeyVO.class
 com/lucky/server/service/WritingCompositionGenerationFailureService.class
@@ -117,7 +118,9 @@ com/lucky/server/common/enums/ReadingWordMaterialFailureStageEnum.class
 com/lucky/server/service/impl/ClassroomMemberServiceImpl.class
 com/lucky/server/service/WritingCompositionEvaluationFailureService.class
 com/lucky/server/domain/entity/WritingCompositionEvaluation.class
+com/lucky/server/domain/dto/MailMessagePageDTO$Filter.class
 com/lucky/server/service/impl/SysUserEmailServiceImpl.class
+com/lucky/server/service/impl/MailSpaceServiceImpl.class
 com/lucky/server/service/superadmin/impl/SuperAdminFeedbackServiceImpl.class
 com/lucky/server/config/CorsConfig.class
 com/lucky/server/mapper/SysUserTermLibraryMapper.class
@@ -125,6 +128,7 @@ com/lucky/server/controller/superadmin/SuperAdminMailAccountController.class
 com/lucky/server/service/superadmin/impl/SuperAdminLogDashboardServiceImpl$LogEntry.class
 com/lucky/server/service/ClassroomSessionStudentService.class
 com/lucky/server/service/SpeakingEvaluationService.class
+com/lucky/server/domain/dto/MailMessageDetailDTO.class
 com/lucky/server/domain/dto/SuperAdminFeedbackPageQueryDTO.class
 com/lucky/server/service/impl/SysUserMailAccountServiceImpl.class
 com/lucky/server/common/jwt/JwtUtil.class
@@ -147,6 +151,7 @@ com/lucky/server/domain/dto/SuperAdminFeedbackProcessDTO.class
 com/lucky/server/service/SysUserTermLibraryService.class
 com/lucky/server/mapper/SpeakingMaterialGenerationFailureMapper.class
 com/lucky/server/common/enums/MailAccountStatusEnum.class
+com/lucky/server/domain/vo/MailFolderVO.class
 com/lucky/server/service/SysUserApiKeyService.class
 com/lucky/server/domain/entity/SysUserMailAccount.class
 com/lucky/server/service/impl/SpeakingEvaluationServiceImpl.class
@@ -253,6 +258,7 @@ com/lucky/server/domain/entity/SpeakingMaterialGeneration.class
 com/lucky/server/agent/middleware/TimingMiddleware.class
 com/lucky/server/service/impl/ClassroomServiceImpl.class
 com/lucky/server/config/AsrModelConfig$ProviderInfo.class
+com/lucky/server/domain/vo/MailMessageDetailVO$Attachment.class
 com/lucky/server/service/impl/SysUserShortcutConfigServiceImpl.class
 com/lucky/server/domain/vo/ClassroomSessionStudentDetailVO.class
 com/lucky/server/controller/api/SysUserTermEntryController.class
@@ -332,6 +338,7 @@ com/lucky/server/service/ReadingWordMaterialService.class
 com/lucky/server/domain/vo/SysUserTermEntryVO.class
 com/lucky/server/service/superadmin/SuperAdminFeedbackService.class
 com/lucky/server/domain/vo/ClassroomMemberListVO.class
+com/lucky/server/domain/dto/MailMessagePageDTO.class
 com/lucky/server/controller/api/SysUserModelPreferenceController.class
 com/lucky/server/domain/dto/ClassroomSessionStartDTO.class
 com/lucky/server/domain/vo/SpeakingMaterialPracticeDetailVO.class
@@ -356,6 +363,7 @@ com/lucky/server/service/SysUserFeedbackService.class
 com/lucky/server/domain/dto/SysUserStudentRegisterDTO.class
 com/lucky/server/service/WritingCompositionEvaluationService.class
 com/lucky/server/config/WebSocketConfig.class
+com/lucky/server/service/MailSpaceService.class
 com/lucky/server/common/enums/SpeakingDifficultyEnum.class
 com/lucky/server/domain/dto/ReadingWordMaterialPageQueryDTO.class
 com/lucky/server/service/impl/WritingCompositionEvaluationServiceImpl$2.class
@@ -390,6 +398,7 @@ com/lucky/server/mapper/ClassroomMapper.class
 com/lucky/server/config/SecurityConfig.class
 com/lucky/server/domain/dto/WritingCompositionEvaluationPageQueryDTO$Filter.class
 com/lucky/server/config/FeishuFeedbackBotProperties.class
+com/lucky/server/domain/vo/MailMessageSummaryVO.class
 com/lucky/server/common/enums/CompositionLanguageEnum.class
 com/lucky/server/asr/AsrFactory.class
 com/lucky/server/service/impl/SysUserServiceImpl.class
