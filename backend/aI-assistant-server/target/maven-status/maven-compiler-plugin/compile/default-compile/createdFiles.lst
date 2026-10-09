@@ -17,6 +17,7 @@ com/lucky/server/handler/AudioWebSocketHandler$SessionContext.class
 com/lucky/server/common/enums/DeletedStatusEnum.class
 com/lucky/server/domain/entity/SysUserTermLibrary.class
 com/lucky/server/domain/dto/SysUserApiKeyDTO.class
+com/lucky/server/controller/api/SysUserAnnouncementController.class
 com/lucky/server/service/SysUserAiModelService.class
 com/lucky/server/controller/api/SysUserEmailController.class
 com/lucky/server/service/impl/MailSpaceServiceImpl$MailContent.class
