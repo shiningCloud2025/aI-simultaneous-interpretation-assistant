@@ -15,6 +15,7 @@ import {
   type RecentRegisterUser,
   type SkillDetail,
   type SkillItem,
+  type SkillResource,
   type UserDashboardStructure,
   type UserDashboardSummary,
   type UserTrendItem,
@@ -820,9 +821,9 @@ function AdminAccountRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AdminAccountField({ label, children }: { label: string; children: React.ReactNode }) {
+function AdminAccountField({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className="admin-account-field">
+    <label className={`admin-account-field ${className}`.trim()}>
       <span>{label}</span>
       {children}
     </label>
@@ -1669,10 +1670,17 @@ function FeedbackPanel() {
 function SkillPanel() {
   const pageSize = 10;
   const mdFileInputRef = useRef<HTMLInputElement | null>(null);
+  const resourceFileInputRef = useRef<HTMLInputElement | null>(null);
   const [data, setData] = useState<PageResult<SkillItem>>({ records: [], total: 0, size: pageSize, current: 1 });
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<SkillDetail | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', skillContent: '', overwrite: false });
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    skillContent: '',
+    resources: [] as SkillResource[],
+    overwrite: false,
+  });
   const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1692,7 +1700,7 @@ function SkillPanel() {
 
   const resetForm = () => {
     setEditing(null);
-    setForm({ name: '', description: '', skillContent: '', overwrite: false });
+    setForm({ name: '', description: '', skillContent: '', resources: [], overwrite: false });
   };
 
   const openCreate = () => {
@@ -1705,7 +1713,13 @@ function SkillPanel() {
     try {
       const detail = await adminApi.skillDetail(item.name);
       setEditing(detail);
-      setForm({ name: detail.name, description: detail.description || '', skillContent: detail.skillContent || '', overwrite: true });
+      setForm({
+        name: detail.name,
+        description: detail.description || '',
+        skillContent: detail.skillContent || '',
+        resources: detail.resources || [],
+        overwrite: true,
+      });
       setModal(nextModal);
     } catch (e: any) {
       setError(e.message || '详情加载失败');
@@ -1720,7 +1734,7 @@ function SkillPanel() {
   const save = async () => {
     if (!form.name.trim()) return setError('Skill 名称不能为空');
     try {
-      if (editing) await adminApi.updateSkill(editing.name, { description: form.description, skillContent: form.skillContent });
+      if (editing) await adminApi.updateSkill(editing.name, { description: form.description, skillContent: form.skillContent, resources: form.resources });
       else await adminApi.createSkill(form);
       closeModal();
       await load(editing ? data.current : 1);
@@ -1784,16 +1798,54 @@ function SkillPanel() {
 
   const skillMarkdownFileName = () => `${form.name.trim() || 'skill'}.md`;
 
-  const downloadSkillMarkdown = () => {
-    const blob = new Blob([form.skillContent || ''], { type: 'text/markdown;charset=utf-8' });
+  const downloadMarkdownFile = (fileName: string, content: string) => {
+    const blob = new Blob([content || ''], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = skillMarkdownFileName();
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadSkillMarkdown = () => {
+    downloadMarkdownFile(skillMarkdownFileName(), form.skillContent);
+  };
+
+  const handleResourceFiles = async (files?: FileList | null) => {
+    const fileList = Array.from(files || []);
+    if (!fileList.length) return;
+    const invalidFile = fileList.find(file => !/\.(md|markdown)$/i.test(file.name));
+    if (invalidFile) {
+      setError(`资源仅支持 .md 或 .markdown 文件：${invalidFile.name}`);
+      if (resourceFileInputRef.current) resourceFileInputRef.current.value = '';
+      return;
+    }
+    try {
+      const resources = await Promise.all(fileList.map(async (file) => ({
+        path: file.name,
+        content: await file.text(),
+      })));
+      setForm(current => {
+        const next = new Map(current.resources.map(resource => [resource.path, resource]));
+        resources.forEach(resource => next.set(resource.path, resource));
+        return { ...current, resources: Array.from(next.values()) };
+      });
+      setError('');
+    } catch {
+      setError('资源文件读取失败');
+    } finally {
+      if (resourceFileInputRef.current) resourceFileInputRef.current.value = '';
+    }
+  };
+
+  const removeResource = (path: string) => {
+    setForm(current => ({
+      ...current,
+      resources: current.resources.filter(resource => resource.path !== path),
+    }));
   };
 
   const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || pageSize)));
@@ -1882,7 +1934,7 @@ function SkillPanel() {
               <AdminAccountField label="Skill 描述">
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" disabled={modal === 'view'} />
               </AdminAccountField>
-              <AdminAccountField label="Skill 内容">
+              <AdminAccountField label="Skill 内容" className="admin-skill-wide-field">
                 {modal !== 'view' && (
                   <div className="admin-skill-md-upload">
                     <input
@@ -1916,6 +1968,52 @@ function SkillPanel() {
                     <button type="button" className="admin-btn" onClick={downloadSkillMarkdown}>下载</button>
                   </div>
                 )}
+              </AdminAccountField>
+              <AdminAccountField label="Skill 资源" className="admin-skill-wide-field">
+                {modal !== 'view' && (
+                  <div className="admin-skill-md-upload">
+                    <input
+                      ref={resourceFileInputRef}
+                      type="file"
+                      accept=".md,.markdown,text/markdown,text/plain"
+                      multiple
+                      onChange={(e) => handleResourceFiles(e.target.files)}
+                    />
+                    <div>
+                      <strong>资源 Markdown</strong>
+                      <span>可上传多个 .md 资源，同名文件会覆盖列表中的旧内容。</span>
+                    </div>
+                    <button type="button" className="admin-btn" onClick={() => resourceFileInputRef.current?.click()}>选择资源</button>
+                  </div>
+                )}
+                <div className="admin-skill-resource-list">
+                  {form.resources.map((resource) => (
+                    <div
+                      className="admin-skill-md-file admin-skill-resource-file"
+                      key={resource.path}
+                      role="button"
+                      tabIndex={0}
+                      title="双击下载资源 Markdown"
+                      onDoubleClick={() => downloadMarkdownFile(resource.path, resource.content)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') downloadMarkdownFile(resource.path, resource.content); }}
+                    >
+                      <div className="admin-skill-md-file-icon">MD</div>
+                      <div className="admin-skill-md-file-main">
+                        <strong>{resource.path}</strong>
+                        <span>{resource.content.length} 字符 · 双击下载资源</span>
+                      </div>
+                      <div className="admin-skill-resource-actions">
+                        <button type="button" className="admin-btn" onClick={() => downloadMarkdownFile(resource.path, resource.content)}>下载</button>
+                        {modal !== 'view' && <button type="button" className="admin-btn danger" onClick={() => removeResource(resource.path)}>移除</button>}
+                      </div>
+                    </div>
+                  ))}
+                  {!form.resources.length && (
+                    <div className="admin-skill-resource-empty">
+                      {modal === 'view' ? '当前 Skill 暂无资源。' : '可选：上传补充说明、教材片段、示例模板等 Markdown 资源。'}
+                    </div>
+                  )}
+                </div>
               </AdminAccountField>
             </div>
             {modal === 'create' && (

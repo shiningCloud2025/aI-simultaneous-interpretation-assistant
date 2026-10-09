@@ -2393,6 +2393,11 @@
   margin-bottom: 0;
 }
 
+.admin-skill-modal-form .admin-skill-wide-field {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
 .admin-skill-modal-form.without-name .admin-account-field:first-child {
   grid-column: 1 / -1;
 }
@@ -2490,6 +2495,34 @@
   color: #8c8b85;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.admin-skill-resource-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-skill-resource-file {
+  margin-top: 0;
+}
+
+.admin-skill-resource-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-skill-resource-empty {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  border: 1px dashed #e4dbcf;
+  border-radius: 12px;
+  background: #fbfaf7;
+  color: #8c8b85;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .admin-skill-modal .admin-skill-checkbox {

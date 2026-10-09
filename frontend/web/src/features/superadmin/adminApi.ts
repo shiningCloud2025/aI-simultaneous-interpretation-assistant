@@ -168,7 +168,13 @@ export interface SkillItem {
 
 export interface SkillDetail extends SkillItem {
   skillContent?: string;
+  resources?: SkillResource[];
   metadataJson?: string;
+}
+
+export interface SkillResource {
+  path: string;
+  content: string;
 }
 
 function qs(params: Record<string, string | number | boolean | undefined | null>) {
@@ -228,9 +234,9 @@ export const adminApi = {
   skills: (params: { pageNum: number; pageSize: number; name?: string }) =>
     apiCall<PageResult<SkillItem>>(`/superadmin/skills/page${qs(params)}`),
   skillDetail: (name: string) => apiCall<SkillDetail>(`/superadmin/skills/${encodeURIComponent(name)}`),
-  createSkill: (data: { name: string; description: string; skillContent: string; overwrite?: boolean }) =>
+  createSkill: (data: { name: string; description: string; skillContent: string; resources?: SkillResource[]; overwrite?: boolean }) =>
     apiCall<void>('/superadmin/skills', { method: 'POST', body: JSON.stringify(data) }),
-  updateSkill: (name: string, data: { description: string; skillContent: string }) =>
+  updateSkill: (name: string, data: { description: string; skillContent: string; resources?: SkillResource[] }) =>
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteSkill: (name: string) =>
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }),
