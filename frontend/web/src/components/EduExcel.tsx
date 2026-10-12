@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, Component } from 'react';
 import { Card, PageBanner } from './ui';
+import { appAlert } from '../lib/appDialog';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/styles/handsontable.min.css';
@@ -93,7 +94,7 @@ function EduExcelInner() {
     if (!f) return;
     const ext = f.name.split('.').pop()?.toLowerCase() || '';
     if (!['xlsx', 'xls', 'csv'].includes(ext)) {
-      alert('请上传 .xlsx / .xls / .csv 格式的文件');
+      void appAlert('请上传 .xlsx / .xls / .csv 格式的文件');
       return;
     }
     setFile(f);
@@ -130,7 +131,7 @@ function EduExcelInner() {
       setActiveSheet(0);
     } catch (e: any) {
       console.error(e);
-      alert('Excel 解析失败: ' + (e?.message || '未知错误'));
+      void appAlert('Excel 解析失败: ' + (e?.message || '未知错误'), '解析失败');
     } finally {
       setLoading(false);
     }
@@ -154,7 +155,7 @@ function EduExcelInner() {
       setActiveSheet(0);
     } catch (e) {
       console.error('handleNewBlank error:', e);
-      alert('新建表格失败: ' + (e as any)?.message);
+      void appAlert('新建表格失败: ' + (e as any)?.message, '新建失败');
     }
   };
 
@@ -183,7 +184,7 @@ function EduExcelInner() {
       return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
     }).join(',')).join('\n');
     downloadBlob(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }), (file?.name || 'table').replace(/\.\w+$/i, '') + '.csv');
-    alert('已导出 CSV');
+    void appAlert('已导出 CSV');
   };
 
   // 导出 Excel
@@ -199,10 +200,10 @@ function EduExcelInner() {
         XLSX.utils.book_append_sheet(wb, ws, sheet.name);
       }
       XLSX.writeFile(wb, (file?.name || 'table').replace(/\.\w+$/i, '') + '_export.xlsx');
-      alert('已导出 Excel');
+      void appAlert('已导出 Excel');
     } catch (e: any) {
       console.error(e);
-      alert('导出失败: ' + (e?.message || '未知错误'));
+      void appAlert('导出失败: ' + (e?.message || '未知错误'), '导出失败');
     }
   };
 
@@ -221,10 +222,10 @@ function EduExcelInner() {
         headStyles: { fillColor: [68, 114, 196], textColor: 255, fontStyle: 'bold' },
       });
       doc.save((file?.name || 'table').replace(/\.\w+$/i, '') + '.pdf');
-      alert('已导出 PDF');
+      void appAlert('已导出 PDF');
     } catch (e: any) {
       console.error(e);
-      alert('PDF 导出失败: ' + (e?.message || '未知错误'));
+      void appAlert('PDF 导出失败: ' + (e?.message || '未知错误'), '导出失败');
     }
   };
 

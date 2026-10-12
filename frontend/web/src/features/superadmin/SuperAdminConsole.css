@@ -2393,6 +2393,11 @@
   margin-bottom: 0;
 }
 
+.admin-skill-modal-form .admin-skill-wide-field {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
 .admin-skill-modal-form.without-name .admin-account-field:first-child {
   grid-column: 1 / -1;
 }
@@ -2402,6 +2407,122 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
   line-height: 1.7;
+}
+
+.admin-skill-md-upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px dashed #d9d0c1;
+  border-radius: 10px;
+  background: #fbfaf7;
+}
+
+.admin-skill-md-upload input {
+  display: none;
+}
+
+.admin-skill-md-upload strong {
+  display: block;
+  color: #253430;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.admin-skill-md-upload span {
+  display: block;
+  margin-top: 3px;
+  color: #8c8b85;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-skill-md-file {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e6ded0;
+  border-radius: 12px;
+  background: #fbfaf7;
+  cursor: default;
+  user-select: none;
+}
+
+.admin-skill-md-file:focus {
+  outline: none;
+  border-color: #2f7066;
+  box-shadow: 0 0 0 3px rgba(47, 112, 102, .12);
+}
+
+.admin-skill-md-file-icon {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #244f4b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.admin-skill-md-file-main {
+  min-width: 0;
+}
+
+.admin-skill-md-file-main strong {
+  display: block;
+  overflow: hidden;
+  color: #253430;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-skill-md-file-main span {
+  display: block;
+  margin-top: 4px;
+  color: #8c8b85;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-skill-resource-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-skill-resource-file {
+  margin-top: 0;
+}
+
+.admin-skill-resource-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-skill-resource-empty {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  border: 1px dashed #e4dbcf;
+  border-radius: 12px;
+  background: #fbfaf7;
+  color: #8c8b85;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .admin-skill-modal .admin-skill-checkbox {

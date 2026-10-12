@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, PageBanner, Select } from './ui';
 import { apiCall } from '../lib/api';
 import { LlmModelPreference } from './LlmModelPreference';
+import { appAlert } from '../lib/appDialog';
 
 // 与后端枚举保持一致（code 值）
 const LANGUAGES = [
@@ -177,7 +178,7 @@ export function EduWriting() {
 
   const handleGenerate = async () => {
     if (!stage || !genre || !difficulty || !scene || currentStages.length === 0 || currentGenres.length === 0) {
-      alert('请选择完整的作文生成条件');
+      void appAlert('请选择完整的作文生成条件');
       return;
     }
     setLoading(true);
@@ -196,7 +197,7 @@ export function EduWriting() {
       setTopic(data);
       loadHistory(1, true);
     } catch (e: any) {
-      alert(e?.message || '生成失败');
+      void appAlert(e?.message || '生成失败', '生成失败');
       loadHistory(1, false);
     } finally {
       setLoading(false);

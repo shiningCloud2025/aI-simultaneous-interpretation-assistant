@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, Select } from './ui';
+import { appAlert } from '../lib/appDialog';
 
 export function StaticTrans() {
   const [result, setResult] = useState(false);
@@ -10,7 +11,7 @@ export function StaticTrans() {
         <div style={{ fontSize: 48, marginBottom: 16 }}>📁</div>
         <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>静态转译</div>
         <div style={{ fontSize: 13, color: '#999', marginBottom: 24 }}>上传音频文件，自动识别语音并翻译<br />支持 MP3 / WAV / M4A / WebM 格式</div>
-        <div onClick={() => alert('文件选择器已打开（模拟）')} style={{ border: '2px dashed #e8e6e1', borderRadius: 14, padding: 40, marginBottom: 20, cursor: 'pointer' }}>
+        <div onClick={() => void appAlert('文件选择器已打开（模拟）')} style={{ border: '2px dashed #e8e6e1', borderRadius: 14, padding: 40, marginBottom: 20, cursor: 'pointer' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>☁️</div>
           <div style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>点击上传或拖拽音频文件到此处</div>
           <div style={{ fontSize: 12, color: '#bbb' }}>最大支持 500MB · 最长 4 小时</div>

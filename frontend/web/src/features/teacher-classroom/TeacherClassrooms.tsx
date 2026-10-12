@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
+import { appConfirm } from '../../lib/appDialog';
 import {
   classroomRepository,
   type ClassroomStatus,
@@ -109,8 +110,8 @@ export function TeacherClassrooms() {
     }
   };
 
-  const removeMember = (memberId: string) => {
-    if (!selectedClassroom || !window.confirm('确定将该学生移出课堂吗？')) return;
+  const removeMember = async (memberId: string) => {
+    if (!selectedClassroom || !await appConfirm({ title: '移出学生', message: '确定将该学生移出课堂吗？', confirmText: '移出', danger: true })) return;
     replaceClassrooms(classroomRepository.removeMember(ownerKey, selectedClassroom.id, memberId));
     showToast('学生已移出课堂');
   };
@@ -121,8 +122,8 @@ export function TeacherClassrooms() {
     showToast('课堂已开始');
   };
 
-  const endClassroom = (classroom: TeacherClassroom) => {
-    if (!window.confirm('确定结束当前课堂吗？')) return;
+  const endClassroom = async (classroom: TeacherClassroom) => {
+    if (!await appConfirm({ title: '结束课堂', message: '确定结束当前课堂吗？结束后课堂将进入已结束状态。', confirmText: '结束', danger: true })) return;
     replaceClassrooms(classroomRepository.end(ownerKey, classroom.id));
     showToast('课堂已结束');
   };
