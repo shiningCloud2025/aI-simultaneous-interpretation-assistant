@@ -6,7 +6,7 @@
 }
 
 .mail-workspace.account-mode {
-  max-width: 920px;
+  max-width: 100%;
   margin: 0;
 }
 
@@ -85,6 +85,16 @@
   font-size: 13px;
 }
 
+.mail-alert.compact {
+  max-width: 760px;
+  margin-top: 16px;
+}
+
+.mail-space-alert {
+  grid-column: 1 / -1;
+  margin: 14px 18px 0;
+}
+
 .mail-alert button {
   border: 0;
   background: transparent;
@@ -107,12 +117,16 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  max-width: 640px;
+  max-width: 980px;
   margin-top: 18px;
 }
 
 .mail-account-card {
   padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
   border: 1px solid #e2e8e2;
   border-radius: 14px;
   background: #fffdfa;
@@ -153,7 +167,7 @@
 }
 
 .mail-account-meta {
-  margin-top: 14px;
+  margin-top: 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -184,13 +198,14 @@
 }
 
 .mail-account-error {
+  grid-column: 1 / -1;
   margin-top: 10px;
   color: #b65242;
   line-height: 1.6;
 }
 
 .mail-account-actions {
-  margin-top: 14px;
+  margin-top: 0;
   display: flex;
   gap: 8px;
 }
@@ -529,6 +544,17 @@
   justify-content: space-between;
 }
 
+.mail-modal-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #f1c9c4;
+  border-radius: 10px;
+  background: #fff6f4;
+  color: #b64f42;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .mail-modal h2 {
   margin: 0;
   color: #203330;
@@ -686,5 +712,13 @@
   .mail-ghost,
   .mail-account-actions button {
     width: 100%;
+  }
+
+  .mail-account-card {
+    grid-template-columns: 1fr;
+  }
+
+  .mail-account-meta {
+    justify-content: flex-start;
   }
 }

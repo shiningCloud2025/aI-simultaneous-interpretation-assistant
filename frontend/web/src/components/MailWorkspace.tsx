@@ -136,6 +136,7 @@ export function MailWorkspace() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [modalError, setModalError] = useState('');
   const [notice, setNotice] = useState('');
   const [showBindModal, setShowBindModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState<MailAccount | null>(null);
@@ -190,8 +191,9 @@ export function MailWorkspace() {
   };
 
   const saveAccount = async () => {
-    if (!form.email.trim()) return setError('请输入邮箱地址');
-    if (!form.mailAuthCode.trim()) return setError('请输入邮箱客户端授权码');
+    setModalError('');
+    if (!form.email.trim()) return setModalError('请输入邮箱地址');
+    if (!form.mailAuthCode.trim()) return setModalError('请输入邮箱客户端授权码');
     try {
       const payload = {
         ...form,
@@ -208,18 +210,20 @@ export function MailWorkspace() {
       showNotice(editingAccount ? '邮箱绑定已更新' : '邮箱已绑定');
       await loadAccounts();
     } catch (cause) {
-      setError(errorText(cause));
+      setModalError(errorText(cause));
     }
   };
 
   const openCreateModal = () => {
     setEditingAccount(null);
+    setModalError('');
     setForm(emptyForm);
     setShowBindModal(true);
   };
 
   const openEditModal = (account: MailAccount) => {
     setEditingAccount(account);
+    setModalError('');
     setForm({
       provider: account.provider || 'QQ',
       email: account.email || '',
@@ -334,8 +338,6 @@ export function MailWorkspace() {
 
   return (
     <div className={`mail-workspace ${activeAccount ? 'space-mode' : 'account-mode'}`}>
-      {error && <div className="mail-alert"><span>{error}</span><button onClick={() => setError('')}><X size={15} /></button></div>}
-
       {!activeAccount ? (
         <section className="mail-account-panel">
           <div className="mail-section-head">
@@ -348,6 +350,7 @@ export function MailWorkspace() {
               <button className="mail-primary" onClick={openCreateModal}><Plus size={16} />绑定邮箱</button>
             </div>
           </div>
+          {error && <div className="mail-alert compact"><span>{error}</span><button onClick={() => setError('')}><X size={15} /></button></div>}
 
           {accounts.length === 0 && !loadingAccounts ? (
             <div className="mail-empty">
@@ -386,6 +389,7 @@ export function MailWorkspace() {
         </section>
       ) : (
         <section className="mail-space">
+          {error && <div className="mail-alert mail-space-alert"><span>{error}</span><button onClick={() => setError('')}><X size={15} /></button></div>}
           <aside className="mail-folder-sidebar">
             <button className="mail-back" onClick={() => { setActiveAccount(null); setSelectedMessage(null); }}>← 邮箱列表</button>
             <div className="mail-current-account">
@@ -445,17 +449,19 @@ export function MailWorkspace() {
           if (event.target === event.currentTarget) {
             setShowBindModal(false);
             setEditingAccount(null);
+            setModalError('');
           }
         }}>
           <div className="mail-modal">
-            <header><h2>{editingAccount ? '编辑邮箱绑定' : '绑定邮箱'}</h2><button onClick={() => { setShowBindModal(false); setEditingAccount(null); }}><X size={17} /></button></header>
+            <header><h2>{editingAccount ? '编辑邮箱绑定' : '绑定邮箱'}</h2><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}><X size={17} /></button></header>
+            {modalError && <div className="mail-modal-error">{modalError}</div>}
             <label>邮箱厂商<select value={form.provider} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, provider: event.target.value })}>{providers.map(provider => <option key={provider.value} value={provider.value}>{provider.label}</option>)}</select></label>
             <p className="mail-form-hint">{providers.find(item => item.value === form.provider)?.hint}</p>
             <label>邮箱地址<input value={form.email} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
             <label>备注名<input value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} placeholder="例如 我的QQ邮箱，可不填" /></label>
             <label>客户端授权码<input value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder={editingAccount ? '重新输入授权码后保存' : 'QQ/163 邮箱开启 IMAP 后生成的授权码'} /></label>
             <label>平台访问密码<input type="password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder={editingAccount ? '重新设置访问密码，可不填' : '进入该邮箱前需要输入，可不填'} /></label>
-            <div className="mail-modal-actions"><button onClick={() => { setShowBindModal(false); setEditingAccount(null); }}>取消</button><button className="mail-primary" onClick={saveAccount}>{editingAccount ? '保存修改' : '保存绑定'}</button></div>
+            <div className="mail-modal-actions"><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}>取消</button><button className="mail-primary" onClick={saveAccount}>{editingAccount ? '保存修改' : '保存绑定'}</button></div>
           </div>
         </div>
       )}

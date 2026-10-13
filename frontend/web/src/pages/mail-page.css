@@ -7,7 +7,7 @@
 }
 
 .mail-page-topbar {
-  height: 76px;
+  height: 64px;
   display: grid;
   grid-template-columns: minmax(150px, 1fr) auto;
   align-items: center;
@@ -29,16 +29,15 @@
 
 .mail-page-brand {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
   justify-self: start;
   text-align: left;
 }
 
 .mail-page-brand span {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   border-radius: 11px;
@@ -48,8 +47,8 @@
 
 .mail-page-brand strong {
   color: #223632;
-  font-size: 14px;
-  line-height: 1;
+  font-size: 17px;
+  line-height: 1.2;
 }
 
 .mail-page-actions {
