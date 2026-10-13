@@ -86,6 +86,7 @@ export function MainLayout() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showMail, setShowMail] = useState(false);
   const changePanel = (panel: string) => {
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
@@ -173,6 +174,7 @@ export function MainLayout() {
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button onClick={() => setShowCalendar(true)} className="btn">📅 日历</button>
+            <button onClick={() => setShowMail(true)} className="btn">📧 邮箱</button>
             <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
@@ -193,6 +195,11 @@ export function MainLayout() {
             onOpenPanel={panel => { setShowCalendar(false); changePanel(panel); }}
             onOpenSession={sessionId => { setShowCalendar(false); setSearchParams({ panel: 'classrooms', sessionId: String(sessionId) }); }}
           />
+        </CalendarModal>
+      )}
+      {showMail && (
+        <CalendarModal title="邮箱空间" onClose={() => setShowMail(false)}>
+          <MailWorkspace />
         </CalendarModal>
       )}
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}

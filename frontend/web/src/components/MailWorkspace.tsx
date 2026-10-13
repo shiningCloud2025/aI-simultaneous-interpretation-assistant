@@ -429,7 +429,7 @@ export function MailWorkspace() {
             <p className="mail-form-hint">{providers.find(item => item.value === form.provider)?.hint}</p>
             <label>邮箱地址<input value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
             <label>备注名<input value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} placeholder="例如 我的QQ邮箱，可不填" /></label>
-            <label>客户端授权码<input type="password" value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder="QQ/163 邮箱开启 IMAP 后生成的授权码" /></label>
+            <label>客户端授权码<input value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder="QQ/163 邮箱开启 IMAP 后生成的授权码" /></label>
             <label>平台访问密码<input type="password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder="进入该邮箱前需要输入，可不填" /></label>
             <div className="mail-modal-actions"><button onClick={() => setShowBindModal(false)}>取消</button><button className="mail-primary" onClick={saveAccount}>保存绑定</button></div>
           </div>

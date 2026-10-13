@@ -22,6 +22,7 @@ import {
 } from './adminApi';
 import { AdminCalendarPanel } from './AdminCalendarPanel';
 import { CalendarModal } from '../../components/CalendarModal';
+import { MailWorkspace } from '../../components/MailWorkspace';
 import './SuperAdminConsole.css';
 
 type AdminPanelKey =
@@ -368,6 +369,7 @@ export function SuperAdminConsole() {
   const [starLevel, setStarLevel] = useState<StarNavigationLevel>('primary');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showMail, setShowMail] = useState(false);
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
   const logout = useAppStore((s) => s.logout);
@@ -495,6 +497,7 @@ export function SuperAdminConsole() {
           </div>
           <div className="admin-top-actions">
             <button className="admin-btn" onClick={() => setShowCalendar(true)}>📅 日历</button>
+            <button className="admin-btn" onClick={() => setShowMail(true)}>📧 邮箱</button>
             <button
               className={`admin-btn ${mode === 'star' || mode === 'star-content' ? 'primary' : ''}`}
               onClick={() => {
@@ -549,6 +552,11 @@ export function SuperAdminConsole() {
       {showCalendar && (
         <CalendarModal title="平台日历" onClose={() => setShowCalendar(false)}>
           <AdminCalendarPanel />
+        </CalendarModal>
+      )}
+      {showMail && (
+        <CalendarModal title="邮箱空间" onClose={() => setShowMail(false)}>
+          <MailWorkspace />
         </CalendarModal>
       )}
     </div>

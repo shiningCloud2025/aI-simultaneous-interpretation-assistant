@@ -6,6 +6,7 @@ const groups = [
     title: '账号与设备',
     items: [
       { id: 'account', label: '个人中心', description: '查看和修改个人资料、账号信息。', icon: UserRound },
+      { id: 'mail', label: '邮箱空间', description: '绑定 QQ 或 163 邮箱，查看邮件内容。', icon: Mail },
       { id: 'audio', label: '音频设备', description: '选择麦克风和扬声器。', icon: Headphones },
       { id: 'shortcuts', label: '快捷键', description: '查看和调整常用快捷操作。', icon: Keyboard },
     ],
@@ -14,7 +15,6 @@ const groups = [
     title: '服务与帮助',
     items: [
       { id: 'api-key', label: 'API Key 配置', description: '管理自己使用的模型服务密钥。', icon: KeyRound },
-      { id: 'mail', label: '邮箱空间', description: '绑定 QQ 或 163 邮箱，查看邮件内容。', icon: Mail },
       { id: 'term-library', label: '术语库', description: '整理翻译时使用的专有词汇。', icon: BookOpen },
       { id: 'help', label: '帮助反馈', description: '查看帮助，反馈使用中遇到的问题。', icon: CircleHelp },
       { id: 'about', label: '关于', description: '查看平台信息。', icon: Info },
