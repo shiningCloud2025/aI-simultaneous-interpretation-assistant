@@ -207,6 +207,7 @@ public class MailSpaceServiceImpl implements MailSpaceService {
         properties.put("mail.imaps.host", account.getImapHost());
         properties.put("mail.imaps.port", String.valueOf(account.getImapPort()));
         properties.put("mail.imaps.ssl.enable", "true");
+        properties.put("mail.imaps.ssl.trust", account.getImapHost());
         properties.put("mail.imaps.connectiontimeout", "8000");
         properties.put("mail.imaps.timeout", "8000");
         return properties;

@@ -29,6 +29,7 @@ public class MailConnectionTester {
         properties.put("mail.imaps.host", account.getImapHost());
         properties.put("mail.imaps.port", String.valueOf(account.getImapPort()));
         properties.put("mail.imaps.ssl.enable", "true");
+        properties.put("mail.imaps.ssl.trust", account.getImapHost());
         properties.put("mail.imaps.connectiontimeout", "8000");
         properties.put("mail.imaps.timeout", "8000");
 
@@ -58,6 +59,7 @@ public class MailConnectionTester {
         properties.put("mail.smtp.host", account.getSmtpHost());
         properties.put("mail.smtp.port", String.valueOf(account.getSmtpPort()));
         properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.ssl.trust", account.getSmtpHost());
         properties.put("mail.smtp.connectiontimeout", "8000");
         properties.put("mail.smtp.timeout", "8000");
 
