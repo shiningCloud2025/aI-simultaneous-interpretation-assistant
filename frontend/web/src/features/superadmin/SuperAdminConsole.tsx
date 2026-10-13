@@ -27,6 +27,11 @@ import {
 import { AdminCalendarPanel } from './AdminCalendarPanel';
 import { CalendarModal } from '../../components/CalendarModal';
 import './SuperAdminConsole.css';
+import '@wangeditor/editor/dist/css/style.css';
+
+let RichEditor: any;
+let RichToolbar: any;
+let richEditorLoaded = false;
 
 type AdminPanelKey =
   | 'user-dashboard'
@@ -830,7 +835,7 @@ function AdminAccountRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AdminAccountField({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
+function AdminAccountField({ label, children, className = '' }: { label: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
     <label className={`admin-account-field ${className}`.trim()}>
       <span>{label}</span>
@@ -1684,6 +1689,79 @@ const emptyAnnouncementForm: AnnouncementSaveInput = {
   status: 0,
 };
 
+function AdminRichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  minHeight,
+  disabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  minHeight: number;
+  disabled?: boolean;
+}) {
+  const [editor, setEditor] = useState<any>(null);
+  const [ready, setReady] = useState(richEditorLoaded);
+
+  useEffect(() => {
+    if (richEditorLoaded) {
+      setReady(true);
+      return;
+    }
+    let cancelled = false;
+    import('@wangeditor/editor-for-react').then(module => {
+      RichEditor = module.Editor;
+      RichToolbar = module.Toolbar;
+      richEditorLoaded = true;
+      if (!cancelled) setReady(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (editor) editor.disable();
+    if (editor && !disabled) editor.enable();
+  }, [editor, disabled]);
+
+  useEffect(() => () => {
+    if (editor) editor.destroy();
+  }, [editor]);
+
+  const editorConfig = {
+    placeholder,
+    autoFocus: false,
+    readOnly: Boolean(disabled),
+    MENU_CONF: {
+      uploadImage: {
+        async customUpload(file: File, insertFn: (url: string, alt?: string, href?: string) => void) {
+          const uploaded = await uploadFile<{ url: string }>(file);
+          if (uploaded.url) insertFn(uploaded.url, file.name, uploaded.url);
+        },
+      },
+    },
+  };
+
+  if (!ready || !RichEditor || !RichToolbar) {
+    return <div className="admin-rich-editor-loading">富文本编辑器加载中...</div>;
+  }
+
+  return (
+    <div className={`admin-rich-editor ${disabled ? 'disabled' : ''}`}>
+      {!disabled && <RichToolbar editor={editor} defaultConfig={{}} mode="default" />}
+      <RichEditor
+        defaultConfig={editorConfig}
+        value={value}
+        onCreated={setEditor}
+        onChange={(instance: any) => onChange(instance.getHtml())}
+        mode="default"
+        style={{ minHeight, overflowY: 'auto' }}
+      />
+    </div>
+  );
+}
+
 function AnnouncementAdminPanel() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [data, setData] = useState<PageResult<AnnouncementItem>>({ records: [], total: 0, size: 10, current: 1 });
@@ -1885,30 +1963,42 @@ function AnnouncementAdminPanel() {
             </div>
 
             <div className="admin-announcement-form">
-              <AdminAccountField label="公告标题">
+              <AdminAccountField label={<span>公告标题<b className="form-required">*</b></span>}>
                 <input value={form.title} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="请输入公告标题" />
               </AdminAccountField>
-              <AdminAccountField label="标题富文本（可选）">
-                <input value={form.titleContent || ''} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, titleContent: e.target.value })} placeholder="不填则使用公告标题" />
+              <AdminAccountField label="标题富文本（可选）" className="admin-announcement-wide">
+                <AdminRichTextEditor
+                  value={form.titleContent || ''}
+                  disabled={modal === 'view'}
+                  placeholder="可设置加粗、颜色等标题展示效果；不填则使用公告标题"
+                  minHeight={90}
+                  onChange={(value) => setForm({ ...form, titleContent: value })}
+                />
               </AdminAccountField>
               <AdminAccountField label="封面图 URL（可选）">
                 <input value={form.coverUrl || ''} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, coverUrl: e.target.value })} placeholder="可粘贴图片 URL" />
               </AdminAccountField>
-              <AdminAccountField label="公告状态">
+              <AdminAccountField label={<span>公告状态<b className="form-required">*</b></span>}>
                 <select value={form.status} disabled={modal === 'view' || Boolean(active)} onChange={(e) => setForm({ ...form, status: Number(e.target.value) })}>
                   <option value={0}>草稿</option>
                   <option value={1}>已发布</option>
                 </select>
               </AdminAccountField>
-              <AdminAccountField label="公告正文 HTML" className="admin-announcement-wide">
+              <AdminAccountField label={<span>公告正文<b className="form-required">*</b></span>} className="admin-announcement-wide">
+                <AdminRichTextEditor
+                  value={form.content}
+                  disabled={modal === 'view'}
+                  placeholder="请输入公告正文，支持图片、标题、列表和基础排版"
+                  minHeight={240}
+                  onChange={(value) => setForm({ ...form, content: value })}
+                />
                 {modal !== 'view' && (
                   <div className="admin-announcement-tools">
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => insertImage(e.target.files?.[0])} />
                     <button type="button" className="admin-btn" onClick={() => fileInputRef.current?.click()}>上传图片并插入正文</button>
-                    <span>支持普通文字、HTML 标签和图片。</span>
+                    <span>也可以直接在富文本编辑器中粘贴图片。</span>
                   </div>
                 )}
-                <textarea className="admin-textarea admin-announcement-textarea" value={form.content} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="<p>请输入公告正文</p>" />
               </AdminAccountField>
               <div className="admin-announcement-preview">
                 <span>预览</span>

@@ -2324,6 +2324,40 @@
   font-size: 12px;
 }
 
+.admin-rich-editor,
+.admin-rich-editor-loading {
+  overflow: hidden;
+  border: 1px solid #eee8dd;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-rich-editor-loading {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: #8c8b85;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-rich-editor.disabled {
+  background: #fbfaf7;
+}
+
+.admin-rich-editor .w-e-toolbar {
+  border-bottom: 1px solid #eee8dd !important;
+  background: #fbfaf7 !important;
+}
+
+.admin-rich-editor .w-e-text-container {
+  background: #fff !important;
+}
+
+.admin-rich-editor.disabled .w-e-text-container {
+  background: #fbfaf7 !important;
+}
+
 .admin-announcement-textarea {
   min-height: 260px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
