@@ -5,6 +5,11 @@ body {
   background: #f5f3f0; color: #333;
   transition: background .3s, color .3s;
 }
+.form-required {
+  margin-left: 4px;
+  color: #d94f3f;
+  font-weight: 800;
+}
 .card { background: #fff; border: 1px solid #f0efec; border-radius: 14px; padding: 20px; margin-bottom: 16px; transition: background .3s, border-color .3s; }
 .btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; background: #f5f3f0; border: none; color: #666; cursor: pointer; }
 .theme-select { padding: 6px 10px; border: 1px solid #e8e6e1; border-radius: 8px; font-size: 12px; color: #333; background: #fff; outline: none; cursor: pointer; }

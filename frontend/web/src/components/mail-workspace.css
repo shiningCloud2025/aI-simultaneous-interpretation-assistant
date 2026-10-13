@@ -114,17 +114,22 @@
 }
 
 .mail-account-grid {
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  max-width: 980px;
+  max-width: none;
   margin-top: 18px;
 }
 
 .mail-account-card {
+  width: 100%;
   padding: 16px 18px;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto auto;
+  grid-template-columns: minmax(320px, 1fr) minmax(260px, auto) auto;
+  grid-template-areas:
+    "main meta actions"
+    "error error error";
   align-items: center;
   gap: 16px;
   border: 1px solid #e2e8e2;
@@ -133,6 +138,8 @@
 }
 
 .mail-account-main {
+  grid-area: main;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -167,12 +174,26 @@
 }
 
 .mail-account-meta {
+  grid-area: meta;
   margin-top: 0;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: #8a958f;
+}
+
+.mail-account-badges,
+.mail-account-times {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.mail-account-times {
   color: #8a958f;
+  line-height: 1.7;
 }
 
 .mail-status,
@@ -198,16 +219,20 @@
 }
 
 .mail-account-error {
-  grid-column: 1 / -1;
-  margin-top: 10px;
+  grid-area: error;
+  margin-top: 0;
   color: #b65242;
   line-height: 1.6;
 }
 
 .mail-account-actions {
+  grid-area: actions;
   margin-top: 0;
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .mail-account-actions button {
@@ -716,6 +741,11 @@
 
   .mail-account-card {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "meta"
+      "error"
+      "actions";
   }
 
   .mail-account-meta {

@@ -371,9 +371,14 @@ export function MailWorkspace() {
                     </div>
                   </div>
                   <div className="mail-account-meta">
-                    <span className={`mail-status status-${account.status}`}>{account.statusText}</span>
-                    {account.accessProtected && <span className="mail-protected"><KeyRound size={13} />访问密码</span>}
-                    <span>{account.lastTestTime ? `测试于 ${formatTime(account.lastTestTime)}` : '暂未测试'}</span>
+                    <div className="mail-account-badges">
+                      <span className={`mail-status status-${account.status}`}>{account.statusText}</span>
+                      {account.accessProtected && <span className="mail-protected"><KeyRound size={13} />访问密码</span>}
+                    </div>
+                    <div className="mail-account-times">
+                      <span>绑定于 {formatTime(account.createTime)}</span>
+                      <span>{account.lastTestTime ? `测试于 ${formatTime(account.lastTestTime)}` : '暂未测试'}</span>
+                    </div>
                   </div>
                   {account.lastError && <div className="mail-account-error">{account.lastError}</div>}
                   <div className="mail-account-actions">
@@ -455,12 +460,12 @@ export function MailWorkspace() {
           <div className="mail-modal">
             <header><h2>{editingAccount ? '编辑邮箱绑定' : '绑定邮箱'}</h2><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}><X size={17} /></button></header>
             {modalError && <div className="mail-modal-error">{modalError}</div>}
-            <label>邮箱厂商<select value={form.provider} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, provider: event.target.value })}>{providers.map(provider => <option key={provider.value} value={provider.value}>{provider.label}</option>)}</select></label>
+            <label><span>邮箱类型<b className="form-required">*</b></span><select value={form.provider} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, provider: event.target.value })}>{providers.map(provider => <option key={provider.value} value={provider.value}>{provider.label}</option>)}</select></label>
             <p className="mail-form-hint">{providers.find(item => item.value === form.provider)?.hint}</p>
-            <label>邮箱地址<input value={form.email} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
-            <label>备注名<input value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} placeholder="例如 我的QQ邮箱，可不填" /></label>
-            <label>客户端授权码<input value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder={editingAccount ? '重新输入授权码后保存' : 'QQ/163 邮箱开启 IMAP 后生成的授权码'} /></label>
-            <label>平台访问密码<input type="password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder={editingAccount ? '重新设置访问密码，可不填' : '进入该邮箱前需要输入，可不填'} /></label>
+            <label><span>邮箱账号<b className="form-required">*</b></span><input autoComplete="off" value={form.email} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
+            <label>邮箱命名<input autoComplete="off" value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} placeholder="例如 我的QQ邮箱，可不填" /></label>
+            <label><span>客户端授权码<b className="form-required">*</b></span><input autoComplete="new-password" name="mail-client-auth-code" value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder={editingAccount ? '重新输入授权码后保存' : 'QQ/163 邮箱开启 IMAP 后生成的授权码'} /></label>
+            <label>平台访问密码<input type="password" autoComplete="new-password" name="mail-access-password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder={editingAccount ? '重新设置访问密码，可不填' : '进入该邮箱前需要输入，可不填'} /></label>
             <div className="mail-modal-actions"><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}>取消</button><button className="mail-primary" onClick={saveAccount}>{editingAccount ? '保存修改' : '保存绑定'}</button></div>
           </div>
         </div>
