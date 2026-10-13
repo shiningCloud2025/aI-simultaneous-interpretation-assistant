@@ -17,6 +17,7 @@ import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
+import { MailWorkspace } from '../components/MailWorkspace';
 import { useState, useEffect } from 'react';
 import { isTeacherUser } from '../lib/authRole';
 import { PersonalWorkspace } from '../components/PersonalWorkspace';
@@ -62,6 +63,7 @@ const panelComponents: Record<string, React.FC> = {
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview, 'writing-tutor': EduWritingTutor,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
+  'mail': MailWorkspace,
 };
 
 const panelTitles: Record<string, string> = {
@@ -70,9 +72,10 @@ const panelTitles: Record<string, string> = {
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅', 'writing-tutor': '已批阅作文答疑',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库', 'personal': '个人工作台', 'classrooms': '我的课堂', 'tools': '通用工具',
+  'mail': '邮箱空间',
 };
 
-const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'term-library', 'help', 'about']);
+const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'mail', 'term-library', 'help', 'about']);
 
 export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();

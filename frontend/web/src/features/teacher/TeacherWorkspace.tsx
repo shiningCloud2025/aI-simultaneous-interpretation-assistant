@@ -10,6 +10,7 @@ import { AudioSettings } from '../../components/AudioSettings';
 import { ShortcutSettings } from '../../components/ShortcutSettings';
 import { ApiKeyConfig } from '../../components/ApiKeyConfig';
 import { TermLibraryPage } from '../../components/TermLibraryPage';
+import { MailWorkspace } from '../../components/MailWorkspace';
 import { AboutPage } from '../../components/AboutPage';
 import { PlatformSkillsDialog } from '../../components/PlatformSkillsDialog';
 import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBadge';
@@ -250,7 +251,7 @@ export function TeacherWorkspace() {
   const isStudentSection = page === 'preview' || page === 'tools' && !isUtilityTool;
   const isToolSection = page === 'utilities' || isUtilityTool;
   const isPersonalSection = page === 'personal' || page === 'profile' || page === 'settings' || page === 'help';
-  const personalSettingTitles: Record<string, string> = { audio: '音频设备', shortcuts: '快捷键', 'api-key': 'API Key 配置', 'term-library': '术语库', about: '关于' };
+  const personalSettingTitles: Record<string, string> = { audio: '音频设备', shortcuts: '快捷键', 'api-key': 'API Key 配置', mail: '邮箱空间', 'term-library': '术语库', about: '关于' };
   const currentTitle = page === 'home' ? '教学仪表盘'
     : page === 'classrooms' ? room?.id === entityId && entityId ? room.name : '我的课堂'
     : page === 'sessions' ? session?.id === entityId && entityId ? session.sessionName : '上课记录'
@@ -381,6 +382,7 @@ export function TeacherWorkspace() {
         {page === 'settings' && rawId === 'audio' && <Embedded title="音频设备" onBack={() => go('/teacher/personal')}><AudioSettings /></Embedded>}
         {page === 'settings' && rawId === 'shortcuts' && <Embedded title="快捷键" onBack={() => go('/teacher/personal')}><ShortcutSettings /></Embedded>}
         {page === 'settings' && rawId === 'api-key' && <Embedded title="API Key 配置" onBack={() => go('/teacher/personal')}><ApiKeyConfig /></Embedded>}
+        {page === 'settings' && rawId === 'mail' && <Embedded title="邮箱空间" subtitle="绑定邮箱并查看邮件内容。" onBack={() => go('/teacher/personal')}><MailWorkspace /></Embedded>}
         {page === 'settings' && rawId === 'term-library' && <Embedded title="术语库" onBack={() => go('/teacher/personal')}><TermLibraryPage /></Embedded>}
         {page === 'settings' && rawId === 'about' && <Embedded title="关于" subtitle="平台信息" onBack={() => go('/teacher/personal')}><AboutPage /></Embedded>}
       </div>
