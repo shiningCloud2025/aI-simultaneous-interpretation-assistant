@@ -296,8 +296,8 @@ export function TeacherWorkspace() {
         </div>
         <div className="teacher-top-actions">
           {isClassroomSection && <button className="teacher-icon-button" title="刷新数据" aria-label="刷新数据" onClick={reload}><RefreshCw size={17} /></button>}
-          <button className="teacher-icon-button" title="教学日历" aria-label="教学日历" onClick={() => setShowCalendar(true)}><CalendarDays size={17} /></button>
-          <button className="teacher-icon-button" title="邮箱空间" aria-label="邮箱空间" onClick={() => go('/mail')}><Mail size={17} /></button>
+          <button className="teacher-top-link-button" onClick={() => setShowCalendar(true)}><CalendarDays size={16} />日历</button>
+          <button className="teacher-top-link-button" onClick={() => go('/mail')}><Mail size={16} />邮箱</button>
           <button className="teacher-skill-button" title="平台 Skill" aria-label="平台 Skill" onClick={() => setShowSkillModal(true)}><Puzzle size={16} />平台 Skill</button>
           <label className="teacher-theme-control">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}<select aria-label="选择背景" value={theme} onChange={event => setTheme(event.target.value)}><option value="light">浅色背景</option><option value="dark">深色背景</option></select></label>
           <button className="teacher-exit-button" onClick={() => { logout(); navigate('/login'); }}><LogOut size={16} />退出</button>

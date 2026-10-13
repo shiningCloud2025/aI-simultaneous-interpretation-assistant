@@ -97,8 +97,54 @@ const emptyForm = {
   accessPassword: '',
 };
 
+const verifiedAccountStorageKey = 'mail-space-verified-account-ids';
+const activeAccountStorageKey = 'mail-space-active-account-id';
+
 function request<T>(path: string, options?: RequestInit) {
   return apiCall<T>(path, options);
+}
+
+function readVerifiedAccountIds() {
+  try {
+    const raw = sessionStorage.getItem(verifiedAccountStorageKey);
+    const ids = raw ? JSON.parse(raw) : [];
+    return new Set<number>(Array.isArray(ids) ? ids.map(Number).filter(Number.isFinite) : []);
+  } catch {
+    return new Set<number>();
+  }
+}
+
+function writeVerifiedAccountIds(ids: Set<number>) {
+  try {
+    sessionStorage.setItem(verifiedAccountStorageKey, JSON.stringify([...ids]));
+  } catch {
+    // 会话缓存不可用时，不影响邮箱基础使用。
+  }
+}
+
+function readActiveAccountId() {
+  try {
+    const value = Number(sessionStorage.getItem(activeAccountStorageKey));
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeActiveAccountId(id: number) {
+  try {
+    sessionStorage.setItem(activeAccountStorageKey, String(id));
+  } catch {
+    // 会话缓存不可用时，不影响邮箱基础使用。
+  }
+}
+
+function clearActiveAccountId() {
+  try {
+    sessionStorage.removeItem(activeAccountStorageKey);
+  } catch {
+    // 会话缓存不可用时，不影响邮箱基础使用。
+  }
 }
 
 const mailApi = {
@@ -124,7 +170,7 @@ const mailApi = {
 export function MailWorkspace() {
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [activeAccount, setActiveAccount] = useState<MailAccount | null>(null);
-  const [verifiedAccountIds, setVerifiedAccountIds] = useState<Set<number>>(new Set());
+  const [verifiedAccountIds, setVerifiedAccountIds] = useState<Set<number>>(() => readVerifiedAccountIds());
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [activeFolder, setActiveFolder] = useState<MailFolder | null>(null);
   const [messages, setMessages] = useState<PageResult<MailMessageSummary> | null>(null);
@@ -156,7 +202,13 @@ export function MailWorkspace() {
       const data = await mailApi.accounts();
       setAccounts(data);
       setError('');
-      setActiveAccount(current => current ? data.find(item => item.id === current.id) || null : current);
+      setActiveAccount(current => {
+        if (current) return data.find(item => item.id === current.id) || null;
+        const cachedAccountId = readActiveAccountId();
+        const cachedAccount = data.find(item => item.id === cachedAccountId);
+        if (cachedAccount && (!cachedAccount.accessProtected || verifiedAccountIds.has(cachedAccount.id))) return cachedAccount;
+        return current;
+      });
     } catch (cause) {
       setError(errorText(cause));
     } finally {
@@ -171,6 +223,7 @@ export function MailWorkspace() {
       return;
     }
     setActiveAccount(account);
+    writeActiveAccountId(account.id);
     setSelectedMessage(null);
     setActiveFolder(null);
     setPage(1);
@@ -180,7 +233,11 @@ export function MailWorkspace() {
     if (!showAccessModal) return;
     try {
       await mailApi.verifyAccess(showAccessModal.id, accessPassword);
-      setVerifiedAccountIds(previous => new Set(previous).add(showAccessModal.id));
+      setVerifiedAccountIds(previous => {
+        const next = new Set(previous).add(showAccessModal.id);
+        writeVerifiedAccountIds(next);
+        return next;
+      });
       const account = showAccessModal;
       setShowAccessModal(null);
       setAccessPassword('');
@@ -247,6 +304,7 @@ export function MailWorkspace() {
       await mailApi.deleteAccount(account.id);
       if (activeAccount?.id === account.id) {
         setActiveAccount(null);
+        clearActiveAccountId();
         setFolders([]);
         setMessages(null);
         setSelectedMessage(null);
@@ -396,7 +454,7 @@ export function MailWorkspace() {
         <section className="mail-space">
           {error && <div className="mail-alert mail-space-alert"><span>{error}</span><button onClick={() => setError('')}><X size={15} /></button></div>}
           <aside className="mail-folder-sidebar">
-            <button className="mail-back" onClick={() => { setActiveAccount(null); setSelectedMessage(null); }}>← 邮箱列表</button>
+            <button className="mail-back" onClick={() => { setActiveAccount(null); clearActiveAccountId(); setSelectedMessage(null); }}>← 邮箱列表</button>
             <div className="mail-current-account">
               <strong>{activeAccount.displayName || activeAccount.email}</strong>
               <span>{activeAccount.providerName} · {activeAccount.email}</span>

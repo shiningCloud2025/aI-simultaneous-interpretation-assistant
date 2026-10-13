@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Home, LogOut, Mail } from 'lucide-react';
+import { Home, Mail } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { api, useAppStore } from '../stores/appStore';
 import { MailWorkspace } from '../components/MailWorkspace';
@@ -47,9 +47,7 @@ export function MailPage() {
           <strong>邮箱空间</strong>
         </button>
         <div className="mail-page-actions">
-          <button onClick={() => nav(home)}><Home size={16} />返回首页</button>
-          <button onClick={() => nav(-1)}><ArrowLeft size={16} />返回上一页</button>
-          <button className="danger" onClick={() => { logout(); nav('/login'); }}><LogOut size={16} />退出</button>
+          <button onClick={() => nav(home)}><Home size={16} />返回智语同航</button>
         </div>
       </header>
       <main className="mail-page-main">
