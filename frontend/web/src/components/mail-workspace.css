@@ -5,7 +5,11 @@
   color: #223632;
 }
 
-.mail-heading,
+.mail-workspace.account-mode {
+  max-width: 920px;
+  margin: 0;
+}
+
 .mail-section-head,
 .mail-message-toolbar {
   display: flex;
@@ -14,24 +18,13 @@
   gap: 18px;
 }
 
-.mail-heading {
-  margin-bottom: 20px;
-}
-
-.mail-heading h1,
 .mail-section-head h2,
 .mail-message-toolbar h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
-.mail-section-head h2,
-.mail-message-toolbar h2 {
-  font-size: 17px;
-}
-
-.mail-heading p,
 .mail-section-head p,
 .mail-message-toolbar p,
 .mail-form-hint {
@@ -39,6 +32,12 @@
   color: #7b8984;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.mail-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .mail-primary,
@@ -101,18 +100,19 @@
 }
 
 .mail-account-panel {
-  padding: 20px;
+  padding: 24px;
 }
 
 .mail-account-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 640px;
+  margin-top: 18px;
 }
 
 .mail-account-card {
-  padding: 16px;
+  padding: 16px 18px;
   border: 1px solid #e2e8e2;
   border-radius: 14px;
   background: #fffdfa;

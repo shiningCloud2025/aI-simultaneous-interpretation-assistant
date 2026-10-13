@@ -17,7 +17,6 @@ import { AccountPage } from '../components/AccountPage';
 import { HelpPage } from '../components/HelpPage';
 import { AboutPage } from '../components/AboutPage';
 import { TermLibraryPage } from '../components/TermLibraryPage';
-import { MailWorkspace } from '../components/MailWorkspace';
 import { useState, useEffect } from 'react';
 import { isTeacherUser } from '../lib/authRole';
 import { PersonalWorkspace } from '../components/PersonalWorkspace';
@@ -63,7 +62,6 @@ const panelComponents: Record<string, React.FC> = {
   'edu-ppt': EduPPT, 'edu-word': EduWord, 'edu-excel': EduExcel,
   'vocab': EduVocab, 'speaking-generate': EduSpeakingGenerate, 'speaking-practice': EduSpeakingPractice, 'writing': EduWriting, 'writing-review': EduWritingReview, 'writing-tutor': EduWritingTutor,
   'account': AccountPage, 'help': HelpPage, 'about': AboutPage, 'term-library': TermLibraryPage,
-  'mail': MailWorkspace,
 };
 
 const panelTitles: Record<string, string> = {
@@ -86,10 +84,16 @@ export function MainLayout() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [showMail, setShowMail] = useState(false);
   const changePanel = (panel: string) => {
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
+  };
+  const openPanel = (panel: string) => {
+    if (panel === 'mail') {
+      nav('/mail');
+      return;
+    }
+    changePanel(panel);
   };
 
   useEffect(() => {
@@ -174,7 +178,7 @@ export function MainLayout() {
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button onClick={() => setShowCalendar(true)} className="btn">📅 日历</button>
-            <button onClick={() => setShowMail(true)} className="btn">📧 邮箱</button>
+            <button onClick={() => nav('/mail')} className="btn">📧 邮箱</button>
             <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
@@ -186,7 +190,7 @@ export function MainLayout() {
         <div className="content">
           {activePanel !== 'personal' && personalPanels.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('personal')}>← 个人工作台</button>}
           {studentToolIds.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('tools')}>← 通用工具</button>}
-          {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
+          {activePanel === 'personal' ? <PersonalWorkspace onOpen={openPanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
         </div>
       </div>
       {showCalendar && (
@@ -195,11 +199,6 @@ export function MainLayout() {
             onOpenPanel={panel => { setShowCalendar(false); changePanel(panel); }}
             onOpenSession={sessionId => { setShowCalendar(false); setSearchParams({ panel: 'classrooms', sessionId: String(sessionId) }); }}
           />
-        </CalendarModal>
-      )}
-      {showMail && (
-        <CalendarModal title="邮箱空间" onClose={() => setShowMail(false)}>
-          <MailWorkspace />
         </CalendarModal>
       )}
       {showSkillModal && <PlatformSkillsDialog onClose={() => setShowSkillModal(false)} />}

@@ -333,15 +333,7 @@ export function MailWorkspace() {
   }, [messages]);
 
   return (
-    <div className="mail-workspace">
-      <header className="mail-heading">
-        <div>
-          <h1>邮箱空间</h1>
-          <p>绑定 QQ 或 163 邮箱后，可在平台内查看文件夹、邮件列表和邮件详情。</p>
-        </div>
-        <button className="mail-primary" onClick={openCreateModal}><Plus size={16} />绑定邮箱</button>
-      </header>
-
+    <div className={`mail-workspace ${activeAccount ? 'space-mode' : 'account-mode'}`}>
       {error && <div className="mail-alert"><span>{error}</span><button onClick={() => setError('')}><X size={15} /></button></div>}
 
       {!activeAccount ? (
@@ -349,9 +341,12 @@ export function MailWorkspace() {
           <div className="mail-section-head">
             <div>
               <h2>我的绑定邮箱</h2>
-              <p>{loadingAccounts ? '正在读取邮箱绑定…' : `${accounts.length} 个邮箱账号`}</p>
+              <p>{loadingAccounts ? '正在读取邮箱绑定…' : accounts.length ? `${accounts.length} 个邮箱账号` : '绑定 QQ 或 163 邮箱后，在这里进入对应邮箱空间'}</p>
             </div>
-            <button className="mail-ghost" onClick={loadAccounts}><RefreshCw size={15} />刷新</button>
+            <div className="mail-section-actions">
+              <button className="mail-ghost" onClick={loadAccounts}><RefreshCw size={15} />刷新</button>
+              <button className="mail-primary" onClick={openCreateModal}><Plus size={16} />绑定邮箱</button>
+            </div>
           </div>
 
           {accounts.length === 0 && !loadingAccounts ? (

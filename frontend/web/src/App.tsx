@@ -11,6 +11,7 @@ import { ApiKeyGuidePage } from './pages/ApiKeyGuidePage';
 import { DesktopAppPage } from './pages/DesktopAppPage';
 import { OfficialGamesPage } from './pages/OfficialGamesPage';
 import { JoinClassroomPage } from './pages/JoinClassroomPage';
+import { MailPage } from './pages/MailPage';
 import { SuperAdminConsole, SuperAdminLoginPage } from './features/superadmin/SuperAdminConsole';
 import { TeacherWorkspace } from './features/teacher/TeacherWorkspace';
 import { AppDialogProvider } from './components/AppDialogProvider';
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/forgot" element={<ForgotPage />} />
           <Route path="/admin/login" element={<SuperAdminLoginPage />} />
           <Route path="/admin" element={<ProtectedRoute redirectTo="/admin/login"><SuperAdminConsole /></ProtectedRoute>} />
+          <Route path="/mail" element={<ProtectedRoute><MailPage /></ProtectedRoute>} />
           <Route path="/teacher/*" element={<ProtectedRoute><TeacherWorkspace /></ProtectedRoute>} />
           <Route path="/change-pwd" element={<ProtectedRoute><ChangePwdPage /></ProtectedRoute>} />
           <Route path="/*" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
