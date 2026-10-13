@@ -177,6 +177,33 @@ export interface SkillResource {
   content: string;
 }
 
+export interface AnnouncementItem {
+  id: number;
+  title: string;
+  coverUrl?: string | null;
+  status?: number | string | null;
+  statusText?: string | null;
+  publishTime?: string | null;
+  read?: boolean | null;
+  createTime?: string | null;
+}
+
+export interface AnnouncementDetail extends AnnouncementItem {
+  titleContent?: string | null;
+  content?: string | null;
+  createdById?: number | null;
+  updatedById?: number | null;
+  updateTime?: string | null;
+}
+
+export interface AnnouncementSaveInput {
+  title: string;
+  titleContent?: string;
+  content: string;
+  coverUrl?: string;
+  status: number;
+}
+
 function qs(params: Record<string, string | number | boolean | undefined | null>) {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -240,4 +267,16 @@ export const adminApi = {
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteSkill: (name: string) =>
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
+  announcements: (data: { page: number; size: number; filter?: { keyword?: string | null; status?: number | null } }) =>
+    apiCall<PageResult<AnnouncementItem>>('/superadmin/announcement/page', { method: 'POST', body: JSON.stringify(data) }),
+  announcementDetail: (id: number) => apiCall<AnnouncementDetail>(`/superadmin/announcement/${id}`),
+  createAnnouncement: (data: AnnouncementSaveInput) =>
+    apiCall<void>('/superadmin/announcement', { method: 'POST', body: JSON.stringify(data) }),
+  updateAnnouncement: (id: number, data: AnnouncementSaveInput) =>
+    apiCall<void>(`/superadmin/announcement/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAnnouncement: (id: number) =>
+    apiCall<void>(`/superadmin/announcement/${id}`, { method: 'DELETE' }),
+  publishAnnouncement: (id: number) =>
+    apiCall<void>(`/superadmin/announcement/${id}/publish`, { method: 'PUT' }),
 };

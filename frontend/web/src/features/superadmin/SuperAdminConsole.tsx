@@ -4,8 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { api, useAppStore } from '../../stores/appStore';
 import { uploadFile } from '../../lib/api';
 import { appConfirm, appPrompt } from '../../lib/appDialog';
+import { AnnouncementCenter, sanitizeHtml } from '../../components/AnnouncementCenter';
 import {
   adminApi,
+  type AnnouncementDetail,
+  type AnnouncementItem,
+  type AnnouncementSaveInput,
   type DashboardOnline,
   type FeedbackItem,
   type LogContent,
@@ -33,6 +37,7 @@ type AdminPanelKey =
   | 'feedback'
   | 'skills'
   | 'system'
+  | 'announcements'
   | 'nacos-console'
   | 'sentinel-console'
   | 'admin-account';
@@ -88,6 +93,7 @@ const navGroups: Array<{
     name: '系统',
     children: [
       { key: 'system', icon: '⚙', name: '系统配置', desc: '固定配置后续扩展' },
+      { key: 'announcements', icon: '📣', name: '系统公告', desc: '发布登录提示与平台公告' },
     ],
   },
   {
@@ -495,6 +501,7 @@ export function SuperAdminConsole() {
           </div>
           <div className="admin-top-actions">
             <button className="admin-btn" onClick={() => setShowCalendar(true)}>📅 日历</button>
+            <AnnouncementCenter buttonClassName="admin-btn" />
             <button className="admin-btn" onClick={() => nav('/mail')}>📧 邮箱</button>
             <button
               className={`admin-btn ${mode === 'star' || mode === 'star-content' ? 'primary' : ''}`}
@@ -541,6 +548,7 @@ export function SuperAdminConsole() {
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+              {panel === 'announcements' && <AnnouncementAdminPanel />}
               {meta.iframeUrl && <GovernanceFramePanel item={meta} />}
               {panel === 'admin-account' && <AdminAccountPanel />}
             </>
@@ -1660,6 +1668,259 @@ function FeedbackPanel() {
             <div className="admin-account-edit-actions">
               {activeFeedback.status === 'PROCESSING' && <button className="primary" onClick={resolveFeedback}>确认解决</button>}
               <button onClick={() => setActiveFeedback(null)}>{activeFeedback.status === 'PROCESSING' ? '取消' : '关闭'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const emptyAnnouncementForm: AnnouncementSaveInput = {
+  title: '',
+  titleContent: '',
+  content: '',
+  coverUrl: '',
+  status: 0,
+};
+
+function AnnouncementAdminPanel() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [data, setData] = useState<PageResult<AnnouncementItem>>({ records: [], total: 0, size: 10, current: 1 });
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState('');
+  const [form, setForm] = useState<AnnouncementSaveInput>(emptyAnnouncementForm);
+  const [active, setActive] = useState<AnnouncementDetail | null>(null);
+  const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async (page = data.current || 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      setData(await adminApi.announcements({
+        page,
+        size: 10,
+        filter: {
+          keyword: keyword.trim() || null,
+          status: status === '' ? null : Number(status),
+        },
+      }));
+    } catch (cause: any) {
+      setError(cause.message || '公告加载失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(1); }, []);
+
+  const openCreate = () => {
+    setActive(null);
+    setForm(emptyAnnouncementForm);
+    setError('');
+    setModal('create');
+  };
+
+  const openDetail = async (item: AnnouncementItem, nextModal: 'edit' | 'view') => {
+    try {
+      const detail = await adminApi.announcementDetail(item.id);
+      setActive(detail);
+      setForm({
+        title: detail.title || '',
+        titleContent: detail.titleContent || '',
+        content: detail.content || '',
+        coverUrl: detail.coverUrl || '',
+        status: Number(detail.status ?? 0),
+      });
+      setError('');
+      setModal(nextModal);
+    } catch (cause: any) {
+      setError(cause.message || '公告详情加载失败');
+    }
+  };
+
+  const closeModal = () => {
+    setModal(null);
+    setActive(null);
+    setForm(emptyAnnouncementForm);
+  };
+
+  const save = async () => {
+    if (!form.title.trim()) return setError('公告标题不能为空');
+    if (!form.content.trim()) return setError('公告正文不能为空');
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        title: form.title.trim(),
+        titleContent: form.titleContent?.trim() || form.title.trim(),
+        coverUrl: form.coverUrl?.trim() || '',
+        content: form.content.trim(),
+      };
+      if (active) await adminApi.updateAnnouncement(active.id, payload);
+      else await adminApi.createAnnouncement(payload);
+      closeModal();
+      await load(active ? data.current : 1);
+    } catch (cause: any) {
+      setError(cause.message || '公告保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publish = async (item: AnnouncementItem) => {
+    if (!await appConfirm({ title: '发布公告', message: `确定发布「${item.title}」吗？发布后将对用户可见，且不能继续修改。`, confirmText: '发布' })) return;
+    try {
+      await adminApi.publishAnnouncement(item.id);
+      await load(data.current);
+    } catch (cause: any) {
+      setError(cause.message || '公告发布失败');
+    }
+  };
+
+  const remove = async (item: AnnouncementItem) => {
+    if (!await appConfirm({ title: '删除公告', message: `确定删除「${item.title}」吗？`, confirmText: '删除', danger: true })) return;
+    try {
+      await adminApi.deleteAnnouncement(item.id);
+      const nextPage = data.records.length === 1 && data.current > 1 ? data.current - 1 : data.current;
+      await load(nextPage);
+    } catch (cause: any) {
+      setError(cause.message || '公告删除失败');
+    }
+  };
+
+  const insertImage = async (file?: File) => {
+    if (!file) return;
+    try {
+      const uploaded = await uploadFile<{ url: string }>(file);
+      const url = uploaded.url;
+      if (!url) throw new Error('图片上传接口未返回 URL');
+      setForm(current => ({ ...current, content: `${current.content}\n<p><img src="${url}" alt="" /></p>` }));
+      setError('');
+    } catch (cause: any) {
+      setError(cause.message || '图片上传失败');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || 10)));
+
+  return (
+    <div className="admin-panel">
+      <section className="admin-card admin-announcement-card">
+        <div className="admin-skill-card-head">
+          <div>
+            <h2>系统公告</h2>
+            <p>维护登录后主动提醒和公告栏展示的系统公告。</p>
+          </div>
+          <div className="admin-skill-head-actions">
+            <span className="admin-skill-count">共 {data.total || 0} 条</span>
+            <button className="admin-btn primary" onClick={openCreate}>新增公告</button>
+          </div>
+        </div>
+
+        <div className="admin-toolbar">
+          <input className="admin-input" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="按公告标题搜索" onKeyDown={(e) => { if (e.key === 'Enter') load(1); }} />
+          <select className="admin-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">全部状态</option>
+            <option value="0">草稿</option>
+            <option value="1">已发布</option>
+          </select>
+          <button className="admin-btn primary" onClick={() => load(1)}>{loading ? '查询中' : '查询'}</button>
+        </div>
+        <ErrorBlock error={error} />
+
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.records.map(item => {
+                const published = Number(item.status) === 1;
+                return (
+                  <tr key={item.id}>
+                    <td><strong>{item.title || '未命名公告'}</strong></td>
+                    <td><span className={`admin-pill ${published ? 'ok' : 'warn'}`}>{item.statusText || (published ? '已发布' : '草稿')}</span></td>
+                    <td>{formatDate(item.publishTime || undefined)}</td>
+                    <td>{formatDate(item.createTime || undefined)}</td>
+                    <td>
+                      <div className="admin-row-actions admin-announcement-actions">
+                        <button className="admin-btn" onClick={() => openDetail(item, 'view')}>查看</button>
+                        {!published && <button className="admin-btn" onClick={() => openDetail(item, 'edit')}>编辑</button>}
+                        {!published && <button className="admin-btn primary" onClick={() => publish(item)}>发布</button>}
+                        <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {!data.records.length && <div className="admin-table-empty-panel">{loading ? '正在加载公告...' : '暂无公告'}</div>}
+        </div>
+
+        <AdminPager current={data.current || 1} pages={totalPages} total={data.total || 0} loading={loading} onChange={load} />
+      </section>
+
+      {modal && (
+        <div className="admin-account-edit-mask" onClick={closeModal}>
+          <div className="admin-account-edit admin-announcement-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-skill-modal-head">
+              <div>
+                <h3>{modal === 'create' ? '新增公告' : modal === 'edit' ? '编辑公告' : '公告详情'}</h3>
+                <p>{modal === 'view' ? '查看公告发布内容。' : '编辑公告标题、封面和富文本正文。'}</p>
+              </div>
+              <button onClick={closeModal}>×</button>
+            </div>
+
+            <div className="admin-announcement-form">
+              <AdminAccountField label="公告标题">
+                <input value={form.title} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="请输入公告标题" />
+              </AdminAccountField>
+              <AdminAccountField label="标题富文本（可选）">
+                <input value={form.titleContent || ''} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, titleContent: e.target.value })} placeholder="不填则使用公告标题" />
+              </AdminAccountField>
+              <AdminAccountField label="封面图 URL（可选）">
+                <input value={form.coverUrl || ''} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, coverUrl: e.target.value })} placeholder="可粘贴图片 URL" />
+              </AdminAccountField>
+              <AdminAccountField label="公告状态">
+                <select value={form.status} disabled={modal === 'view' || Boolean(active)} onChange={(e) => setForm({ ...form, status: Number(e.target.value) })}>
+                  <option value={0}>草稿</option>
+                  <option value={1}>已发布</option>
+                </select>
+              </AdminAccountField>
+              <AdminAccountField label="公告正文 HTML" className="admin-announcement-wide">
+                {modal !== 'view' && (
+                  <div className="admin-announcement-tools">
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => insertImage(e.target.files?.[0])} />
+                    <button type="button" className="admin-btn" onClick={() => fileInputRef.current?.click()}>上传图片并插入正文</button>
+                    <span>支持普通文字、HTML 标签和图片。</span>
+                  </div>
+                )}
+                <textarea className="admin-textarea admin-announcement-textarea" value={form.content} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="<p>请输入公告正文</p>" />
+              </AdminAccountField>
+              <div className="admin-announcement-preview">
+                <span>预览</span>
+                {form.coverUrl && <img src={form.coverUrl} alt="" />}
+                <h2 dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.titleContent || form.title || '公告标题') }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.content || '<p>正文预览</p>') }} />
+              </div>
+            </div>
+
+            <div className="admin-account-edit-actions">
+              {modal !== 'view' && <button className="primary" disabled={saving} onClick={save}>{saving ? '保存中...' : modal === 'create' ? '确认新增' : '保存修改'}</button>}
+              <button onClick={closeModal}>{modal === 'view' ? '关闭' : '取消'}</button>
             </div>
           </div>
         </div>

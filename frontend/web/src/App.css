@@ -11,7 +11,7 @@ body {
   font-weight: 800;
 }
 .card { background: #fff; border: 1px solid #f0efec; border-radius: 14px; padding: 20px; margin-bottom: 16px; transition: background .3s, border-color .3s; }
-.btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; background: #f5f3f0; border: none; color: #666; cursor: pointer; }
+.btn { padding: 6px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; font-size: 12px; background: #f5f3f0; border: none; color: #666; cursor: pointer; }
 .theme-select { padding: 6px 10px; border: 1px solid #e8e6e1; border-radius: 8px; font-size: 12px; color: #333; background: #fff; outline: none; cursor: pointer; }
 .sidebar { width: 210px; background: #fff; border-right: 1px solid #e8e6e1; display: flex; flex-direction: column; flex-shrink: 0; transition: background .3s, border-color .3s; }
 .sidebar-header { padding: 18px 20px; border-bottom: 1px solid #f0efec; display: flex; align-items: center; gap: 10px; }

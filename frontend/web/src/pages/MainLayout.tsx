@@ -27,6 +27,7 @@ import { StudentCalendar } from '../features/student/StudentCalendar';
 import { CalendarModal } from '../components/CalendarModal';
 import { StudentTools } from '../features/student/StudentTools';
 import { studentToolIds } from '../features/student/studentToolCatalog';
+import { AnnouncementCenter } from '../components/AnnouncementCenter';
 
 const navItems = [
   { group: '通用', items: [
@@ -178,6 +179,7 @@ export function MainLayout() {
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button onClick={() => setShowCalendar(true)} className="btn">📅 日历</button>
+            <AnnouncementCenter buttonClassName="btn" />
             <button onClick={() => nav('/mail')} className="btn">📧 邮箱</button>
             <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">

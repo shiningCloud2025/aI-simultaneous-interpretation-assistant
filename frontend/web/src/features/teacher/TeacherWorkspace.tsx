@@ -16,6 +16,7 @@ import { LiveSessionBadge, useLiveConsole } from '../../components/LiveSessionBa
 import { TeacherDashboard } from './TeacherDashboard';
 import { TeacherCalendar } from './TeacherCalendar';
 import { CalendarModal } from '../../components/CalendarModal';
+import { AnnouncementCenter } from '../../components/AnnouncementCenter';
 import { TeacherLearningArea } from './TeacherLearning';
 import { TeacherPersonalWorkspace } from './TeacherPersonalWorkspace';
 import { TeacherClassroomList } from './TeacherClassroomList';
@@ -297,6 +298,7 @@ export function TeacherWorkspace() {
         <div className="teacher-top-actions">
           {isClassroomSection && <button className="teacher-icon-button" title="刷新数据" aria-label="刷新数据" onClick={reload}><RefreshCw size={17} /></button>}
           <button className="teacher-top-link-button" onClick={() => setShowCalendar(true)}><CalendarDays size={16} />日历</button>
+          <AnnouncementCenter buttonClassName="teacher-top-link-button" />
           <button className="teacher-top-link-button" onClick={() => go('/mail')}><Mail size={16} />邮箱</button>
           <button className="teacher-skill-button" title="平台 Skill" aria-label="平台 Skill" onClick={() => setShowSkillModal(true)}><Puzzle size={16} />平台 Skill</button>
           <label className="teacher-theme-control">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}<select aria-label="选择背景" value={theme} onChange={event => setTheme(event.target.value)}><option value="light">浅色背景</option><option value="dark">深色背景</option></select></label>

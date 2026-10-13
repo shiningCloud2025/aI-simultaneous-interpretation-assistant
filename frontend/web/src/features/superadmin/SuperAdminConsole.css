@@ -714,6 +714,10 @@
   color: #47524e;
   height: 32px;
   padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border-radius: 9px;
   cursor: pointer;
   font: inherit;
@@ -1827,6 +1831,16 @@
   background: #faf8f3;
 }
 
+.admin-table-empty-panel {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid #eee9df;
+  color: #9a948a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .admin-pagination {
   display: flex;
   justify-content: space-between;
@@ -2256,6 +2270,106 @@
 .admin-skill-form-card,
 .admin-skill-list-card {
   min-height: 640px;
+}
+
+.admin-announcement-card {
+  min-height: 520px;
+}
+
+.admin-announcement-actions {
+  min-width: 300px;
+}
+
+.admin-announcement-modal {
+  width: min(1040px, calc(100vw - 48px));
+  max-height: min(860px, calc(100vh - 48px));
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 0;
+}
+
+.admin-announcement-form {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr);
+  gap: 14px 18px;
+  padding: 20px 24px;
+}
+
+.admin-announcement-wide,
+.admin-announcement-preview {
+  grid-column: 1 / -1;
+}
+
+.admin-announcement-tools {
+  margin-bottom: 10px;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px dashed #d9d0c1;
+  border-radius: 10px;
+  background: #fbfaf7;
+}
+
+.admin-announcement-tools input {
+  display: none;
+}
+
+.admin-announcement-tools span {
+  color: #8c8b85;
+  font-size: 12px;
+}
+
+.admin-announcement-textarea {
+  min-height: 260px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.admin-announcement-preview {
+  min-height: 180px;
+  padding: 16px 18px;
+  border: 1px solid #eee8dd;
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #2f3b37;
+}
+
+.admin-announcement-preview > span {
+  display: block;
+  margin-bottom: 12px;
+  color: #8d877e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-announcement-preview img {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.admin-announcement-preview h2 {
+  margin: 0 0 12px;
+  color: #20302c;
+  font-size: 20px;
+}
+
+.admin-announcement-preview div {
+  font-size: 13px;
+  line-height: 1.8;
+  word-break: break-word;
+}
+
+.admin-announcement-preview div img {
+  height: auto;
 }
 
 .admin-skill-manager {
