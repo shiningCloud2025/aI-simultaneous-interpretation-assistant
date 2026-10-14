@@ -233,7 +233,7 @@ export function TermLibraryPage() {
           <div onClick={e => e.stopPropagation()} style={modal}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>{editLib.id ? '编辑术语库' : '新建术语库'}</div>
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>名称</div>
+              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>名称<b className="form-required">*</b></div>
               <input value={editLib.name} onChange={e => setEditLib({ ...editLib, name: e.target.value })} style={inp} placeholder="例如：医学词汇、法律术语" />
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#666', marginBottom: 20, cursor: 'pointer' }}>

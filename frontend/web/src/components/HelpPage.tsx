@@ -96,7 +96,7 @@ export function HelpPage() {
       {/* 提交表单 */}
       <div style={{ background: '#fff', border: '1px solid #f0efec', borderRadius: 14, padding: 24 }}>
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: '#666', marginBottom: 8, fontWeight: 500 }}>反馈类型</div>
+          <div style={{ fontSize: 13, color: '#666', marginBottom: 8, fontWeight: 500 }}>反馈类型<b className="form-required">*</b></div>
           <div style={{ display: 'flex', gap: 8 }}>
             {(Object.keys(typeLabels) as FeedbackType[]).map(t => (
               <button key={t} onClick={() => setType(t)} style={typeBtn(type === t)}>{typeLabels[t]}</button>
@@ -104,11 +104,11 @@ export function HelpPage() {
           </div>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>标题</div>
+          <div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>标题<b className="form-required">*</b></div>
           <input value={title} onChange={e => setTitle(e.target.value)} style={inp} placeholder="请输入标题" />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>详细描述</div>
+          <div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>详细描述<b className="form-required">*</b></div>
           <textarea value={content} onChange={e => setContent(e.target.value)} style={{ ...inp, minHeight: 120, resize: 'vertical', fontFamily: 'inherit' }} placeholder="请描述你的问题或建议..." />
         </div>
         <div style={{ marginBottom: 20 }}>

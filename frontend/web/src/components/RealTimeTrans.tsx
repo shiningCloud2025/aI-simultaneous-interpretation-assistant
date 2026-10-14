@@ -800,7 +800,7 @@ function ModelPicker({
         {/* 表单 */}
         <div style={{ padding: '20px' }}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 6 }}>厂商</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 6 }}>厂商<b className="form-required">*</b></label>
             <Select
               options={providers.map(p => p.key)}
               labels={Object.fromEntries(providers.map(p => [p.key, p.name]))}
@@ -809,7 +809,7 @@ function ModelPicker({
             />
           </div>
           <div style={{ marginBottom: 8 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 6 }}>模型</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 6 }}>模型<b className="form-required">*</b></label>
             {provider ? (
               <Select
                 options={models.map(m => m.name)}

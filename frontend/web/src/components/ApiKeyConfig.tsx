@@ -159,7 +159,7 @@ export function ApiKeyConfig() {
           <div onClick={e => e.stopPropagation()} style={modal}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>添加 API Key</div>
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>厂商</div>
+              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>厂商<b className="form-required">*</b></div>
               <select
                 value={form.provider}
                 onChange={e => setForm({ ...form, provider: e.target.value })}
@@ -172,7 +172,7 @@ export function ApiKeyConfig() {
               </select>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>类型</div>
+              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>类型<b className="form-required">*</b></div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['LLM', 'ASR'] as const).map(t => (
                   <button key={t} onClick={() => changeKeyType(t)}
@@ -183,7 +183,7 @@ export function ApiKeyConfig() {
               </div>
             </div>
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>API Key</div>
+              <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>API Key<b className="form-required">*</b></div>
               <input
                 value={form.apiKey}
                 onChange={e => setForm({ ...form, apiKey: e.target.value })}

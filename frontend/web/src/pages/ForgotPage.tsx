@@ -66,8 +66,8 @@ export function ForgotPage() {
       </div>
       {tab === 'email' ? (
         <>
-          <Fg label="邮箱"><input value={email} onChange={e => setEmail(e.target.value)} placeholder="请输入注册邮箱" style={inp} /></Fg>
-          <Fg label="验证码">
+          <Fg label="邮箱" required><input value={email} onChange={e => setEmail(e.target.value)} placeholder="请输入注册邮箱" style={inp} /></Fg>
+          <Fg label="验证码" required>
             <div style={{ display: 'flex', gap: 10 }}>
               <input value={code} onChange={e => setCode(e.target.value)} placeholder="请输入验证码" style={{ ...inp, flex: 1 }} />
               <button onClick={sendEmailCode} style={sendBtn(emailCount > 0)}>{emailCount > 0 ? emailCount + 's' : '获取验证码'}</button>
@@ -76,8 +76,8 @@ export function ForgotPage() {
         </>
       ) : (
         <>
-          <Fg label="手机号"><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="请输入注册手机号" style={inp} /></Fg>
-          <Fg label="验证码">
+          <Fg label="手机号" required><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="请输入注册手机号" style={inp} /></Fg>
+          <Fg label="验证码" required>
             <div style={{ display: 'flex', gap: 10 }}>
               <input value={code} onChange={e => setCode(e.target.value)} placeholder="请输入验证码" style={{ ...inp, flex: 1 }} />
               <button onClick={sendSms} style={sendBtn(smsCount > 0)}>{smsCount > 0 ? smsCount + 's' : '获取验证码'}</button>
@@ -85,7 +85,7 @@ export function ForgotPage() {
           </Fg>
         </>
       )}
-      <Fg label="新密码"><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="请输入新密码（至少6位）" style={inp} /></Fg>
+      <Fg label="新密码" required><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="请输入新密码（至少6位）" style={inp} /></Fg>
       <Btn onClick={doReset} disabled={loading}>{loading ? '重置中...' : '重 置 密 码'}</Btn>
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#999' }}><Link to="/login" style={{ color: '#2c2c2c', fontWeight: 500, textDecoration: 'none' }}>返回登录</Link></div>
       {toast && <T msg={toast} />}
@@ -94,7 +94,7 @@ export function ForgotPage() {
 }
 
 const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', background: '#f7f6f4', border: '1px solid transparent', borderRadius: 10, color: '#1a1a1a', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
-function Fg({ label, children }: { label: string; children: React.ReactNode }) { return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}</div>{children}</div>; }
+function Fg({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) { return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}{required && <b className="form-required">*</b>}</div>{children}</div>; }
 function Btn({ onClick, children, disabled }: { onClick: () => void; children: React.ReactNode; disabled?: boolean }) { return <button onClick={onClick} disabled={disabled} style={{ width: '100%', padding: 12, border: 'none', background: disabled ? '#999' : '#2c2c2c', color: '#fff', fontSize: 14, fontWeight: 600, borderRadius: 10, cursor: disabled ? 'default' : 'pointer' }}>{children}</button>; }
 function tb(a: boolean): React.CSSProperties { return { flex: 1, padding: 10, border: 'none', background: a ? '#fff' : 'transparent', color: a ? '#1a1a1a' : '#999', borderRadius: 8, cursor: 'pointer', fontWeight: a ? 600 : 400, fontSize: 13, boxShadow: a ? '0 1px 3px rgba(0,0,0,.06)' : 'none' }; }
 function T({ msg }: { msg: string }) { return <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{msg}</div>; }

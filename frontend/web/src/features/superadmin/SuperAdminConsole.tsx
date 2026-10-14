@@ -753,7 +753,7 @@ function AdminAccountPanel() {
             <h3>{modal === 'profile' ? '编辑资料' : modal === 'password' ? '修改密码' : modal === 'phone' ? '换绑手机' : '换绑邮箱'}</h3>
             {modal === 'profile' && (
               <>
-                <AdminAccountField label="用户名">
+                <AdminAccountField label={<span>用户名<b className="form-required">*</b></span>}>
                   <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="请输入用户名" />
                 </AdminAccountField>
                 <AdminAccountField label="头像">
@@ -780,20 +780,20 @@ function AdminAccountPanel() {
             )}
             {modal === 'password' && (
               <>
-                <AdminAccountField label="新密码">
+                <AdminAccountField label={<span>新密码<b className="form-required">*</b></span>}>
                   <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6-26 位新密码" />
                 </AdminAccountField>
-                <AdminAccountField label="确认新密码">
+                <AdminAccountField label={<span>确认新密码<b className="form-required">*</b></span>}>
                   <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" />
                 </AdminAccountField>
               </>
             )}
             {modal === 'phone' && (
               <>
-                <AdminAccountField label="新手机号">
+                <AdminAccountField label={<span>新手机号<b className="form-required">*</b></span>}>
                   <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="请输入新手机号" />
                 </AdminAccountField>
-                <AdminAccountField label="短信验证码">
+                <AdminAccountField label={<span>短信验证码<b className="form-required">*</b></span>}>
                   <div className="admin-account-code-row">
                     <input value={smsCaptcha} onChange={(e) => setSmsCaptcha(e.target.value)} placeholder="请输入验证码" />
                     <button onClick={sendSms}>{smsCount > 0 ? `${smsCount}s` : '获取'}</button>
@@ -803,10 +803,10 @@ function AdminAccountPanel() {
             )}
             {modal === 'email' && (
               <>
-                <AdminAccountField label="新邮箱">
+                <AdminAccountField label={<span>新邮箱<b className="form-required">*</b></span>}>
                   <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="请输入新邮箱" />
                 </AdminAccountField>
-                <AdminAccountField label="邮箱验证码">
+                <AdminAccountField label={<span>邮箱验证码<b className="form-required">*</b></span>}>
                   <div className="admin-account-code-row">
                     <input value={emailCaptcha} onChange={(e) => setEmailCaptcha(e.target.value)} placeholder="请输入验证码" />
                     <button onClick={sendEmailCode}>{emailCount > 0 ? `${emailCount}s` : '获取'}</button>
@@ -2085,6 +2085,8 @@ function SkillPanel() {
 
   const save = async () => {
     if (!form.name.trim()) return setError('Skill 名称不能为空');
+    if (!form.description.trim()) return setError('Skill 描述不能为空');
+    if (!form.skillContent.trim()) return setError('Skill 内容不能为空');
     try {
       if (editing) await adminApi.updateSkill(editing.name, { description: form.description, skillContent: form.skillContent, resources: form.resources });
       else await adminApi.createSkill(form);
@@ -2279,14 +2281,14 @@ function SkillPanel() {
             </div>
             <div className={`admin-skill-modal-form ${modal !== 'create' ? 'without-name' : ''}`}>
               {modal === 'create' && (
-                <AdminAccountField label="Skill 名称">
+                <AdminAccountField label={<span>Skill 名称<b className="form-required">*</b></span>}>
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如 english_writing_rubric" />
                 </AdminAccountField>
               )}
-              <AdminAccountField label="Skill 描述">
+              <AdminAccountField label={<span>Skill 描述<b className="form-required">*</b></span>}>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" disabled={modal === 'view'} />
               </AdminAccountField>
-              <AdminAccountField label="Skill 内容" className="admin-skill-wide-field">
+              <AdminAccountField label={<span>Skill 内容<b className="form-required">*</b></span>} className="admin-skill-wide-field">
                 {modal !== 'view' && (
                   <div className="admin-skill-md-upload">
                     <input

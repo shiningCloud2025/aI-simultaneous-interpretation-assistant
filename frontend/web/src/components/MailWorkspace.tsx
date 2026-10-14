@@ -534,7 +534,7 @@ export function MailWorkspace() {
           <div className="mail-modal small">
             <header><h2>输入访问密码</h2><button onClick={() => setShowAccessModal(null)}><X size={17} /></button></header>
             <p className="mail-form-hint">该邮箱设置了平台内访问密码，通过后才会读取邮箱空间。</p>
-            <label>访问密码<input autoFocus type="password" value={accessPassword} onChange={event => setAccessPassword(event.target.value)} onKeyDown={event => event.key === 'Enter' && confirmAccess()} placeholder="请输入访问密码" /></label>
+            <label><span>访问密码<b className="form-required">*</b></span><input autoFocus type="password" value={accessPassword} onChange={event => setAccessPassword(event.target.value)} onKeyDown={event => event.key === 'Enter' && confirmAccess()} placeholder="请输入访问密码" /></label>
             <div className="mail-modal-actions"><button onClick={() => setShowAccessModal(null)}>取消</button><button className="mail-primary" onClick={confirmAccess}>确认进入</button></div>
           </div>
         </div>

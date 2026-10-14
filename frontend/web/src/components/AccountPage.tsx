@@ -139,7 +139,7 @@ export function AccountPage() {
 
             {modal === 'profile' && (
               <>
-                <Field label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} style={inp} placeholder="用户名" /></Field>
+                <Field label="用户名" required><input value={username} onChange={e => setUsername(e.target.value)} style={inp} placeholder="用户名" /></Field>
                 <Field label="头像">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#234b49', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 24, fontWeight: 700, overflow: 'hidden', boxShadow: '0 4px 18px rgba(35,75,73,.16)', flex: '0 0 auto' }}>
@@ -169,15 +169,15 @@ export function AccountPage() {
 
             {modal === 'password' && (
               <>
-                <Field label="新密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} style={inp} placeholder="至少6位密码" /></Field>
-                <Field label="确认新密码"><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={inp} placeholder="再次输入新密码" /></Field>
+                <Field label="新密码" required><input type="password" value={password} onChange={e => setPassword(e.target.value)} style={inp} placeholder="至少6位密码" /></Field>
+                <Field label="确认新密码" required><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={inp} placeholder="再次输入新密码" /></Field>
               </>
             )}
 
             {modal === 'phone' && (
               <>
-                <Field label="新手机号"><input value={phone} onChange={e => setPhone(e.target.value)} style={inp} placeholder="请输入新手机号" /></Field>
-                <Field label="短信验证码">
+                <Field label="新手机号" required><input value={phone} onChange={e => setPhone(e.target.value)} style={inp} placeholder="请输入新手机号" /></Field>
+                <Field label="短信验证码" required>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input value={smsCaptcha} onChange={e => setSmsCaptcha(e.target.value)} style={{ ...inp, flex: 1 }} placeholder="请输入验证码" />
                     <button onClick={sendSms} style={captchaBtn(smsCount > 0)}>{smsCount > 0 ? smsCount + 's' : '获取'}</button>
@@ -188,8 +188,8 @@ export function AccountPage() {
 
             {modal === 'email' && (
               <>
-                <Field label="新邮箱"><input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="请输入新邮箱" /></Field>
-                <Field label="邮箱验证码">
+                <Field label="新邮箱" required><input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="请输入新邮箱" /></Field>
+                <Field label="邮箱验证码" required>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input value={emailCaptcha} onChange={e => setEmailCaptcha(e.target.value)} style={{ ...inp, flex: 1 }} placeholder="请输入验证码" />
                     <button onClick={sendEmailCode} style={captchaBtn(emailCount > 0)}>{emailCount > 0 ? emailCount + 's' : '获取'}</button>
@@ -220,8 +220,8 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}</div>{children}</div>;
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) {
+  return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}{required && <b className="form-required">*</b>}</div>{children}</div>;
 }
 
 function fmt(t: string) {

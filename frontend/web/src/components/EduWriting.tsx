@@ -210,23 +210,23 @@ export function EduWriting() {
       <Card title="题目设置">
         <LlmModelPreference label="出题模型" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
-          <Field label="语言">
+          <Field label="语言" required>
             <Select options={LANGUAGES.map(s => s.desc)} value={LANGUAGES.find(s => s.code === language)!.desc} onChange={d => changeLanguage(LANGUAGES.find(s => s.desc === d)!.code)} />
           </Field>
-          <Field label="学段">
+          <Field label="学段" required>
             <Select options={currentStages.map(s => s.desc)} value={STAGES.find(s => s.code === stage)?.desc || ''} onChange={d => changeStage(STAGES.find(s => s.desc === d)?.code || '')} />
           </Field>
-          <Field label="题型">
+          <Field label="题型" required>
             <Select options={currentGenres.map(s => s.desc)} value={GENRES.find(s => s.code === genre)?.desc || ''} onChange={d => setGenre(GENRES.find(s => s.desc === d)?.code || '')} />
           </Field>
-          <Field label="难度">
+          <Field label="难度" required>
             <Select options={DIFFICULTIES.map(s => s.desc)} value={DIFFICULTIES.find(s => s.code === difficulty)?.desc || ''} onChange={d => setDifficulty(DIFFICULTIES.find(s => s.desc === d)?.code || '')} />
           </Field>
-          <Field label="场景">
+          <Field label="场景" required>
             <Select options={SCENES.map(s => s.desc)} value={SCENES.find(s => s.code === scene)?.desc || ''} onChange={d => setScene(SCENES.find(s => s.desc === d)?.code || '')} />
           </Field>
           {scene === 'custom' && (
-            <Field label="自定义场景">
+            <Field label="自定义场景" required>
               <input value={customScene} onChange={e => setCustomScene(e.target.value)} placeholder="如：人工智能与人类未来" style={{ width: '100%', padding: '6px 12px', border: '1px solid #e8e6e1', borderRadius: 8, fontSize: 13, outline: 'none' }} />
             </Field>
           )}
@@ -438,10 +438,10 @@ function Section({ title, items }: { title: string; items?: string[] }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}{required && <b className="form-required">*</b>}</div>
       {children}
     </div>
   );

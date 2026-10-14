@@ -94,10 +94,10 @@ export function RegisterPage() {
         <button onClick={() => setRole('student')} style={roleButton(role === 'student')}>注册学生账号</button>
         <button onClick={() => setRole('teacher')} style={roleButton(role === 'teacher')}>注册老师账号</button>
       </div>
-      <Fg label="账号"><input value={account} onChange={e => setAccount(e.target.value)} placeholder="5-12位数字账号" style={inp} /></Fg>
-      <Fg label="用户名"><input value={username} onChange={e => setUsername(e.target.value)} placeholder="请输入用户名/昵称" style={inp} /></Fg>
-      <Fg label="密码"><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位密码" style={inp} /></Fg>
-      <Fg label="确认密码"><input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="再次输入密码" style={inp} /></Fg>
+      <Fg label="账号" required><input value={account} onChange={e => setAccount(e.target.value)} placeholder="5-12位数字账号" style={inp} /></Fg>
+      <Fg label="用户名" required><input value={username} onChange={e => setUsername(e.target.value)} placeholder="请输入用户名/昵称" style={inp} /></Fg>
+      <Fg label="密码" required><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位密码" style={inp} /></Fg>
+      <Fg label="确认密码" required><input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="再次输入密码" style={inp} /></Fg>
 
       {/* 手机号绑定 */}
       <div style={{ marginBottom: 16 }}>
@@ -157,7 +157,7 @@ export function RegisterPage() {
 }
 
 const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', background: '#f7f6f4', border: '1px solid transparent', borderRadius: 10, color: '#1a1a1a', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
-function Fg({ label, children }: { label: string; children: React.ReactNode }) { return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}</div>{children}</div>; }
+function Fg({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) { return <div style={{ marginBottom: 16 }}><div style={{ fontSize: 13, color: '#666', marginBottom: 6, fontWeight: 500 }}>{label}{required && <b className="form-required">*</b>}</div>{children}</div>; }
 function Btn({ onClick, children, disabled }: { onClick: () => void; children: React.ReactNode; disabled?: boolean }) { return <button onClick={onClick} disabled={disabled} style={{ width: '100%', padding: 12, border: 'none', background: disabled ? '#999' : '#2c2c2c', color: '#fff', fontSize: 14, fontWeight: 600, borderRadius: 10, cursor: disabled ? 'default' : 'pointer' }}>{children}</button>; }
 function T({ msg }: { msg: string }) { return <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', padding: '10px 24px', background: '#2c2c2c', color: '#fff', borderRadius: 10, fontSize: 13, zIndex: 999 }}>{msg}</div>; }
 function sendBtn(disabled: boolean): React.CSSProperties { return { padding: '11px 14px', background: '#f5f3f0', border: 'none', borderRadius: 10, fontSize: 13, color: disabled ? '#bbb' : '#666', cursor: disabled ? 'default' : 'pointer', whiteSpace: 'nowrap', fontWeight: 500 }; }
