@@ -8,6 +8,35 @@ export interface PageResult<T> {
   pages?: number;
 }
 
+export interface ManagedMailAccount {
+  id: number;
+  userId: number;
+  account?: string | null;
+  username?: string | null;
+  userType?: string | null;
+  userTypeText?: string | null;
+  provider: 'QQ' | 'NETEASE_163';
+  providerName: string;
+  email: string;
+  displayName?: string | null;
+  accessProtected: boolean;
+  status: 0 | 1 | 2 | 3;
+  statusText: string;
+  lastTestTime?: string | null;
+  lastError?: string | null;
+  createdById?: number | null;
+  createTime?: string | null;
+  updatedById?: number | null;
+  updateTime?: string | null;
+}
+
+export interface MailAccountManageFilter {
+  keyword?: string;
+  provider?: 'QQ' | 'NETEASE_163';
+  status?: 0 | 1 | 2 | 3;
+  userType?: 'student' | 'teacher' | 'superadmin';
+}
+
 export interface AdminMetric {
   value: number;
   comparePercent?: number;
@@ -216,6 +245,12 @@ function qs(params: Record<string, string | number | boolean | undefined | null>
 }
 
 export const adminApi = {
+  mailAccounts: (data: { page: number; size: number; filter: MailAccountManageFilter }) =>
+    apiCall<PageResult<ManagedMailAccount>>('/superadmin/mail-account-manage/page', { method: 'POST', body: JSON.stringify(data) }),
+  updateMailAccountStatus: (id: number, status: 1 | 3) =>
+    apiCall<void>(`/superadmin/mail-account-manage/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  deleteMailAccount: (id: number) =>
+    apiCall<void>(`/superadmin/mail-account-manage/${id}`, { method: 'DELETE' }),
   login: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
     apiCall<{ token: string }>('/sys/superadmin/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   sendSmsCode: (phone: string) =>

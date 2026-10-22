@@ -26,6 +26,7 @@ import {
   type UserTrendItem,
 } from './adminApi';
 import { AdminCalendarPanel } from './AdminCalendarPanel';
+import { AdminMailAccountPanel } from './AdminMailAccountPanel';
 import { CalendarModal } from '../../components/CalendarModal';
 import './SuperAdminConsole.css';
 
@@ -35,6 +36,7 @@ type AdminPanelKey =
   | 'ops-dashboard'
   | 'log-dashboard'
   | 'user-management'
+  | 'mail-management'
   | 'feedback'
   | 'skills'
   | 'system'
@@ -77,6 +79,7 @@ const navGroups: Array<{
     name: '管理控制台',
     children: [
       { key: 'user-management', icon: '👤', name: '用户管理', desc: '全部用户、在线用户、禁用用户与操作记录' },
+      { key: 'mail-management', icon: '✉', name: '邮箱管理', desc: '平台邮箱绑定、状态与连接记录' },
     ],
   },
   {
@@ -546,6 +549,7 @@ export function SuperAdminConsole() {
               {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
               {panel === 'log-dashboard' && <LogDashboardPanel />}
               {panel === 'user-management' && <UserManagementPanel />}
+              {panel === 'mail-management' && <AdminMailAccountPanel />}
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
