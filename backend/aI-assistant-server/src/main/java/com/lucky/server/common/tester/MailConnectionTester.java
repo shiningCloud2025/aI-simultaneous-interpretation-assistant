@@ -2,6 +2,7 @@ package com.lucky.server.common.tester;
 
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.common.enums.MailProviderEnum;
 import com.lucky.server.domain.entity.SysUserMailAccount;
 import jakarta.mail.Folder;
 import jakarta.mail.Session;
@@ -10,6 +11,8 @@ import jakarta.mail.Transport;
 import org.springframework.stereotype.Component;
 
 import java.util.Properties;
+import java.util.Map;
+import org.eclipse.angus.mail.imap.IMAPStore;
 
 /**
  * 邮箱账号连接测试工具
@@ -39,6 +42,14 @@ public class MailConnectionTester {
             Session session = Session.getInstance(properties);
             store = session.getStore("imaps");
             store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+            // 网易邮箱读取文件夹前需要声明客户端身份。
+            if (account.getProvider() == MailProviderEnum.NETEASE_163) {
+                ((IMAPStore) store).id(Map.of(
+                        "name", "ZhiYuTongHang",
+                        "version", "1.0.0",
+                        "vendor", "ZhiYuTongHang"
+                ));
+            }
 
             inbox = store.getFolder("INBOX");
             if (inbox != null && !inbox.isOpen()) {

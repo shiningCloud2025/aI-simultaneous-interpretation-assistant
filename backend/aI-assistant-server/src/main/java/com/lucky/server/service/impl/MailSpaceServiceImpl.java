@@ -6,6 +6,7 @@ import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.DeletedStatusEnum;
 import com.lucky.server.common.enums.MailAccountStatusEnum;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.common.enums.MailProviderEnum;
 import com.lucky.server.common.util.MailAuthCodeCryptoUtil;
 import com.lucky.server.domain.dto.MailMessageDetailDTO;
 import com.lucky.server.domain.dto.MailMessagePageDTO;
@@ -39,6 +40,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Map;
+import org.eclipse.angus.mail.imap.IMAPStore;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.stream.Collectors;
@@ -65,6 +68,14 @@ public class MailSpaceServiceImpl implements MailSpaceService {
             Session session = Session.getInstance(buildImapProperties(account));
             store = session.getStore("imaps");
             store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+            // 网易邮箱读取文件夹前需要声明客户端身份。
+            if (account.getProvider() == MailProviderEnum.NETEASE_163) {
+                ((IMAPStore) store).id(Map.of(
+                        "name", "ZhiYuTongHang",
+                        "version", "1.0.0",
+                        "vendor", "ZhiYuTongHang"
+                ));
+            }
 
             Folder defaultFolder = store.getDefaultFolder();
             Folder[] folders = defaultFolder.list("*");
@@ -94,6 +105,14 @@ public class MailSpaceServiceImpl implements MailSpaceService {
             Session session = Session.getInstance(buildImapProperties(account));
             store = session.getStore("imaps");
             store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+            // 网易邮箱读取文件夹前需要声明客户端身份。
+            if (account.getProvider() == MailProviderEnum.NETEASE_163) {
+                ((IMAPStore) store).id(Map.of(
+                        "name", "ZhiYuTongHang",
+                        "version", "1.0.0",
+                        "vendor", "ZhiYuTongHang"
+                ));
+            }
 
             folder = store.getFolder(dto.filter().folderName());
             if (folder == null || !folder.exists()) {
@@ -146,6 +165,14 @@ public class MailSpaceServiceImpl implements MailSpaceService {
             Session session = Session.getInstance(buildImapProperties(account));
             store = session.getStore("imaps");
             store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+            // 网易邮箱读取文件夹前需要声明客户端身份。
+            if (account.getProvider() == MailProviderEnum.NETEASE_163) {
+                ((IMAPStore) store).id(Map.of(
+                        "name", "ZhiYuTongHang",
+                        "version", "1.0.0",
+                        "vendor", "ZhiYuTongHang"
+                ));
+            }
 
             folder = store.getFolder(dto.folderName());
             if (folder == null || !folder.exists()) {
