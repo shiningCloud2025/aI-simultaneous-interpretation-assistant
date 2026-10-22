@@ -27,6 +27,7 @@ import { StudentCalendar } from '../features/student/StudentCalendar';
 import { CalendarModal } from '../components/CalendarModal';
 import { StudentTools } from '../features/student/StudentTools';
 import { studentToolIds } from '../features/student/studentToolCatalog';
+import { AnnouncementCenter } from '../components/AnnouncementCenter';
 
 const navItems = [
   { group: '通用', items: [
@@ -70,9 +71,10 @@ const panelTitles: Record<string, string> = {
   'edu-ppt': 'PPT 集成', 'edu-word': 'Word 集成', 'edu-excel': 'Excel 集成',
   'vocab': '单词记忆', 'speaking-generate': '生成口语素材', 'speaking-practice': '口语练习', 'writing': '写作题目生成', 'writing-review': '作文智能批阅', 'writing-tutor': '已批阅作文答疑',
   'account': '个人中心', 'help': '帮助反馈', 'about': '关于', 'term-library': '术语库', 'personal': '个人工作台', 'classrooms': '我的课堂', 'tools': '通用工具',
+  'mail': '邮箱空间',
 };
 
-const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'term-library', 'help', 'about']);
+const personalPanels = new Set(['personal', 'account', 'audio', 'shortcuts', 'api-key', 'mail', 'term-library', 'help', 'about']);
 
 export function MainLayout() {
   const { user, activePanel, setActivePanel, logout, setUser, token } = useAppStore();
@@ -86,6 +88,13 @@ export function MainLayout() {
   const changePanel = (panel: string) => {
     setActivePanel(panel);
     setSearchParams(panel === 'dashboard' ? {} : { panel });
+  };
+  const openPanel = (panel: string) => {
+    if (panel === 'mail') {
+      nav('/mail');
+      return;
+    }
+    changePanel(panel);
   };
 
   useEffect(() => {
@@ -170,6 +179,8 @@ export function MainLayout() {
           <span style={{ fontSize: 14, fontWeight: 600 }}>{panelTitles[activePanel] || '仪表盘'}</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button onClick={() => setShowCalendar(true)} className="btn">📅 日历</button>
+            <AnnouncementCenter buttonClassName="btn" />
+            <button onClick={() => nav('/mail')} className="btn">📧 邮箱</button>
             <button onClick={() => setShowSkillModal(true)} className="btn">🧩 平台 Skill</button>
             <select value={theme} onChange={e => { const t = e.target.value; setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t); }} className="theme-select">
               <option value="light">☀️ 浅色</option>
@@ -181,7 +192,7 @@ export function MainLayout() {
         <div className="content">
           {activePanel !== 'personal' && personalPanels.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('personal')}>← 个人工作台</button>}
           {studentToolIds.has(activePanel) && <button className="btn personal-workspace-back" onClick={() => changePanel('tools')}>← 通用工具</button>}
-          {activePanel === 'personal' ? <PersonalWorkspace onOpen={changePanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
+          {activePanel === 'personal' ? <PersonalWorkspace onOpen={openPanel} /> : activePanel === 'classrooms' ? <StudentClassrooms /> : activePanel === 'tools' ? <StudentTools onOpen={changePanel} /> : <PanelComponent />}
         </div>
       </div>
       {showCalendar && (

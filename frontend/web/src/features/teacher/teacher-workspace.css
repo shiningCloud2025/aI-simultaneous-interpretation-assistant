@@ -129,7 +129,7 @@
 [data-theme="dark"] .teacher-learning-nav button { color: #bdcbc0; }
 [data-theme="dark"] .teacher-learning-nav button:hover, [data-theme="dark"] .teacher-learning-nav button.active { background: #375044; color: #e9f4e9; }
 [data-theme="dark"] .teacher-topbar { background: rgba(41, 51, 44, .94); border-color: #3d4d42; }
-[data-theme="dark"] .teacher-theme-control, [data-theme="dark"] .teacher-exit-button, [data-theme="dark"] .teacher-icon-button, [data-theme="dark"] .teacher-secondary, [data-theme="dark"] .teacher-cell-actions button, [data-theme="dark"] .teacher-pager button, [data-theme="dark"] .teacher-learning-tool-head { background: #334137; border-color: #526459; color: #e3ebe4 !important; }
+[data-theme="dark"] .teacher-theme-control, [data-theme="dark"] .teacher-exit-button, [data-theme="dark"] .teacher-icon-button, [data-theme="dark"] .teacher-top-link-button, [data-theme="dark"] .teacher-secondary, [data-theme="dark"] .teacher-cell-actions button, [data-theme="dark"] .teacher-pager button, [data-theme="dark"] .teacher-learning-tool-head { background: #334137; border-color: #526459; color: #e3ebe4 !important; }
 [data-theme="dark"] .teacher-learning-card p, [data-theme="dark"] .teacher-learning-tool-head p, [data-theme="dark"] .teacher-learning-tool-head > span { color: #afc2b5; }
 [data-theme="dark"] .teacher-row-button, [data-theme="dark"] .teacher-history-list > button { background: #29332c; color: #e9eee8; }
 [data-theme="dark"] .teacher-field input, [data-theme="dark"] .teacher-field select, [data-theme="dark"] .teacher-field textarea, [data-theme="dark"] .teacher-picker select, [data-theme="dark"] .teacher-list-toolbar input { background: #334137; border-color: #526459; color: #e9eee8; }
@@ -167,6 +167,8 @@
 .teacher-topbar-location > span { margin: 0 !important; color: #859087 !important; font-size: 12px !important; }
 .teacher-topbar-location > strong { overflow: hidden; color: #26352b; font-size: 13px !important; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .teacher-top-actions { gap: 10px; }
+.teacher-top-link-button { min-height: 36px; padding: 0 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--teacher-line); border-radius: 10px; background: #fff; color: #52645d; font-size: 12px; font-weight: 700; cursor: pointer; }
+.teacher-top-link-button:hover { background: #f4f8f5; color: #285647; }
 .teacher-content { max-width: 1540px; min-height: calc(100vh - 64px); margin: 0 auto; padding: 34px 40px 70px; }
 .teacher-page { max-width: 1180px; }
 .teacher-rooms-page { max-width: 1060px; }

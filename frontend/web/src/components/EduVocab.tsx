@@ -156,25 +156,27 @@ export function EduVocab() {
       <Card title="单词输入">
         <LlmModelPreference label="生成模型" />
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
-          <Field label="语言">
+          <Field label="语言" required>
             <PlainSelect options={LANGUAGES} value={language} onChange={changeLanguage} />
           </Field>
-          <Field label="学习阶段">
+          <Field label="学习阶段" required>
             <PlainSelect options={currentStages} value={stage} onChange={setStage} />
           </Field>
         </div>
-        <input
-          value={word}
-          onChange={e => {
-            setWord(e.target.value);
-            setError('');
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Enter') handleGenerate();
-          }}
-          placeholder="请输入一个单词，例如：apple"
-          style={{ width: '100%', height: 44, padding: '0 12px', border: '1px solid #e8e6e1', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
-        />
+        <Field label="单词" required>
+          <input
+            value={word}
+            onChange={e => {
+              setWord(e.target.value);
+              setError('');
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleGenerate();
+            }}
+            placeholder="请输入一个单词，例如：apple"
+            style={{ width: '100%', height: 44, padding: '0 12px', border: '1px solid #e8e6e1', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+          />
+        </Field>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
           <button
             onClick={handleGenerate}
@@ -284,10 +286,10 @@ export function EduVocab() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}{required && <b className="form-required">*</b>}</div>
       {children}
     </div>
   );

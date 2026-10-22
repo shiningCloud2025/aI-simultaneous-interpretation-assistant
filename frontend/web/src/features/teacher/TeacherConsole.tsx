@@ -192,7 +192,7 @@ export function TeacherConsole() {
       </main>
 
       {dialog === 'create' && <Modal title="创建课堂" subtitle="填写基础教学信息，创建后将自动生成课堂码" onClose={() => setDialog(null)}>
-        <Field label="课堂名称"><input autoFocus value={classroomForm.name} onChange={event => setClassroomForm({ ...classroomForm, name: event.target.value })} placeholder="例如：高一英语口语 2 班" /></Field>
+        <Field label="课堂名称" required><input autoFocus value={classroomForm.name} onChange={event => setClassroomForm({ ...classroomForm, name: event.target.value })} placeholder="例如：高一英语口语 2 班" /></Field>
         <div className="teacher-form-grid"><Field label="教学语言"><select value={classroomForm.languageCode} onChange={event => setClassroomForm({ ...classroomForm, languageCode: event.target.value })}>{Object.entries(languageNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field><Field label="学习阶段"><select value={classroomForm.stageCode} onChange={event => setClassroomForm({ ...classroomForm, stageCode: event.target.value })}>{Object.entries(stageNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field></div>
         <div className="teacher-form-grid"><Field label="学年"><input value={classroomForm.academicYear} onChange={event => setClassroomForm({ ...classroomForm, academicYear: event.target.value })} placeholder="2026-2027" /></Field><Field label="学期"><select value={classroomForm.semesterCode} onChange={event => setClassroomForm({ ...classroomForm, semesterCode: event.target.value })}><option value="FIRST">上学期</option><option value="SECOND">下学期</option></select></Field></div>
         <Field label="课堂说明"><textarea rows={4} value={classroomForm.description} onChange={event => setClassroomForm({ ...classroomForm, description: event.target.value })} placeholder="介绍课堂目标或教学安排" /></Field>
@@ -206,14 +206,14 @@ export function TeacherConsole() {
 
       {dialog === 'member' && selectedClassroom && <Modal title="主动添加学生" subtitle={selectedClassroom.name} onClose={() => setDialog(null)}>
         <div className="teacher-dialog-note"><UserPlus size={20} /><span>学生加入后使用这里填写的真实姓名参与课堂。</span></div>
-        <Field label="学生账号"><input autoFocus value={memberForm.studentId} onChange={event => setMemberForm({ ...memberForm, studentId: event.target.value })} placeholder="输入学生账号" /></Field>
-        <Field label="学生真实姓名"><input value={memberForm.studentName} onChange={event => setMemberForm({ ...memberForm, studentName: event.target.value })} placeholder="输入学生姓名" /></Field>
+        <Field label="学生账号" required><input autoFocus value={memberForm.studentId} onChange={event => setMemberForm({ ...memberForm, studentId: event.target.value })} placeholder="输入学生账号" /></Field>
+        <Field label="学生真实姓名" required><input value={memberForm.studentName} onChange={event => setMemberForm({ ...memberForm, studentName: event.target.value })} placeholder="输入学生姓名" /></Field>
         <ModalActions onCancel={() => setDialog(null)} label="确认添加" onConfirm={() => addMember(selectedClassroom)} />
       </Modal>}
 
       {dialog === 'session' && selectedClassroom && <Modal title="开始上课" subtitle={selectedClassroom.name} onClose={() => setDialog(null)}>
         <div className="teacher-dialog-note"><Play size={20} /><span>开课后会根据当前课堂成员生成本次上课学生记录。</span></div>
-        <Field label="课次名称"><input autoFocus value={sessionName} onChange={event => setSessionName(event.target.value)} placeholder={`例如：第 ${selectedClassroom.sessions.length + 1} 课时 · 情境对话`} /></Field>
+        <Field label="课次名称" required><input autoFocus value={sessionName} onChange={event => setSessionName(event.target.value)} placeholder={`例如：第 ${selectedClassroom.sessions.length + 1} 课时 · 情境对话`} /></Field>
         <div className="teacher-session-preview"><span>预计参与学生</span><strong>{selectedClassroom.members.length} 人</strong></div>
         <ModalActions onCancel={() => setDialog(null)} label="开始上课" onConfirm={() => startSession(selectedClassroom)} />
       </Modal>}
@@ -305,7 +305,7 @@ function PageHead({ eyebrow, title, subtitle, action }: { eyebrow: string; title
 function Info({ label, value }: { label: string; value: string }) { return <div><span>{label}</span><strong>{value}</strong></div>; }
 function EmptyInline({ text, action, onClick }: { text: string; action: string; onClick: () => void }) { return <div className="teacher-empty-inline"><Users size={24} /><strong>{text}</strong><button onClick={onClick}>{action}</button></div>; }
 function NotFound({ onBack }: { onBack: () => void }) { return <div className="teacher-empty-page"><BookOpen size={28} /><h2>没有找到对应内容</h2><button className="teacher-primary" onClick={onBack}>返回列表</button></div>; }
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="teacher-field"><span>{label}</span>{children}</label>; }
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) { return <label className="teacher-field"><span>{label}{required && <b className="form-required">*</b>}</span>{children}</label>; }
 function Modal({ title, subtitle, children, onClose }: { title: string; subtitle: string; children: React.ReactNode; onClose: () => void }) { return <div className="teacher-modal-mask" onMouseDown={event => event.target === event.currentTarget && onClose()}><div className="teacher-modal"><div className="teacher-modal-head"><div><h2>{title}</h2><p>{subtitle}</p></div><button onClick={onClose}><X size={18} /></button></div><div className="teacher-modal-body">{children}</div></div></div>; }
 function ModalActions({ onCancel, onConfirm, label }: { onCancel: () => void; onConfirm: () => void; label: string }) { return <div className="teacher-modal-actions"><button className="teacher-secondary" onClick={onCancel}>取消</button><button className="teacher-primary" onClick={onConfirm}>{label}</button></div>; }
 

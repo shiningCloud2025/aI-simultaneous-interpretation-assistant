@@ -2,6 +2,7 @@ package com.lucky.server.common.tester;
 
 import com.lucky.server.common.basic.BusinessException;
 import com.lucky.server.common.enums.ResultCodeEnum;
+import com.lucky.server.common.enums.MailProviderEnum;
 import com.lucky.server.domain.entity.SysUserMailAccount;
 import jakarta.mail.Folder;
 import jakarta.mail.Session;
@@ -10,6 +11,8 @@ import jakarta.mail.Transport;
 import org.springframework.stereotype.Component;
 
 import java.util.Properties;
+import java.util.Map;
+import org.eclipse.angus.mail.imap.IMAPStore;
 
 /**
  * 邮箱账号连接测试工具
@@ -29,6 +32,7 @@ public class MailConnectionTester {
         properties.put("mail.imaps.host", account.getImapHost());
         properties.put("mail.imaps.port", String.valueOf(account.getImapPort()));
         properties.put("mail.imaps.ssl.enable", "true");
+        properties.put("mail.imaps.ssl.trust", account.getImapHost());
         properties.put("mail.imaps.connectiontimeout", "8000");
         properties.put("mail.imaps.timeout", "8000");
 
@@ -38,6 +42,14 @@ public class MailConnectionTester {
             Session session = Session.getInstance(properties);
             store = session.getStore("imaps");
             store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), mailAuthCode);
+            // 网易邮箱读取文件夹前需要声明客户端身份。
+            if (account.getProvider() == MailProviderEnum.NETEASE_163) {
+                ((IMAPStore) store).id(Map.of(
+                        "name", "ZhiYuTongHang",
+                        "version", "1.0.0",
+                        "vendor", "ZhiYuTongHang"
+                ));
+            }
 
             inbox = store.getFolder("INBOX");
             if (inbox != null && !inbox.isOpen()) {
@@ -58,6 +70,7 @@ public class MailConnectionTester {
         properties.put("mail.smtp.host", account.getSmtpHost());
         properties.put("mail.smtp.port", String.valueOf(account.getSmtpPort()));
         properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.ssl.trust", account.getSmtpHost());
         properties.put("mail.smtp.connectiontimeout", "8000");
         properties.put("mail.smtp.timeout", "8000");
 

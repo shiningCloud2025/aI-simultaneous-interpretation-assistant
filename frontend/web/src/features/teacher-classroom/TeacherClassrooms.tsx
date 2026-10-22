@@ -270,7 +270,7 @@ export function TeacherClassrooms() {
             <>
               <DialogHead title="创建课堂" description="创建后自动生成课堂码和邀请链接" onClose={() => setDialog(null)} />
               <div className="tc-dialog-body">
-                <Field label="课堂名称"><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="例如：高一英语口语 2 班" autoFocus /></Field>
+                <Field label="课堂名称" required><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="例如：高一英语口语 2 班" autoFocus /></Field>
                 <div className="tc-form-row">
                   <Field label="学科"><select value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })}><option>英语</option><option>日语</option><option>韩语</option><option>其他</option></select></Field>
                   <Field label="学习阶段"><select value={form.stage} onChange={(event) => setForm({ ...form, stage: event.target.value })}><option>小学</option><option>初中</option><option>高中</option><option>大学</option><option>研究生</option></select></Field>
@@ -317,8 +317,8 @@ function AddMemberForm({ account, name, onAccountChange, onNameChange, onSubmit 
     <div className="tc-share-box align-left">
       <span className="tc-share-icon">＋</span><h3>按学生账号主动添加</h3>
       <p>当前后端尚未提供学生检索接口，此处保存为教师端本地课堂成员。</p>
-      <Field label="学生账号"><input value={account} onChange={(event) => onAccountChange(event.target.value)} placeholder="5–12 位数字账号" /></Field>
-      <Field label="学生姓名"><input value={name} onChange={(event) => onNameChange(event.target.value)} placeholder="输入学生姓名" /></Field>
+      <Field label="学生账号" required><input value={account} onChange={(event) => onAccountChange(event.target.value)} placeholder="5–12 位数字账号" /></Field>
+      <Field label="学生姓名" required><input value={name} onChange={(event) => onNameChange(event.target.value)} placeholder="输入学生姓名" /></Field>
       <button className="tc-button primary full" onClick={onSubmit}>确认添加</button>
     </div>
   );
@@ -332,8 +332,8 @@ function DialogFoot({ onCancel, actionText, onAction }: { onCancel: () => void; 
   return <div className="tc-dialog-foot"><button className="tc-button secondary" onClick={onCancel}>取消</button><button className="tc-button primary" onClick={onAction}>{actionText}</button></div>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="tc-field"><span>{label}</span>{children}</label>;
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) {
+  return <label className="tc-field"><span>{label}{required && <b className="form-required">*</b>}</span>{children}</label>;
 }
 
 function formatDate(value: string) {

@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bold, Heading2, ImagePlus, Italic, Link as LinkIcon, List, ListOrdered, Pilcrow } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { uploadFile } from '../../lib/api';
 import { appConfirm, appPrompt } from '../../lib/appDialog';
+import { AnnouncementCenter, sanitizeHtml } from '../../components/AnnouncementCenter';
 import {
   adminApi,
+  type AnnouncementDetail,
+  type AnnouncementItem,
+  type AnnouncementSaveInput,
   type DashboardOnline,
   type FeedbackItem,
   type LogContent,
@@ -21,6 +26,7 @@ import {
   type UserTrendItem,
 } from './adminApi';
 import { AdminCalendarPanel } from './AdminCalendarPanel';
+import { AdminMailAccountPanel } from './AdminMailAccountPanel';
 import { CalendarModal } from '../../components/CalendarModal';
 import './SuperAdminConsole.css';
 
@@ -30,9 +36,11 @@ type AdminPanelKey =
   | 'ops-dashboard'
   | 'log-dashboard'
   | 'user-management'
+  | 'mail-management'
   | 'feedback'
   | 'skills'
   | 'system'
+  | 'announcements'
   | 'nacos-console'
   | 'sentinel-console'
   | 'admin-account';
@@ -71,6 +79,7 @@ const navGroups: Array<{
     name: '管理控制台',
     children: [
       { key: 'user-management', icon: '👤', name: '用户管理', desc: '全部用户、在线用户、禁用用户与操作记录' },
+      { key: 'mail-management', icon: '✉', name: '邮箱管理', desc: '平台邮箱绑定、状态与连接记录' },
     ],
   },
   {
@@ -88,6 +97,7 @@ const navGroups: Array<{
     name: '系统',
     children: [
       { key: 'system', icon: '⚙', name: '系统配置', desc: '固定配置后续扩展' },
+      { key: 'announcements', icon: '📣', name: '系统公告', desc: '发布登录提示与平台公告' },
     ],
   },
   {
@@ -495,6 +505,8 @@ export function SuperAdminConsole() {
           </div>
           <div className="admin-top-actions">
             <button className="admin-btn" onClick={() => setShowCalendar(true)}>📅 日历</button>
+            <AnnouncementCenter buttonClassName="admin-btn" />
+            <button className="admin-btn" onClick={() => nav('/mail')}>📧 邮箱</button>
             <button
               className={`admin-btn ${mode === 'star' || mode === 'star-content' ? 'primary' : ''}`}
               onClick={() => {
@@ -537,9 +549,11 @@ export function SuperAdminConsole() {
               {panel === 'ops-dashboard' && <PlaceholderPanel title="运营看板" text="运营功能目前较少，等公告、推荐、活动等业务落地后再接数据。" />}
               {panel === 'log-dashboard' && <LogDashboardPanel />}
               {panel === 'user-management' && <UserManagementPanel />}
+              {panel === 'mail-management' && <AdminMailAccountPanel />}
               {panel === 'feedback' && <FeedbackPanel />}
               {panel === 'skills' && <SkillPanel />}
               {panel === 'system' && <PlaceholderPanel title="系统配置" text="系统配置本期暂未接后端，适合后续放模型默认值、功能开关和公告配置。" />}
+              {panel === 'announcements' && <AnnouncementAdminPanel />}
               {meta.iframeUrl && <GovernanceFramePanel item={meta} />}
               {panel === 'admin-account' && <AdminAccountPanel />}
             </>
@@ -739,7 +753,7 @@ function AdminAccountPanel() {
             <h3>{modal === 'profile' ? '编辑资料' : modal === 'password' ? '修改密码' : modal === 'phone' ? '换绑手机' : '换绑邮箱'}</h3>
             {modal === 'profile' && (
               <>
-                <AdminAccountField label="用户名">
+                <AdminAccountField label={<span>用户名<b className="form-required">*</b></span>}>
                   <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="请输入用户名" />
                 </AdminAccountField>
                 <AdminAccountField label="头像">
@@ -766,20 +780,20 @@ function AdminAccountPanel() {
             )}
             {modal === 'password' && (
               <>
-                <AdminAccountField label="新密码">
+                <AdminAccountField label={<span>新密码<b className="form-required">*</b></span>}>
                   <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6-26 位新密码" />
                 </AdminAccountField>
-                <AdminAccountField label="确认新密码">
+                <AdminAccountField label={<span>确认新密码<b className="form-required">*</b></span>}>
                   <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" />
                 </AdminAccountField>
               </>
             )}
             {modal === 'phone' && (
               <>
-                <AdminAccountField label="新手机号">
+                <AdminAccountField label={<span>新手机号<b className="form-required">*</b></span>}>
                   <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="请输入新手机号" />
                 </AdminAccountField>
-                <AdminAccountField label="短信验证码">
+                <AdminAccountField label={<span>短信验证码<b className="form-required">*</b></span>}>
                   <div className="admin-account-code-row">
                     <input value={smsCaptcha} onChange={(e) => setSmsCaptcha(e.target.value)} placeholder="请输入验证码" />
                     <button onClick={sendSms}>{smsCount > 0 ? `${smsCount}s` : '获取'}</button>
@@ -789,10 +803,10 @@ function AdminAccountPanel() {
             )}
             {modal === 'email' && (
               <>
-                <AdminAccountField label="新邮箱">
+                <AdminAccountField label={<span>新邮箱<b className="form-required">*</b></span>}>
                   <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="请输入新邮箱" />
                 </AdminAccountField>
-                <AdminAccountField label="邮箱验证码">
+                <AdminAccountField label={<span>邮箱验证码<b className="form-required">*</b></span>}>
                   <div className="admin-account-code-row">
                     <input value={emailCaptcha} onChange={(e) => setEmailCaptcha(e.target.value)} placeholder="请输入验证码" />
                     <button onClick={sendEmailCode}>{emailCount > 0 ? `${emailCount}s` : '获取'}</button>
@@ -821,12 +835,12 @@ function AdminAccountRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AdminAccountField({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
+function AdminAccountField({ label, children, className = '' }: { label: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`admin-account-field ${className}`.trim()}>
+    <div className={`admin-account-field ${className}`.trim()}>
       <span>{label}</span>
       {children}
-    </label>
+    </div>
   );
 }
 
@@ -1667,6 +1681,378 @@ function FeedbackPanel() {
   );
 }
 
+const emptyAnnouncementForm: AnnouncementSaveInput = {
+  title: '',
+  titleContent: '',
+  content: '',
+  coverUrl: '',
+  status: 0,
+};
+
+function AdminRichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  minHeight,
+  disabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  minHeight: number;
+  disabled?: boolean;
+}) {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const focusedRef = useRef(false);
+  const lastHtmlRef = useRef('');
+
+  useEffect(() => {
+    if (!editorRef.current || focusedRef.current || value === lastHtmlRef.current) return;
+    editorRef.current.innerHTML = value;
+    lastHtmlRef.current = value;
+  }, [value]);
+
+  const emitChange = () => {
+    const html = editorRef.current?.innerHTML || '';
+    lastHtmlRef.current = html;
+    onChange(html);
+  };
+
+  const runCommand = (command: string, commandValue?: string) => {
+    if (disabled) return;
+    editorRef.current?.focus();
+    document.execCommand(command, false, commandValue);
+    emitChange();
+  };
+
+  const insertLink = () => {
+    if (disabled) return;
+    const url = window.prompt('请输入链接地址');
+    if (!url?.trim()) return;
+    runCommand('createLink', url.trim());
+  };
+
+  const insertUploadedImage = async (file?: File) => {
+    if (!file || disabled) return;
+    try {
+      const uploaded = await uploadFile<{ url: string }>(file);
+      if (!uploaded.url) throw new Error('图片上传接口未返回 URL');
+      editorRef.current?.focus();
+      document.execCommand('insertHTML', false, `<p><img src="${uploaded.url}" alt="${file.name}" /></p>`);
+      emitChange();
+    } catch (cause: any) {
+      window.alert(cause.message || '图片上传失败');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className={`admin-rich-editor ${disabled ? 'disabled' : ''}`}>
+      {!disabled && (
+        <div className="admin-rich-toolbar">
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="加粗" aria-label="加粗" onMouseDown={(event) => { event.preventDefault(); runCommand('bold'); }}><Bold size={15} /><span>加粗</span></button>
+            <button type="button" title="斜体" aria-label="斜体" onMouseDown={(event) => { event.preventDefault(); runCommand('italic'); }}><Italic size={15} /><span>斜体</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="标题" aria-label="标题" onMouseDown={(event) => { event.preventDefault(); runCommand('formatBlock', '<h2>'); }}><Heading2 size={15} /><span>标题</span></button>
+            <button type="button" title="正文" aria-label="正文" onMouseDown={(event) => { event.preventDefault(); runCommand('formatBlock', '<p>'); }}><Pilcrow size={15} /><span>正文</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="无序列表" aria-label="无序列表" onMouseDown={(event) => { event.preventDefault(); runCommand('insertUnorderedList'); }}><List size={15} /><span>列表</span></button>
+            <button type="button" title="有序列表" aria-label="有序列表" onMouseDown={(event) => { event.preventDefault(); runCommand('insertOrderedList'); }}><ListOrdered size={15} /><span>编号</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="插入链接" aria-label="插入链接" onMouseDown={(event) => { event.preventDefault(); insertLink(); }}><LinkIcon size={15} /><span>链接</span></button>
+            <button type="button" title="上传图片" aria-label="上传图片" onMouseDown={(event) => { event.preventDefault(); fileInputRef.current?.click(); }}><ImagePlus size={15} /><span>图片</span></button>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => insertUploadedImage(event.target.files?.[0])} />
+        </div>
+      )}
+      <div
+        ref={editorRef}
+        className="admin-rich-editable"
+        contentEditable={!disabled}
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        role="textbox"
+        aria-multiline="true"
+        tabIndex={disabled ? -1 : 0}
+        style={{ minHeight }}
+        onFocus={() => { focusedRef.current = true; }}
+        onBlur={() => { focusedRef.current = false; emitChange(); }}
+        onInput={emitChange}
+      />
+    </div>
+  );
+}
+
+function AnnouncementAdminPanel() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [data, setData] = useState<PageResult<AnnouncementItem>>({ records: [], total: 0, size: 10, current: 1 });
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState('');
+  const [form, setForm] = useState<AnnouncementSaveInput>(emptyAnnouncementForm);
+  const [active, setActive] = useState<AnnouncementDetail | null>(null);
+  const [modal, setModal] = useState<'create' | 'edit' | 'view' | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async (page = data.current || 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      setData(await adminApi.announcements({
+        page,
+        size: 10,
+        filter: {
+          keyword: keyword.trim() || null,
+          status: status === '' ? null : Number(status),
+        },
+      }));
+    } catch (cause: any) {
+      setError(cause.message || '公告加载失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(1); }, []);
+
+  const openCreate = () => {
+    setActive(null);
+    setForm(emptyAnnouncementForm);
+    setError('');
+    setModal('create');
+  };
+
+  const openDetail = async (item: AnnouncementItem, nextModal: 'edit' | 'view') => {
+    try {
+      const detail = await adminApi.announcementDetail(item.id);
+      setActive(detail);
+      setForm({
+        title: detail.title || '',
+        titleContent: detail.titleContent || '',
+        content: detail.content || '',
+        coverUrl: detail.coverUrl || '',
+        status: Number(detail.status ?? 0),
+      });
+      setError('');
+      setModal(nextModal);
+    } catch (cause: any) {
+      setError(cause.message || '公告详情加载失败');
+    }
+  };
+
+  const closeModal = () => {
+    setModal(null);
+    setActive(null);
+    setForm(emptyAnnouncementForm);
+  };
+
+  const save = async () => {
+    if (!form.title.trim()) return setError('公告标题不能为空');
+    if (!form.content.trim()) return setError('公告正文不能为空');
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        title: form.title.trim(),
+        titleContent: form.titleContent?.trim() || form.title.trim(),
+        coverUrl: form.coverUrl?.trim() || '',
+        content: form.content.trim(),
+      };
+      if (active) await adminApi.updateAnnouncement(active.id, payload);
+      else await adminApi.createAnnouncement(payload);
+      closeModal();
+      await load(active ? data.current : 1);
+    } catch (cause: any) {
+      setError(cause.message || '公告保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publish = async (item: AnnouncementItem) => {
+    if (!await appConfirm({ title: '发布公告', message: `确定发布「${item.title}」吗？发布后将对用户可见，且不能继续修改。`, confirmText: '发布' })) return;
+    try {
+      await adminApi.publishAnnouncement(item.id);
+      await load(data.current);
+    } catch (cause: any) {
+      setError(cause.message || '公告发布失败');
+    }
+  };
+
+  const remove = async (item: AnnouncementItem) => {
+    if (!await appConfirm({ title: '删除公告', message: `确定删除「${item.title}」吗？`, confirmText: '删除', danger: true })) return;
+    try {
+      await adminApi.deleteAnnouncement(item.id);
+      const nextPage = data.records.length === 1 && data.current > 1 ? data.current - 1 : data.current;
+      await load(nextPage);
+    } catch (cause: any) {
+      setError(cause.message || '公告删除失败');
+    }
+  };
+
+  const insertImage = async (file?: File) => {
+    if (!file) return;
+    try {
+      const uploaded = await uploadFile<{ url: string }>(file);
+      const url = uploaded.url;
+      if (!url) throw new Error('图片上传接口未返回 URL');
+      setForm(current => ({ ...current, content: `${current.content}\n<p><img src="${url}" alt="" /></p>` }));
+      setError('');
+    } catch (cause: any) {
+      setError(cause.message || '图片上传失败');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const totalPages = data.pages || Math.max(1, Math.ceil((data.total || 0) / (data.size || 10)));
+
+  return (
+    <div className="admin-panel">
+      <section className="admin-card admin-announcement-card">
+        <div className="admin-skill-card-head">
+          <div>
+            <h2>系统公告</h2>
+            <p>维护登录后主动提醒和公告栏展示的系统公告。</p>
+          </div>
+          <div className="admin-skill-head-actions">
+            <span className="admin-skill-count">共 {data.total || 0} 条</span>
+            <button className="admin-btn primary" onClick={openCreate}>新增公告</button>
+          </div>
+        </div>
+
+        <div className="admin-toolbar">
+          <input className="admin-input" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="按公告标题搜索" onKeyDown={(e) => { if (e.key === 'Enter') load(1); }} />
+          <select className="admin-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">全部状态</option>
+            <option value="0">草稿</option>
+            <option value="1">已发布</option>
+          </select>
+          <button className="admin-btn primary" onClick={() => load(1)}>{loading ? '查询中' : '查询'}</button>
+        </div>
+        <ErrorBlock error={error} />
+
+        {data.records.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>标题</th>
+                  <th>状态</th>
+                  <th>发布时间</th>
+                  <th>创建时间</th>
+                  <th className="admin-table-actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.records.map(item => {
+                  const published = Number(item.status) === 1;
+                  return (
+                    <tr key={item.id}>
+                      <td><strong>{item.title || '未命名公告'}</strong></td>
+                      <td><span className={`admin-pill ${published ? 'ok' : 'warn'}`}>{item.statusText || (published ? '已发布' : '草稿')}</span></td>
+                      <td>{formatDate(item.publishTime || undefined)}</td>
+                      <td>{formatDate(item.createTime || undefined)}</td>
+                      <td className="admin-table-actions-col">
+                        <div className="admin-row-actions admin-announcement-actions">
+                          <button className="admin-btn" onClick={() => openDetail(item, 'view')}>查看</button>
+                          {!published && <button className="admin-btn" onClick={() => openDetail(item, 'edit')}>编辑</button>}
+                          {!published && <button className="admin-btn primary" onClick={() => publish(item)}>发布</button>}
+                          <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="admin-announcement-empty">
+            <strong>{loading ? '正在加载公告...' : '暂无系统公告'}</strong>
+            <span>{loading ? '请稍候' : '新增一条公告后，用户登录和公告栏就可以看到它。'}</span>
+            {!loading && <button className="admin-btn primary" onClick={openCreate}>新增公告</button>}
+          </div>
+        )}
+
+        <AdminPager current={data.current || 1} pages={totalPages} total={data.total || 0} loading={loading} onChange={load} />
+      </section>
+
+      {modal && (
+        <div className="admin-account-edit-mask" onClick={closeModal}>
+          <div className="admin-account-edit admin-announcement-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-skill-modal-head">
+              <div>
+                <h3>{modal === 'create' ? '新增公告' : modal === 'edit' ? '编辑公告' : '公告详情'}</h3>
+                <p>{modal === 'view' ? '查看公告发布内容。' : '编辑公告标题、封面和富文本正文。'}</p>
+              </div>
+              <button onClick={closeModal}>×</button>
+            </div>
+
+            <div className="admin-announcement-form">
+              <AdminAccountField label={<span>公告标题<b className="form-required">*</b></span>}>
+                <input value={form.title} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="请输入公告标题" />
+              </AdminAccountField>
+              <AdminAccountField label="标题富文本（可选）" className="admin-announcement-wide">
+                <AdminRichTextEditor
+                  value={form.titleContent || ''}
+                  disabled={modal === 'view'}
+                  placeholder="可设置加粗、颜色等标题展示效果；不填则使用公告标题"
+                  minHeight={90}
+                  onChange={(value) => setForm({ ...form, titleContent: value })}
+                />
+              </AdminAccountField>
+              <AdminAccountField label="封面图 URL（可选）">
+                <input value={form.coverUrl || ''} disabled={modal === 'view'} onChange={(e) => setForm({ ...form, coverUrl: e.target.value })} placeholder="可粘贴图片 URL" />
+              </AdminAccountField>
+              <AdminAccountField label={<span>公告状态<b className="form-required">*</b></span>}>
+                <select value={form.status} disabled={modal === 'view' || Boolean(active)} onChange={(e) => setForm({ ...form, status: Number(e.target.value) })}>
+                  <option value={0}>草稿</option>
+                  <option value={1}>已发布</option>
+                </select>
+              </AdminAccountField>
+              <AdminAccountField label={<span>公告正文<b className="form-required">*</b></span>} className="admin-announcement-wide">
+                <AdminRichTextEditor
+                  value={form.content}
+                  disabled={modal === 'view'}
+                  placeholder="请输入公告正文，支持图片、标题、列表和基础排版"
+                  minHeight={240}
+                  onChange={(value) => setForm({ ...form, content: value })}
+                />
+                {modal !== 'view' && (
+                  <div className="admin-announcement-tools">
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => insertImage(e.target.files?.[0])} />
+                    <button type="button" className="admin-btn" onClick={() => fileInputRef.current?.click()}>上传图片并插入正文</button>
+                    <span>也可以直接在富文本编辑器中粘贴图片。</span>
+                  </div>
+                )}
+              </AdminAccountField>
+              <div className="admin-announcement-preview">
+                <span>预览</span>
+                {form.coverUrl && <img src={form.coverUrl} alt="" />}
+                <h2 dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.titleContent || form.title || '公告标题') }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.content || '<p>正文预览</p>') }} />
+              </div>
+            </div>
+
+            <div className="admin-account-edit-actions">
+              {modal !== 'view' && <button className="primary" disabled={saving} onClick={save}>{saving ? '保存中...' : modal === 'create' ? '确认新增' : '保存修改'}</button>}
+              <button onClick={closeModal}>{modal === 'view' ? '关闭' : '取消'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SkillPanel() {
   const pageSize = 10;
   const mdFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1733,6 +2119,8 @@ function SkillPanel() {
 
   const save = async () => {
     if (!form.name.trim()) return setError('Skill 名称不能为空');
+    if (!form.description.trim()) return setError('Skill 描述不能为空');
+    if (!form.skillContent.trim()) return setError('Skill 内容不能为空');
     try {
       if (editing) await adminApi.updateSkill(editing.name, { description: form.description, skillContent: form.skillContent, resources: form.resources });
       else await adminApi.createSkill(form);
@@ -1927,14 +2315,14 @@ function SkillPanel() {
             </div>
             <div className={`admin-skill-modal-form ${modal !== 'create' ? 'without-name' : ''}`}>
               {modal === 'create' && (
-                <AdminAccountField label="Skill 名称">
+                <AdminAccountField label={<span>Skill 名称<b className="form-required">*</b></span>}>
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如 english_writing_rubric" />
                 </AdminAccountField>
               )}
-              <AdminAccountField label="Skill 描述">
+              <AdminAccountField label={<span>Skill 描述<b className="form-required">*</b></span>}>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="说明这个 Skill 适合什么时候调用、解决什么问题" disabled={modal === 'view'} />
               </AdminAccountField>
-              <AdminAccountField label="Skill 内容" className="admin-skill-wide-field">
+              <AdminAccountField label={<span>Skill 内容<b className="form-required">*</b></span>} className="admin-skill-wide-field">
                 {modal !== 'view' && (
                   <div className="admin-skill-md-upload">
                     <input

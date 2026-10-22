@@ -313,20 +313,20 @@ export function EduSpeakingGenerate() {
       <Card title="素材生成">
         <LlmModelPreference label="生成口语素材模型" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, alignItems: 'end' }}>
-          <Field label="语言">
+          <Field label="语言" required>
             <Select options={LANGUAGES.map(s => s.desc)} value={labelOf(LANGUAGES, language)} onChange={d => changeLanguage(codeOf(LANGUAGES, d))} />
           </Field>
-          <Field label="学习阶段">
+          <Field label="学习阶段" required>
             <Select options={currentStages.map(s => s.desc)} value={labelOf(STAGES, stage)} onChange={d => setStage(codeOf(STAGES, d))} />
           </Field>
-          <Field label="难度">
+          <Field label="难度" required>
             <Select options={DIFFICULTIES.map(s => s.desc)} value={labelOf(DIFFICULTIES, difficulty)} onChange={d => setDifficulty(codeOf(DIFFICULTIES, d))} />
           </Field>
-          <Field label="练习场景">
+          <Field label="练习场景" required>
             <Select options={SCENES.map(s => s.desc)} value={labelOf(SCENES, scene)} onChange={d => setScene(codeOf(SCENES, d))} />
           </Field>
           {scene === 'custom' && (
-            <Field label="自定义场景">
+            <Field label="自定义场景" required>
               <input
                 value={customScene}
                 onChange={e => setCustomScene(e.target.value)}
@@ -337,7 +337,7 @@ export function EduSpeakingGenerate() {
           )}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 14 }}>
-          <Field label="标准音频音色">
+          <Field label="标准音频音色" required>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {TTS_VOICES.map(voice => (
                 <span key={voice.code} style={{ position: 'relative' }}>
@@ -368,7 +368,7 @@ export function EduSpeakingGenerate() {
               ))}
             </div>
           </Field>
-          <Field label="语速">
+          <Field label="语速" required>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {TTS_RATES.map(rate => (
                 <button
@@ -1126,10 +1126,10 @@ function PaginationBar({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, required = false }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 6 }}>{label}{required && <b className="form-required">*</b>}</div>
       {children}
     </div>
   );

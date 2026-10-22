@@ -5,6 +5,7 @@ const teacherPersonalPaths: Record<string, string> = {
   audio: '/teacher/settings/audio',
   shortcuts: '/teacher/settings/shortcuts',
   'api-key': '/teacher/settings/api-key',
+  mail: '/mail',
   'term-library': '/teacher/settings/term-library',
   help: '/teacher/help',
   about: '/teacher/settings/about',

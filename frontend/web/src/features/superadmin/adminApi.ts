@@ -8,6 +8,35 @@ export interface PageResult<T> {
   pages?: number;
 }
 
+export interface ManagedMailAccount {
+  id: number;
+  userId: number;
+  account?: string | null;
+  username?: string | null;
+  userType?: string | null;
+  userTypeText?: string | null;
+  provider: 'QQ' | 'NETEASE_163';
+  providerName: string;
+  email: string;
+  displayName?: string | null;
+  accessProtected: boolean;
+  status: 0 | 1 | 2 | 3;
+  statusText: string;
+  lastTestTime?: string | null;
+  lastError?: string | null;
+  createdById?: number | null;
+  createTime?: string | null;
+  updatedById?: number | null;
+  updateTime?: string | null;
+}
+
+export interface MailAccountManageFilter {
+  keyword?: string;
+  provider?: 'QQ' | 'NETEASE_163';
+  status?: 0 | 1 | 2 | 3;
+  userType?: 'student' | 'teacher' | 'superadmin';
+}
+
 export interface AdminMetric {
   value: number;
   comparePercent?: number;
@@ -177,6 +206,33 @@ export interface SkillResource {
   content: string;
 }
 
+export interface AnnouncementItem {
+  id: number;
+  title: string;
+  coverUrl?: string | null;
+  status?: number | string | null;
+  statusText?: string | null;
+  publishTime?: string | null;
+  read?: boolean | null;
+  createTime?: string | null;
+}
+
+export interface AnnouncementDetail extends AnnouncementItem {
+  titleContent?: string | null;
+  content?: string | null;
+  createdById?: number | null;
+  updatedById?: number | null;
+  updateTime?: string | null;
+}
+
+export interface AnnouncementSaveInput {
+  title: string;
+  titleContent?: string;
+  content: string;
+  coverUrl?: string;
+  status: number;
+}
+
 function qs(params: Record<string, string | number | boolean | undefined | null>) {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -189,6 +245,12 @@ function qs(params: Record<string, string | number | boolean | undefined | null>
 }
 
 export const adminApi = {
+  mailAccounts: (data: { page: number; size: number; filter: MailAccountManageFilter }) =>
+    apiCall<PageResult<ManagedMailAccount>>('/superadmin/mail-account-manage/page', { method: 'POST', body: JSON.stringify(data) }),
+  updateMailAccountStatus: (id: number, status: 1 | 3) =>
+    apiCall<void>(`/superadmin/mail-account-manage/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  deleteMailAccount: (id: number) =>
+    apiCall<void>(`/superadmin/mail-account-manage/${id}`, { method: 'DELETE' }),
   login: (data: { keyword?: string; phone?: string; email?: string; password?: string; captcha?: string }) =>
     apiCall<{ token: string }>('/sys/superadmin/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   sendSmsCode: (phone: string) =>
@@ -240,4 +302,16 @@ export const adminApi = {
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteSkill: (name: string) =>
     apiCall<void>(`/superadmin/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
+  announcements: (data: { page: number; size: number; filter?: { keyword?: string | null; status?: number | null } }) =>
+    apiCall<PageResult<AnnouncementItem>>('/superadmin/announcement/page', { method: 'POST', body: JSON.stringify(data) }),
+  announcementDetail: (id: number) => apiCall<AnnouncementDetail>(`/superadmin/announcement/${id}`),
+  createAnnouncement: (data: AnnouncementSaveInput) =>
+    apiCall<void>('/superadmin/announcement', { method: 'POST', body: JSON.stringify(data) }),
+  updateAnnouncement: (id: number, data: AnnouncementSaveInput) =>
+    apiCall<void>(`/superadmin/announcement/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAnnouncement: (id: number) =>
+    apiCall<void>(`/superadmin/announcement/${id}`, { method: 'DELETE' }),
+  publishAnnouncement: (id: number) =>
+    apiCall<void>(`/superadmin/announcement/${id}/publish`, { method: 'PUT' }),
 };
