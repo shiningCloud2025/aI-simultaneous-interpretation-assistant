@@ -51,7 +51,7 @@ export function MailPage() {
         </div>
       </header>
       <main className="mail-page-main">
-        <MailWorkspace />
+        <MailWorkspace key={user?.id} isSuperAdmin={String(user?.userType || '').toLowerCase() === 'superadmin'} />
       </main>
     </div>
   );

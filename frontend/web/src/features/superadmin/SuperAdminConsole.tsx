@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bold, Heading2, ImagePlus, Italic, Link as LinkIcon, List, ListOrdered, Pilcrow } from 'lucide-react';
 import { api, useAppStore } from '../../stores/appStore';
 import { uploadFile } from '../../lib/api';
 import { appConfirm, appPrompt } from '../../lib/appDialog';
@@ -27,11 +28,6 @@ import {
 import { AdminCalendarPanel } from './AdminCalendarPanel';
 import { CalendarModal } from '../../components/CalendarModal';
 import './SuperAdminConsole.css';
-import '@wangeditor/editor/dist/css/style.css';
-
-let RichEditor: any;
-let RichToolbar: any;
-let richEditorLoaded = false;
 
 type AdminPanelKey =
   | 'user-dashboard'
@@ -837,10 +833,10 @@ function AdminAccountRow({ label, value }: { label: string; value: string }) {
 
 function AdminAccountField({ label, children, className = '' }: { label: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`admin-account-field ${className}`.trim()}>
+    <div className={`admin-account-field ${className}`.trim()}>
       <span>{label}</span>
       {children}
-    </label>
+    </div>
   );
 }
 
@@ -1702,61 +1698,88 @@ function AdminRichTextEditor({
   minHeight: number;
   disabled?: boolean;
 }) {
-  const [editor, setEditor] = useState<any>(null);
-  const [ready, setReady] = useState(richEditorLoaded);
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const focusedRef = useRef(false);
+  const lastHtmlRef = useRef('');
 
   useEffect(() => {
-    if (richEditorLoaded) {
-      setReady(true);
-      return;
-    }
-    let cancelled = false;
-    import('@wangeditor/editor-for-react').then(module => {
-      RichEditor = module.Editor;
-      RichToolbar = module.Toolbar;
-      richEditorLoaded = true;
-      if (!cancelled) setReady(true);
-    });
-    return () => { cancelled = true; };
-  }, []);
+    if (!editorRef.current || focusedRef.current || value === lastHtmlRef.current) return;
+    editorRef.current.innerHTML = value;
+    lastHtmlRef.current = value;
+  }, [value]);
 
-  useEffect(() => {
-    if (editor) editor.disable();
-    if (editor && !disabled) editor.enable();
-  }, [editor, disabled]);
-
-  useEffect(() => () => {
-    if (editor) editor.destroy();
-  }, [editor]);
-
-  const editorConfig = {
-    placeholder,
-    autoFocus: false,
-    readOnly: Boolean(disabled),
-    MENU_CONF: {
-      uploadImage: {
-        async customUpload(file: File, insertFn: (url: string, alt?: string, href?: string) => void) {
-          const uploaded = await uploadFile<{ url: string }>(file);
-          if (uploaded.url) insertFn(uploaded.url, file.name, uploaded.url);
-        },
-      },
-    },
+  const emitChange = () => {
+    const html = editorRef.current?.innerHTML || '';
+    lastHtmlRef.current = html;
+    onChange(html);
   };
 
-  if (!ready || !RichEditor || !RichToolbar) {
-    return <div className="admin-rich-editor-loading">富文本编辑器加载中...</div>;
-  }
+  const runCommand = (command: string, commandValue?: string) => {
+    if (disabled) return;
+    editorRef.current?.focus();
+    document.execCommand(command, false, commandValue);
+    emitChange();
+  };
+
+  const insertLink = () => {
+    if (disabled) return;
+    const url = window.prompt('请输入链接地址');
+    if (!url?.trim()) return;
+    runCommand('createLink', url.trim());
+  };
+
+  const insertUploadedImage = async (file?: File) => {
+    if (!file || disabled) return;
+    try {
+      const uploaded = await uploadFile<{ url: string }>(file);
+      if (!uploaded.url) throw new Error('图片上传接口未返回 URL');
+      editorRef.current?.focus();
+      document.execCommand('insertHTML', false, `<p><img src="${uploaded.url}" alt="${file.name}" /></p>`);
+      emitChange();
+    } catch (cause: any) {
+      window.alert(cause.message || '图片上传失败');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   return (
     <div className={`admin-rich-editor ${disabled ? 'disabled' : ''}`}>
-      {!disabled && <RichToolbar editor={editor} defaultConfig={{}} mode="default" />}
-      <RichEditor
-        defaultConfig={editorConfig}
-        value={value}
-        onCreated={setEditor}
-        onChange={(instance: any) => onChange(instance.getHtml())}
-        mode="default"
-        style={{ minHeight, overflowY: 'auto' }}
+      {!disabled && (
+        <div className="admin-rich-toolbar">
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="加粗" aria-label="加粗" onMouseDown={(event) => { event.preventDefault(); runCommand('bold'); }}><Bold size={15} /><span>加粗</span></button>
+            <button type="button" title="斜体" aria-label="斜体" onMouseDown={(event) => { event.preventDefault(); runCommand('italic'); }}><Italic size={15} /><span>斜体</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="标题" aria-label="标题" onMouseDown={(event) => { event.preventDefault(); runCommand('formatBlock', '<h2>'); }}><Heading2 size={15} /><span>标题</span></button>
+            <button type="button" title="正文" aria-label="正文" onMouseDown={(event) => { event.preventDefault(); runCommand('formatBlock', '<p>'); }}><Pilcrow size={15} /><span>正文</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="无序列表" aria-label="无序列表" onMouseDown={(event) => { event.preventDefault(); runCommand('insertUnorderedList'); }}><List size={15} /><span>列表</span></button>
+            <button type="button" title="有序列表" aria-label="有序列表" onMouseDown={(event) => { event.preventDefault(); runCommand('insertOrderedList'); }}><ListOrdered size={15} /><span>编号</span></button>
+          </div>
+          <div className="admin-rich-toolbar-group">
+            <button type="button" title="插入链接" aria-label="插入链接" onMouseDown={(event) => { event.preventDefault(); insertLink(); }}><LinkIcon size={15} /><span>链接</span></button>
+            <button type="button" title="上传图片" aria-label="上传图片" onMouseDown={(event) => { event.preventDefault(); fileInputRef.current?.click(); }}><ImagePlus size={15} /><span>图片</span></button>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => insertUploadedImage(event.target.files?.[0])} />
+        </div>
+      )}
+      <div
+        ref={editorRef}
+        className="admin-rich-editable"
+        contentEditable={!disabled}
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        role="textbox"
+        aria-multiline="true"
+        tabIndex={disabled ? -1 : 0}
+        style={{ minHeight }}
+        onFocus={() => { focusedRef.current = true; }}
+        onBlur={() => { focusedRef.current = false; emitChange(); }}
+        onInput={emitChange}
       />
     </div>
   );
@@ -1912,41 +1935,48 @@ function AnnouncementAdminPanel() {
         </div>
         <ErrorBlock error={error} />
 
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>标题</th>
-                <th>状态</th>
-                <th>发布时间</th>
-                <th>创建时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.records.map(item => {
-                const published = Number(item.status) === 1;
-                return (
-                  <tr key={item.id}>
-                    <td><strong>{item.title || '未命名公告'}</strong></td>
-                    <td><span className={`admin-pill ${published ? 'ok' : 'warn'}`}>{item.statusText || (published ? '已发布' : '草稿')}</span></td>
-                    <td>{formatDate(item.publishTime || undefined)}</td>
-                    <td>{formatDate(item.createTime || undefined)}</td>
-                    <td>
-                      <div className="admin-row-actions admin-announcement-actions">
-                        <button className="admin-btn" onClick={() => openDetail(item, 'view')}>查看</button>
-                        {!published && <button className="admin-btn" onClick={() => openDetail(item, 'edit')}>编辑</button>}
-                        {!published && <button className="admin-btn primary" onClick={() => publish(item)}>发布</button>}
-                        <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!data.records.length && <div className="admin-table-empty-panel">{loading ? '正在加载公告...' : '暂无公告'}</div>}
-        </div>
+        {data.records.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>标题</th>
+                  <th>状态</th>
+                  <th>发布时间</th>
+                  <th>创建时间</th>
+                  <th className="admin-table-actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.records.map(item => {
+                  const published = Number(item.status) === 1;
+                  return (
+                    <tr key={item.id}>
+                      <td><strong>{item.title || '未命名公告'}</strong></td>
+                      <td><span className={`admin-pill ${published ? 'ok' : 'warn'}`}>{item.statusText || (published ? '已发布' : '草稿')}</span></td>
+                      <td>{formatDate(item.publishTime || undefined)}</td>
+                      <td>{formatDate(item.createTime || undefined)}</td>
+                      <td className="admin-table-actions-col">
+                        <div className="admin-row-actions admin-announcement-actions">
+                          <button className="admin-btn" onClick={() => openDetail(item, 'view')}>查看</button>
+                          {!published && <button className="admin-btn" onClick={() => openDetail(item, 'edit')}>编辑</button>}
+                          {!published && <button className="admin-btn primary" onClick={() => publish(item)}>发布</button>}
+                          <button className="admin-btn danger" onClick={() => remove(item)}>删除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="admin-announcement-empty">
+            <strong>{loading ? '正在加载公告...' : '暂无系统公告'}</strong>
+            <span>{loading ? '请稍候' : '新增一条公告后，用户登录和公告栏就可以看到它。'}</span>
+            {!loading && <button className="admin-btn primary" onClick={openCreate}>新增公告</button>}
+          </div>
+        )}
 
         <AdminPager current={data.current || 1} pages={totalPages} total={data.total || 0} loading={loading} onChange={load} />
       </section>

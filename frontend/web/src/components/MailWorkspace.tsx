@@ -147,27 +147,29 @@ function clearActiveAccountId() {
   }
 }
 
-const mailApi = {
-  accounts: () => request<MailAccount[]>('/sys/user/mail-account'),
-  saveAccount: (data: typeof emptyForm) => request<void>('/sys/user/mail-account', { method: 'POST', body: JSON.stringify(data) }),
-  updateAccount: (id: number, data: typeof emptyForm) => request<void>(`/sys/user/mail-account/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteAccount: (id: number) => request<void>(`/sys/user/mail-account/${id}`, { method: 'DELETE' }),
-  testAccount: (id: number) => request<void>(`/sys/user/mail-account/${id}/test`, { method: 'POST' }),
-  verifyAccess: (id: number, accessPassword: string) => request<void>(`/sys/user/mail-account/${id}/verify-access`, { method: 'POST', body: JSON.stringify({ accessPassword }) }),
-  folders: (accountId: number) => request<MailFolder[]>(`/sys/user/mail-account/${accountId}/space/folders`),
-  messages: (accountId: number, page: number, size: number, folderName: string) =>
-    request<PageResult<MailMessageSummary>>(`/sys/user/mail-account/${accountId}/space/messages/page`, {
-      method: 'POST',
-      body: JSON.stringify({ page, size, filter: { folderName } }),
-    }),
-  detail: (accountId: number, folderName: string, uid: number) =>
-    request<MailMessageDetail>(`/sys/user/mail-account/${accountId}/space/messages/detail`, {
-      method: 'POST',
-      body: JSON.stringify({ folderName, uid }),
-    }),
-};
+function createMailApi(basePath: string) {
+  return {
+    accounts: () => request<MailAccount[]>(basePath),
+    saveAccount: (data: typeof emptyForm) => request<void>(basePath, { method: 'POST', body: JSON.stringify(data) }),
+    deleteAccount: (id: number) => request<void>(`${basePath}/${id}`, { method: 'DELETE' }),
+    testAccount: (id: number) => request<void>(`${basePath}/${id}/test`, { method: 'POST' }),
+    verifyAccess: (id: number, accessPassword: string) => request<void>(`${basePath}/${id}/verify-access`, { method: 'POST', body: JSON.stringify({ accessPassword }) }),
+    folders: (accountId: number) => request<MailFolder[]>(`${basePath}/${accountId}/space/folders`),
+    messages: (accountId: number, page: number, size: number, folderName: string) =>
+      request<PageResult<MailMessageSummary>>(`${basePath}/${accountId}/space/messages/page`, {
+        method: 'POST',
+        body: JSON.stringify({ page, size, filter: { folderName } }),
+      }),
+    detail: (accountId: number, folderName: string, uid: number) =>
+      request<MailMessageDetail>(`${basePath}/${accountId}/space/messages/detail`, {
+        method: 'POST',
+        body: JSON.stringify({ folderName, uid }),
+      }),
+  };
+}
 
-export function MailWorkspace() {
+export function MailWorkspace({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const mailApi = useMemo(() => createMailApi(isSuperAdmin ? '/superadmin/mail-account' : '/sys/user/mail-account'), [isSuperAdmin]);
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [activeAccount, setActiveAccount] = useState<MailAccount | null>(null);
   const [verifiedAccountIds, setVerifiedAccountIds] = useState<Set<number>>(() => readVerifiedAccountIds());
@@ -186,7 +188,6 @@ export function MailWorkspace() {
   const [notice, setNotice] = useState('');
   const [showBindModal, setShowBindModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState<MailAccount | null>(null);
-  const [editingAccount, setEditingAccount] = useState<MailAccount | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [accessPassword, setAccessPassword] = useState('');
   const pageSize = 12;
@@ -259,12 +260,10 @@ export function MailWorkspace() {
         mailAuthCode: form.mailAuthCode.trim(),
         accessPassword: form.accessPassword.trim(),
       };
-      if (editingAccount) await mailApi.updateAccount(editingAccount.id, payload);
-      else await mailApi.saveAccount(payload);
+      await mailApi.saveAccount(payload);
       setShowBindModal(false);
-      setEditingAccount(null);
       setForm(emptyForm);
-      showNotice(editingAccount ? '邮箱绑定已更新' : '邮箱已绑定');
+      showNotice('邮箱已绑定');
       await loadAccounts();
     } catch (cause) {
       setModalError(errorText(cause));
@@ -272,22 +271,8 @@ export function MailWorkspace() {
   };
 
   const openCreateModal = () => {
-    setEditingAccount(null);
     setModalError('');
     setForm(emptyForm);
-    setShowBindModal(true);
-  };
-
-  const openEditModal = (account: MailAccount) => {
-    setEditingAccount(account);
-    setModalError('');
-    setForm({
-      provider: account.provider || 'QQ',
-      email: account.email || '',
-      displayName: account.displayName || '',
-      mailAuthCode: '',
-      accessPassword: '',
-    });
     setShowBindModal(true);
   };
 
@@ -441,7 +426,6 @@ export function MailWorkspace() {
                   {account.lastError && <div className="mail-account-error">{account.lastError}</div>}
                   <div className="mail-account-actions">
                     <button onClick={() => openAccount(account)}>进入邮箱</button>
-                    <button onClick={() => openEditModal(account)}>编辑</button>
                     <button disabled={busyId === account.id} onClick={() => testAccount(account)}>{busyId === account.id ? '测试中…' : '测试连接'}</button>
                     <button className="danger" disabled={busyId === account.id} onClick={() => deleteAccount(account)}>删除</button>
                   </div>
@@ -511,20 +495,19 @@ export function MailWorkspace() {
         <div className="mail-modal-mask" onMouseDown={event => {
           if (event.target === event.currentTarget) {
             setShowBindModal(false);
-            setEditingAccount(null);
             setModalError('');
           }
         }}>
           <div className="mail-modal">
-            <header><h2>{editingAccount ? '编辑邮箱绑定' : '绑定邮箱'}</h2><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}><X size={17} /></button></header>
+            <header><h2>绑定邮箱</h2><button onClick={() => { setShowBindModal(false); setModalError(''); }}><X size={17} /></button></header>
             {modalError && <div className="mail-modal-error">{modalError}</div>}
-            <label><span>邮箱类型<b className="form-required">*</b></span><select value={form.provider} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, provider: event.target.value })}>{providers.map(provider => <option key={provider.value} value={provider.value}>{provider.label}</option>)}</select></label>
+            <label><span>邮箱类型<b className="form-required">*</b></span><select value={form.provider} onChange={event => setForm({ ...form, provider: event.target.value })}>{providers.map(provider => <option key={provider.value} value={provider.value}>{provider.label}</option>)}</select></label>
             <p className="mail-form-hint">{providers.find(item => item.value === form.provider)?.hint}</p>
-            <label><span>邮箱账号<b className="form-required">*</b></span><input autoComplete="off" value={form.email} disabled={Boolean(editingAccount)} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
+            <label><span>邮箱账号<b className="form-required">*</b></span><input autoComplete="off" value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} placeholder="例如 name@qq.com" /></label>
             <label>邮箱命名<input autoComplete="off" value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} placeholder="例如 我的QQ邮箱，可不填" /></label>
-            <label><span>客户端授权码<b className="form-required">*</b></span><input autoComplete="new-password" name="mail-client-auth-code" value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder={editingAccount ? '重新输入授权码后保存' : 'QQ/163 邮箱开启 IMAP 后生成的授权码'} /></label>
-            <label>平台访问密码<input type="password" autoComplete="new-password" name="mail-access-password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder={editingAccount ? '重新设置访问密码，可不填' : '进入该邮箱前需要输入，可不填'} /></label>
-            <div className="mail-modal-actions"><button onClick={() => { setShowBindModal(false); setEditingAccount(null); setModalError(''); }}>取消</button><button className="mail-primary" onClick={saveAccount}>{editingAccount ? '保存修改' : '保存绑定'}</button></div>
+            <label><span>客户端授权码<b className="form-required">*</b></span><input autoComplete="new-password" name="mail-client-auth-code" value={form.mailAuthCode} onChange={event => setForm({ ...form, mailAuthCode: event.target.value })} placeholder="QQ/163 邮箱开启 IMAP 后生成的授权码" /></label>
+            <label>平台访问密码<input type="password" autoComplete="new-password" name="mail-access-password" value={form.accessPassword} onChange={event => setForm({ ...form, accessPassword: event.target.value })} placeholder="进入该邮箱前需要输入，可不填" /></label>
+            <div className="mail-modal-actions"><button onClick={() => { setShowBindModal(false); setModalError(''); }}>取消</button><button className="mail-primary" onClick={saveAccount}>保存绑定</button></div>
           </div>
         </div>
       )}
